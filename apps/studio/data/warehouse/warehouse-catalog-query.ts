@@ -5,10 +5,25 @@ import { fetchGet } from '@/data/fetchers'
 import { API_URL } from '@/lib/constants'
 import { ResponseError } from '@/types'
 
+/**
+ * DuckLake connection details for reading Warehouse tables from an external query engine.
+ *
+ * The Warehouse uses a DuckLake destination plugged into the project itself — the current project
+ * is used for BOTH the catalog (its Postgres) and the storage (its object-storage bucket). This is
+ * the same `supabase_project` / `supabase_storage` DuckLake config the replication product builds,
+ * resolved by the platform into a concrete catalog URL + provisioned S3 credentials.
+ */
 export interface WarehouseCatalogCredentials {
-  catalogUri: string
-  accessToken: string
-  warehouseId: string
+  /** Postgres connection to the project DB that holds the DuckLake catalog metadata. */
+  catalogUrl: string
+  /** Object-storage location of the DuckLake data files, e.g. `s3://<bucket>/<path>`. */
+  dataPath: string
+  s3Endpoint: string
+  s3Region: string
+  s3AccessKeyId: string
+  s3SecretAccessKey: string
+  /** Schema in the catalog DB that stores the DuckLake metadata tables (e.g. `ducklake`). */
+  metadataSchema: string
 }
 
 export interface WarehouseCatalog {
@@ -19,9 +34,13 @@ export interface WarehouseCatalog {
 type WarehouseCatalogApiResponse = {
   enabled: boolean
   credentials?: {
-    catalog_uri: string
-    access_token: string
-    warehouse_id: string
+    catalog_url: string
+    data_path: string
+    s3_endpoint: string
+    s3_region: string
+    s3_access_key_id: string
+    s3_secret_access_key: string
+    metadata_schema: string
   }
 }
 
@@ -41,13 +60,18 @@ export async function getWarehouseCatalog(
   )
   if (result instanceof ResponseError) throw result
 
+  const creds = result.credentials
   return {
     enabled: result.enabled,
-    credentials: result.credentials
+    credentials: creds
       ? {
-          catalogUri: result.credentials.catalog_uri,
-          accessToken: result.credentials.access_token,
-          warehouseId: result.credentials.warehouse_id,
+          catalogUrl: creds.catalog_url,
+          dataPath: creds.data_path,
+          s3Endpoint: creds.s3_endpoint,
+          s3Region: creds.s3_region,
+          s3AccessKeyId: creds.s3_access_key_id,
+          s3SecretAccessKey: creds.s3_secret_access_key,
+          metadataSchema: creds.metadata_schema,
         }
       : undefined,
   }

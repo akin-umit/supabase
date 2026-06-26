@@ -10,6 +10,7 @@ import {
   type WarehouseTableState,
 } from './warehouse-types'
 import { fetchGet } from '@/data/fetchers'
+import { useIsWarehouseEnabled } from '@/hooks/misc/useIsWarehouseEnabled'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { API_URL } from '@/lib/constants'
 import { ResponseError } from '@/types'
@@ -49,8 +50,12 @@ export const useWarehouseTablesQuery = <TData = WarehouseTablesData>(
 
 /** Per-table storage state for the selected project. Falls back to Postgres-only when not linked. */
 export function useWarehouseTableState(tableKey: string): WarehouseTableState {
+  const isWarehouseEnabled = useIsWarehouseEnabled()
   const { data: project } = useSelectedProjectQuery()
-  const { data } = useWarehouseTablesQuery({ projectRef: project?.ref })
+  const { data } = useWarehouseTablesQuery(
+    { projectRef: project?.ref },
+    { enabled: isWarehouseEnabled }
+  )
 
   return useMemo(() => {
     const match = (data ?? []).find((table) => tableKeyOf(table.schema, table.name) === tableKey)
@@ -60,8 +65,12 @@ export function useWarehouseTableState(tableKey: string): WarehouseTableState {
 
 /** Lookup of every linked table for the selected project, keyed by `schema.name`. */
 export function useWarehouseTableStates(): Map<string, WarehouseTableState> {
+  const isWarehouseEnabled = useIsWarehouseEnabled()
   const { data: project } = useSelectedProjectQuery()
-  const { data } = useWarehouseTablesQuery({ projectRef: project?.ref })
+  const { data } = useWarehouseTablesQuery(
+    { projectRef: project?.ref },
+    { enabled: isWarehouseEnabled }
+  )
 
   return useMemo(() => {
     const map = new Map<string, WarehouseTableState>()

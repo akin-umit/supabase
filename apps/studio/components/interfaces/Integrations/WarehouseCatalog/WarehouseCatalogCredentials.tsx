@@ -21,8 +21,9 @@ interface WarehouseCatalogCredentialsProps {
   credentials?: CatalogCredentials
 }
 
-function maskToken(token: string): string {
-  return `${token.slice(0, 4)}${'•'.repeat(16)}`
+function maskSecret(secret: string): string {
+  if (secret.length <= 4) return '••••••'
+  return `${secret.slice(0, 3)}${'•'.repeat(14)}`
 }
 
 export function WarehouseCatalogCredentials({
@@ -38,6 +39,54 @@ export function WarehouseCatalogCredentials({
   const engineContent = credentials
     ? getWarehouseCatalogEngineContent(queryEngine, credentials)
     : undefined
+
+  // Rows shown for the "Environment variables" view. The S3 secret is masked (copy reveals it).
+  const envRows = credentials
+    ? [
+        {
+          name: WAREHOUSE_CATALOG_ENV_VARS.catalogUrl,
+          value: credentials.catalogUrl,
+          copy: credentials.catalogUrl,
+          label: 'catalog URL',
+        },
+        {
+          name: WAREHOUSE_CATALOG_ENV_VARS.dataPath,
+          value: credentials.dataPath,
+          copy: credentials.dataPath,
+          label: 'data path',
+        },
+        {
+          name: WAREHOUSE_CATALOG_ENV_VARS.s3Endpoint,
+          value: credentials.s3Endpoint,
+          copy: credentials.s3Endpoint,
+          label: 'S3 endpoint',
+        },
+        {
+          name: WAREHOUSE_CATALOG_ENV_VARS.s3Region,
+          value: credentials.s3Region,
+          copy: credentials.s3Region,
+          label: 'S3 region',
+        },
+        {
+          name: WAREHOUSE_CATALOG_ENV_VARS.s3AccessKeyId,
+          value: credentials.s3AccessKeyId,
+          copy: credentials.s3AccessKeyId,
+          label: 'S3 access key ID',
+        },
+        {
+          name: WAREHOUSE_CATALOG_ENV_VARS.s3SecretAccessKey,
+          value: maskSecret(credentials.s3SecretAccessKey),
+          copy: credentials.s3SecretAccessKey,
+          label: 'S3 secret access key',
+        },
+        {
+          name: WAREHOUSE_CATALOG_ENV_VARS.metadataSchema,
+          value: credentials.metadataSchema,
+          copy: credentials.metadataSchema,
+          label: 'metadata schema',
+        },
+      ]
+    : []
 
   return (
     <div className="flex flex-col gap-y-4">
@@ -81,39 +130,17 @@ export function WarehouseCatalogCredentials({
             />
           </div>
           <div className="divide-y">
-            <EnvRow name={WAREHOUSE_CATALOG_ENV_VARS.catalogUri} value={credentials.catalogUri}>
-              <CopyButton
-                variant="default"
-                size="tiny"
-                iconOnly
-                aria-label="Copy catalog URI"
-                text={credentials.catalogUri}
-              />
-            </EnvRow>
-            <EnvRow
-              name={WAREHOUSE_CATALOG_ENV_VARS.accessToken}
-              value={maskToken(credentials.accessToken)}
-            >
-              <CopyButton
-                variant="default"
-                size="tiny"
-                iconOnly
-                aria-label="Copy access token"
-                text={credentials.accessToken}
-              />
-            </EnvRow>
-            <EnvRow
-              name={WAREHOUSE_CATALOG_ENV_VARS.warehouseIdentifier}
-              value={credentials.warehouseId}
-            >
-              <CopyButton
-                variant="default"
-                size="tiny"
-                iconOnly
-                aria-label="Copy warehouse identifier"
-                text={credentials.warehouseId}
-              />
-            </EnvRow>
+            {envRows.map((row) => (
+              <EnvRow key={row.name} name={row.name} value={row.value}>
+                <CopyButton
+                  variant="default"
+                  size="tiny"
+                  iconOnly
+                  aria-label={`Copy ${row.label}`}
+                  text={row.copy}
+                />
+              </EnvRow>
+            ))}
           </div>
         </div>
       ) : (

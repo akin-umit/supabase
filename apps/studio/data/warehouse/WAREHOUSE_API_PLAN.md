@@ -136,11 +136,17 @@ Response `200`:
 ```jsonc
 {
   "enabled": true,
+  // present only when enabled; resolved from the project's DuckLake config (current project)
   "credentials": {
-    // present only when enabled
-    "catalog_uri": "https://catalog.<ref>.supabase.co",
-    "access_token": "sbw_...", // secret; only returned to project admins
-    "warehouse_id": "wh_...",
+    // DuckLake catalog = the project's own Postgres (sslmode=require)
+    "catalog_url": "postgres://warehouse_ro:<pwd>@db.<ref>.supabase.co:5432/postgres",
+    // DuckLake data files in the project's storage bucket
+    "data_path": "s3://warehouse/<ref>",
+    "s3_endpoint": "<ref>.storage.supabase.co/storage/v1/s3",
+    "s3_region": "us-east-1",
+    "s3_access_key_id": "...",
+    "s3_secret_access_key": "...", // secret; only returned to project admins
+    "metadata_schema": "ducklake",
   },
 }
 ```
@@ -157,9 +163,10 @@ Request:
 
 Response `200`: same shape as endpoint #4 (on enable, includes freshly provisioned `credentials`).
 
-Server behavior: on enable, provision the catalog endpoint + access token for external readers; on
-disable, revoke them. Access is managed independently from the project's database connection
-settings.
+Server behavior: on enable, provision read credentials for the project's DuckLake catalog — a scoped
+Postgres connection for the catalog metadata plus S3 credentials for the storage bucket (reusing the
+same `supabase_project` / `supabase_storage` resolution as the replication DuckLake destination); on
+disable, revoke them. Access is managed independently from the project's database connection settings.
 
 Studio hook: `useUpdateWarehouseCatalogMutation` (`warehouse-catalog-mutation.ts`).
 
@@ -171,23 +178,29 @@ pipeline_status, catalog: { enabled } }`) if a single status call is preferred o
 
 ---
 
-## ⚠️ Open question: catalog credentials shape (DuckLake vs Iceberg REST)
+## Catalog credentials = DuckLake on the current project
 
-The credentials triple above (`catalog_uri` / `access_token` / `warehouse_id`) and the per-engine
-snippets in `warehouseCatalog.constants.ts` are currently written for an **Iceberg REST catalog**
-(the prototype mocked it that way). The Warehouse product is backed by **DuckLake**, whose external
-access model is different — typically a **Postgres catalog connection** plus **object-storage
-credentials** rather than a REST endpoint + token.
+The Warehouse reuses the replication product's **DuckLake** destination in its Supabase-managed form —
+except the **current project is used for BOTH the catalog and the storage** (the user does not pick
+projects). That is the config the replication product already builds:
 
-Before GA, decide one of:
+```jsonc
+{
+  "ducklake": {
+    "catalog": { "type": "supabase_project", "project_ref": "<ref>" },
+    "storage": { "type": "supabase_storage", "project_ref": "<ref>", "bucket": "warehouse" },
+  },
+}
+```
 
-1. Expose DuckLake directly → credentials become `{ catalog_postgres_url, storage_endpoint,
-storage_access_key_id, storage_secret_access_key, ... }`, and the DuckDB/Spark/Trino/PyIceberg
-   snippets change to `ATTACH 'ducklake:postgres:...'`-style configs.
-2. Front DuckLake with an Iceberg-REST-compatible catalog → keep the current triple + snippets.
+The platform resolves this into the concrete connection details returned by endpoint #4 — a Postgres
+catalog URL (the project DB), an S3 data path + S3 credentials (the project storage bucket), and the
+DuckLake metadata schema — i.e. exactly the fields the existing `ducklake-supabase-config.ts` resolver
+already produces for a replication destination. Studio renders these as a DuckDB
+`ATTACH 'ducklake:...'` snippet (plus a raw env-var view) in `warehouseCatalog.constants.ts`.
 
-The Studio data layer isolates this: only `WarehouseCatalogCredentials` (`warehouse-catalog-query.ts`)
-and `warehouseCatalog.constants.ts` need to change when the shape is finalized.
+Implementation note: the platform work is the same source/destination/pipeline plumbing as
+replication, with the catalog + storage `project_ref` pinned to `{ref}` and surfaced read-only.
 
 ---
 

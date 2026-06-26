@@ -1,109 +1,74 @@
 import type { WarehouseCatalogCredentials } from '@/data/warehouse/warehouse-catalog-query'
 
-export type WarehouseCatalogEngine = 'env' | 'duckdb' | 'spark' | 'trino' | 'pyiceberg'
+export type WarehouseCatalogEngine = 'duckdb' | 'env'
 
 export const WAREHOUSE_CATALOG_ENGINES: { key: WarehouseCatalogEngine; label: string }[] = [
-  { key: 'env', label: 'Environment variables' },
   { key: 'duckdb', label: 'DuckDB' },
-  { key: 'spark', label: 'Spark' },
-  { key: 'trino', label: 'Trino' },
-  { key: 'pyiceberg', label: 'PyIceberg' },
+  { key: 'env', label: 'Environment variables' },
 ]
 
 export const WAREHOUSE_CATALOG_ENV_VARS = {
-  catalogUri: 'CATALOG_URI',
-  accessToken: 'ACCESS_TOKEN',
-  warehouseIdentifier: 'WAREHOUSE_IDENTIFIER',
+  catalogUrl: 'DUCKLAKE_CATALOG_URL',
+  dataPath: 'DUCKLAKE_DATA_PATH',
+  s3Endpoint: 'DUCKLAKE_S3_ENDPOINT',
+  s3Region: 'DUCKLAKE_S3_REGION',
+  s3AccessKeyId: 'DUCKLAKE_S3_ACCESS_KEY_ID',
+  s3SecretAccessKey: 'DUCKLAKE_S3_SECRET_ACCESS_KEY',
+  metadataSchema: 'DUCKLAKE_METADATA_SCHEMA',
 } as const
 
 export function buildWarehouseCatalogEnv(creds: WarehouseCatalogCredentials): string {
   return [
-    `${WAREHOUSE_CATALOG_ENV_VARS.catalogUri}=${creds.catalogUri}`,
-    `${WAREHOUSE_CATALOG_ENV_VARS.accessToken}=${creds.accessToken}`,
-    `${WAREHOUSE_CATALOG_ENV_VARS.warehouseIdentifier}=${creds.warehouseId}`,
+    `${WAREHOUSE_CATALOG_ENV_VARS.catalogUrl}=${creds.catalogUrl}`,
+    `${WAREHOUSE_CATALOG_ENV_VARS.dataPath}=${creds.dataPath}`,
+    `${WAREHOUSE_CATALOG_ENV_VARS.s3Endpoint}=${creds.s3Endpoint}`,
+    `${WAREHOUSE_CATALOG_ENV_VARS.s3Region}=${creds.s3Region}`,
+    `${WAREHOUSE_CATALOG_ENV_VARS.s3AccessKeyId}=${creds.s3AccessKeyId}`,
+    `${WAREHOUSE_CATALOG_ENV_VARS.s3SecretAccessKey}=${creds.s3SecretAccessKey}`,
+    `${WAREHOUSE_CATALOG_ENV_VARS.metadataSchema}=${creds.metadataSchema}`,
   ].join('\n')
 }
 
 /**
- * Per-engine connection snippets for the Warehouse catalog.
- *
- * NOTE: these templates are currently written against an Iceberg REST catalog shape
- * (`uri` / `token` / `warehouse`). The Warehouse product is backed by DuckLake, whose external
- * access model differs (a Postgres catalog connection + object storage). The credential triple
- * and these snippets should be revisited with the DuckLake catalog design before GA — see the
- * warehouse endpoints plan.
+ * Per-engine connection snippet for the Warehouse catalog. The Warehouse is backed by DuckLake
+ * (a Postgres catalog + object storage), so DuckDB attaches it via the `ducklake` extension.
  */
 export function getWarehouseCatalogEngineContent(
   engine: WarehouseCatalogEngine,
   creds: WarehouseCatalogCredentials
-): { headerLabel: string; language: 'sql' | 'toml' | 'python'; value: string } {
-  const { catalogUri, accessToken, warehouseId } = creds
-
+): { headerLabel: string; language: 'sql' | 'bash'; value: string } {
   switch (engine) {
     case 'duckdb':
       return {
-        headerLabel: 'duckdb.sql',
+        headerLabel: 'warehouse.sql',
         language: 'sql',
-        value: `INSTALL iceberg;
-LOAD iceberg;
+        value: `INSTALL ducklake;
+INSTALL postgres;
+INSTALL httpfs;
+LOAD ducklake;
 
-CREATE SECRET supabase_catalog (
-  TYPE ICEBERG,
-  ENDPOINT '${catalogUri}',
-  TOKEN '${accessToken}',
-  WAREHOUSE '${warehouseId}'
+CREATE SECRET supabase_warehouse_storage (
+  TYPE s3,
+  KEY_ID '${creds.s3AccessKeyId}',
+  SECRET '${creds.s3SecretAccessKey}',
+  REGION '${creds.s3Region}',
+  ENDPOINT '${creds.s3Endpoint}',
+  URL_STYLE 'path'
 );
 
-ATTACH 'warehouse' AS wh (
-  TYPE ICEBERG,
-  SECRET supabase_catalog
+ATTACH 'ducklake:${creds.catalogUrl}' AS warehouse (
+  DATA_PATH '${creds.dataPath}',
+  METADATA_SCHEMA '${creds.metadataSchema}'
 );
 
-SELECT * FROM wh.events LIMIT 10;`,
-      }
-    case 'spark':
-      return {
-        headerLabel: 'spark-defaults.conf',
-        language: 'toml',
-        value: `spark.sql.catalog.warehouse=org.apache.iceberg.spark.SparkCatalog
-spark.sql.catalog.warehouse.catalog-impl=org.apache.iceberg.rest.RESTCatalog
-spark.sql.catalog.warehouse.uri=${catalogUri}
-spark.sql.catalog.warehouse.token=${accessToken}
-spark.sql.catalog.warehouse.warehouse=${warehouseId}`,
-      }
-    case 'trino':
-      return {
-        headerLabel: 'warehouse.properties',
-        language: 'toml',
-        value: `connector.name=iceberg
-iceberg.catalog.type=rest
-iceberg.rest-catalog.uri=${catalogUri}
-iceberg.rest-catalog.token=${accessToken}
-iceberg.rest-catalog.warehouse=${warehouseId}`,
-      }
-    case 'pyiceberg':
-      return {
-        headerLabel: 'catalog.py',
-        language: 'python',
-        value: `from pyiceberg.catalog import load_catalog
-
-catalog = load_catalog(
-    "warehouse",
-    **{
-        "uri": "${catalogUri}",
-        "token": "${accessToken}",
-        "warehouse": "${warehouseId}",
-    },
-)
-
-table = catalog.load_table("events")
-print(table.scan().to_pandas().head())`,
+USE warehouse;
+SELECT * FROM events LIMIT 10;`,
       }
     case 'env':
     default:
       return {
         headerLabel: 'catalog.env',
-        language: 'toml',
+        language: 'bash',
         value: buildWarehouseCatalogEnv(creds),
       }
   }

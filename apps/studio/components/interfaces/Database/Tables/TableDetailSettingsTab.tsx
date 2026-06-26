@@ -20,6 +20,7 @@ import { useIsTableRealtimeEnabled } from '@/data/database-publications/database
 import { ENTITY_TYPE } from '@/data/entity-types/entity-type-constants'
 import type { TableLike } from '@/data/table-editor/table-editor-types'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { useIsWarehouseEnabled } from '@/hooks/misc/useIsWarehouseEnabled'
 
 interface TableDetailSettingsTabProps {
   table: TableLike
@@ -29,7 +30,8 @@ export function TableDetailSettingsTab({ table }: TableDetailSettingsTabProps) {
   const [realtimeDialogOpen, setRealtimeDialogOpen] = useState(false)
   const { realtimeAll: isRealtimeFeatureEnabled } = useIsFeatureEnabled(['realtime:all'])
   const isRealtimeEnabled = useIsTableRealtimeEnabled({ id: table.id })
-  const showStorage = table.entity_type === ENTITY_TYPE.TABLE
+  const isWarehouseEnabled = useIsWarehouseEnabled()
+  const showStorage = isWarehouseEnabled && table.entity_type === ENTITY_TYPE.TABLE
 
   return (
     <>
