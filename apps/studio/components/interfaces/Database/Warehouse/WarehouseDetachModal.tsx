@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useParams } from 'common'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -9,46 +10,61 @@ import {
   DialogTitle,
 } from 'ui'
 
-import { clearTableMode } from './warehouseDemoStore'
 import { WarehouseProgressSteps } from './WarehouseProgressSteps'
+import { useWarehouseDetachTableMutation } from '@/data/warehouse/detach-table-mutation'
 
 const DETACH_PROGRESS = ['Stopping sync', 'Deleting copy']
 const STEP_INTERVAL_MS = 1200
-const COMPLETION_HOLD_MS = 650
 
 interface WarehouseDetachModalProps {
   open: boolean
-  tableKey: string
+  schema: string
+  name: string
   copyName: string
   onOpenChange: (open: boolean) => void
 }
 
 export function WarehouseDetachModal({
   open,
-  tableKey,
+  schema,
+  name,
   copyName,
   onOpenChange,
 }: WarehouseDetachModalProps) {
+  const { ref: projectRef } = useParams()
   const [progressIndex, setProgressIndex] = useState(0)
+  const hasStartedRef = useRef(false)
 
+  const { mutate: detachTable, isPending } = useWarehouseDetachTableMutation({
+    onSuccess: () => {
+      toast.success('Warehouse copy detached')
+      onOpenChange(false)
+    },
+    onError: (error) => {
+      toast.error(`Failed to detach Warehouse copy: ${error.message}`)
+      onOpenChange(false)
+    },
+  })
+
+  // Kick off the detach exactly once when the dialog opens.
   useEffect(() => {
     if (!open) {
+      hasStartedRef.current = false
       setProgressIndex(0)
       return
     }
-
-    if (progressIndex >= DETACH_PROGRESS.length) {
-      const timeout = setTimeout(() => {
-        clearTableMode(tableKey)
-        toast.success('Warehouse copy detached')
-        onOpenChange(false)
-      }, COMPLETION_HOLD_MS)
-      return () => clearTimeout(timeout)
+    if (!hasStartedRef.current && projectRef) {
+      hasStartedRef.current = true
+      detachTable({ projectRef, schema, name })
     }
+  }, [open, projectRef, schema, name, detachTable])
 
+  // Cosmetic checklist progression while the request is in flight.
+  useEffect(() => {
+    if (!isPending || progressIndex >= DETACH_PROGRESS.length - 1) return
     const timeout = setTimeout(() => setProgressIndex((index) => index + 1), STEP_INTERVAL_MS)
     return () => clearTimeout(timeout)
-  }, [open, progressIndex, tableKey, onOpenChange])
+  }, [isPending, progressIndex])
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>

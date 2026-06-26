@@ -3,15 +3,12 @@ import { useState, type ReactNode } from 'react'
 import { Button } from 'ui'
 import { InfoTooltip } from 'ui-patterns/info-tooltip'
 
-import {
-  formatWarehouseSize,
-  useWarehouseTableState,
-  type WarehouseMode,
-} from './warehouseDemoStore'
 import { WarehouseDetachModal } from './WarehouseDetachModal'
 import { WarehouseEnablementModal } from './WarehouseEnablementModal'
 import { WarehouseSyncChip } from './WarehouseSyncChip'
 import { DiscardChangesConfirmationDialog } from '@/components/ui-patterns/Dialogs/DiscardChangesConfirmationDialog'
+import { useWarehouseTableState } from '@/data/warehouse/warehouse-tables-query'
+import { formatWarehouseSize, type WarehouseMode } from '@/data/warehouse/warehouse-types'
 
 const MODE_LABELS: Record<WarehouseMode, string> = {
   postgres: 'Postgres heap',
@@ -50,18 +47,21 @@ function ModeLabel({ mode }: { mode: WarehouseMode }) {
 }
 
 interface WarehouseTableStoragePanelProps {
-  tableKey: string
+  schema: string
+  name: string
   postgresSize?: string
 }
 
 export function WarehouseTableStoragePanel({
-  tableKey,
+  schema,
+  name,
   postgresSize,
 }: WarehouseTableStoragePanelProps) {
+  const tableKey = `${schema}.${name}`
   const state = useWarehouseTableState(tableKey)
   const { mode } = state
   const warehouseSize = formatWarehouseSize(state.warehouseSizeBytes)
-  const copyName = state.copyName ?? `warehouse.${tableKey.split('.').pop() ?? tableKey}`
+  const copyName = state.copyName ?? `warehouse.${name}`
 
   const [enablementModalOpen, setEnablementModalOpen] = useState(false)
   const [detachConfirm, setDetachConfirm] = useState(false)
@@ -69,8 +69,6 @@ export function WarehouseTableStoragePanel({
 
   const [, setShowConnect] = useQueryState('showConnect', parseAsBoolean.withDefault(false))
   const [, setConnectTab] = useQueryState('connectTab', parseAsString)
-
-  const tableName = tableKey.split('.').pop() ?? tableKey
 
   const openCatalogConnect = () => {
     setConnectTab('catalog')
@@ -134,8 +132,8 @@ export function WarehouseTableStoragePanel({
       {enablementModalOpen && (
         <WarehouseEnablementModal
           open={true}
-          tableKey={tableKey}
-          tableName={tableName}
+          schema={schema}
+          name={name}
           onOpenChange={(open) => {
             if (!open) setEnablementModalOpen(false)
           }}
@@ -164,7 +162,8 @@ export function WarehouseTableStoragePanel({
       {detachProgress && (
         <WarehouseDetachModal
           open={true}
-          tableKey={tableKey}
+          schema={schema}
+          name={name}
           copyName={copyName}
           onOpenChange={(open) => {
             if (!open) setDetachProgress(false)

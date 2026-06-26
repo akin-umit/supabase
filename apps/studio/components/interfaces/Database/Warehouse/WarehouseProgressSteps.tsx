@@ -8,6 +8,8 @@ interface WarehouseProgressStepsProps {
    * steps after it are pending. Pass `steps.length` to mark everything done.
    */
   activeIndex: number
+  /** Render a small "Progress" header with an N/total counter above the list. */
+  showProgressHeader?: boolean
 }
 
 /**
@@ -15,9 +17,21 @@ interface WarehouseProgressStepsProps {
  * a check on completed steps, a spinner on the active one, and a quiet dot on
  * what's still to come. More discoverable than a single anonymous spinner.
  */
-export function WarehouseProgressSteps({ steps, activeIndex }: WarehouseProgressStepsProps) {
+export function WarehouseProgressSteps({
+  steps,
+  activeIndex,
+  showProgressHeader = false,
+}: WarehouseProgressStepsProps) {
   return (
     <div className="flex flex-col gap-3">
+      {showProgressHeader && (
+        <div className="flex items-center justify-between text-xs text-foreground-lighter">
+          <span className="font-medium uppercase tracking-wide">Progress</span>
+          <span>
+            {Math.min(activeIndex, steps.length)} / {steps.length}
+          </span>
+        </div>
+      )}
       <ul className="flex flex-col overflow-hidden rounded-lg border bg-surface-75">
         {steps.map((label, index) => {
           const status = index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending'

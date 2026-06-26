@@ -47,14 +47,8 @@ import {
 } from 'ui'
 import { Input } from 'ui-patterns/DataInputs/Input'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
-import { useSnapshot } from 'valtio'
 
 import { ProtectedSchemaWarning } from '../ProtectedSchemaWarning'
-import {
-  getWarehouseStorageSummaryLabel,
-  warehouseDemoStore,
-  type WarehouseMode,
-} from '../Warehouse/warehouseDemoStore'
 import { WarehouseSyncChip } from '../Warehouse/WarehouseSyncChip'
 import { formatAllEntities } from './Tables.utils'
 import { buildTableEditorUrl } from '@/components/grid/SupabaseGrid.utils'
@@ -71,6 +65,11 @@ import { useMaterializedViewsQuery } from '@/data/materialized-views/materialize
 import { usePrefetchEditorTablePage } from '@/data/prefetchers/project.$ref.editor.$id'
 import { useInfiniteTablesQuery } from '@/data/tables/tables-query'
 import { useViewsQuery } from '@/data/views/views-query'
+import { useWarehouseTableStates } from '@/data/warehouse/warehouse-tables-query'
+import {
+  getWarehouseStorageSummaryLabel,
+  type WarehouseMode,
+} from '@/data/warehouse/warehouse-types'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useQuerySchemaState } from '@/hooks/misc/useSchemaQueryState'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
@@ -112,7 +111,7 @@ export const TableList = ({
   const [sort, setSort] = useState<TableListSort>('name:asc')
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const warehouseSnap = useSnapshot(warehouseDemoStore)
+  const warehouseStates = useWarehouseTableStates()
   const { can: canUpdateTables } = useAsyncCheckPermissions(
     PermissionAction.TENANT_SQL_ADMIN_WRITE,
     'tables'
@@ -628,8 +627,8 @@ export const TableList = ({
                             {x.type === ENTITY_TYPE.TABLE ? (
                               (() => {
                                 const tableKey = `${selectedSchema}.${x.name}`
-                                const wState = warehouseSnap.tables[tableKey] ?? {
-                                  mode: 'postgres',
+                                const wState = warehouseStates.get(tableKey) ?? {
+                                  mode: 'postgres' as const,
                                 }
                                 const mode = wState.mode as WarehouseMode
                                 const storageSummary = getWarehouseStorageSummaryLabel(
@@ -736,7 +735,10 @@ export const TableList = ({
                                         <Edit size={12} />
                                         <p>Edit definitions</p>
                                       </DropdownMenuItemTooltip>
-                                      <DropdownMenuItem className="flex items-center space-x-2" asChild>
+                                      <DropdownMenuItem
+                                        className="flex items-center space-x-2"
+                                        asChild
+                                      >
                                         <Link href={`${tableDetailUrl}/settings`}>
                                           <Settings size={12} />
                                           <p>Edit settings</p>

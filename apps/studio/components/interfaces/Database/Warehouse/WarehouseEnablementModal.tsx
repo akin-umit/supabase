@@ -1,3 +1,4 @@
+import { useParams } from 'common'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import {
@@ -12,55 +13,49 @@ import {
   DialogTitle,
 } from 'ui'
 
-import { setTableMode } from './warehouseDemoStore'
 import { WarehouseProgressSteps } from './WarehouseProgressSteps'
+import { useWarehouseLinkTableMutation } from '@/data/warehouse/link-table-mutation'
 
 interface WarehouseEnablementModalProps {
   open: boolean
-  tableKey: string
-  tableName: string
+  schema: string
+  name: string
   onOpenChange: (open: boolean) => void
 }
 
 const ATTACH_PROGRESS = ['Creating copy', 'Running initial sync']
-
 const STEP_INTERVAL_MS = 1300
-// Beat after the last step checks off, so the completed state is visible.
-const COMPLETION_HOLD_MS = 650
 
 export function WarehouseEnablementModal({
   open,
-  tableKey,
-  tableName,
+  schema,
+  name,
   onOpenChange,
 }: WarehouseEnablementModalProps) {
-  const [isRunning, setIsRunning] = useState(false)
+  const { ref: projectRef } = useParams()
   const [progressIndex, setProgressIndex] = useState(0)
 
-  const warehouseCopyName = `warehouse.${tableName}`
+  const tableKey = `${schema}.${name}`
+  const warehouseCopyName = `warehouse.${name}`
 
+  const { mutate: linkTable, isPending: isRunning } = useWarehouseLinkTableMutation({
+    onSuccess: () => {
+      toast.success('Warehouse copy is live')
+      onOpenChange(false)
+    },
+  })
+
+  // Reset the cosmetic checklist whenever the dialog closes.
   useEffect(() => {
-    if (!open) {
-      setIsRunning(false)
-      setProgressIndex(0)
-    }
+    if (!open) setProgressIndex(0)
   }, [open])
 
+  // Advance the checklist while the request is in flight; hold on the last step until it resolves.
   useEffect(() => {
-    if (!isRunning) return
-
-    if (progressIndex >= ATTACH_PROGRESS.length) {
-      const timeout = setTimeout(() => {
-        setTableMode(tableKey, 'has_warehouse_copy')
-        toast.success('Warehouse copy is live')
-        onOpenChange(false)
-      }, COMPLETION_HOLD_MS)
-      return () => clearTimeout(timeout)
-    }
-
+    if (!isRunning || progressIndex >= ATTACH_PROGRESS.length - 1) return
     const timeout = setTimeout(() => setProgressIndex((index) => index + 1), STEP_INTERVAL_MS)
     return () => clearTimeout(timeout)
-  }, [isRunning, progressIndex, tableKey, onOpenChange])
+  }, [isRunning, progressIndex])
 
   return (
     <Dialog
@@ -107,9 +102,11 @@ export function WarehouseEnablementModal({
               </Button>
               <Button
                 variant="primary"
+                disabled={!projectRef}
                 onClick={() => {
+                  if (!projectRef) return
                   setProgressIndex(0)
-                  setIsRunning(true)
+                  linkTable({ projectRef, schema, name })
                 }}
               >
                 Create copy

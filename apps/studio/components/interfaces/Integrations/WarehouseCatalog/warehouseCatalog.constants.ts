@@ -1,3 +1,5 @@
+import type { WarehouseCatalogCredentials } from '@/data/warehouse/warehouse-catalog-query'
+
 export type WarehouseCatalogEngine = 'env' | 'duckdb' | 'spark' | 'trino' | 'pyiceberg'
 
 export const WAREHOUSE_CATALOG_ENGINES: { key: WarehouseCatalogEngine; label: string }[] = [
@@ -8,20 +10,13 @@ export const WAREHOUSE_CATALOG_ENGINES: { key: WarehouseCatalogEngine; label: st
   { key: 'pyiceberg', label: 'PyIceberg' },
 ]
 
-export const WAREHOUSE_CATALOG_CREDENTIALS = {
-  catalogUri: 'https://catalog.supabase.example',
-  accessToken: 'sbw_demo_token_abc123xyz',
-  accessTokenMasked: 'sbw_••••••••••••••••',
-  warehouseId: 'wh_demo123',
-} as const
-
 export const WAREHOUSE_CATALOG_ENV_VARS = {
   catalogUri: 'CATALOG_URI',
   accessToken: 'ACCESS_TOKEN',
   warehouseIdentifier: 'WAREHOUSE_IDENTIFIER',
 } as const
 
-export function buildWarehouseCatalogEnv(creds = WAREHOUSE_CATALOG_CREDENTIALS): string {
+export function buildWarehouseCatalogEnv(creds: WarehouseCatalogCredentials): string {
   return [
     `${WAREHOUSE_CATALOG_ENV_VARS.catalogUri}=${creds.catalogUri}`,
     `${WAREHOUSE_CATALOG_ENV_VARS.accessToken}=${creds.accessToken}`,
@@ -29,9 +24,18 @@ export function buildWarehouseCatalogEnv(creds = WAREHOUSE_CATALOG_CREDENTIALS):
   ].join('\n')
 }
 
+/**
+ * Per-engine connection snippets for the Warehouse catalog.
+ *
+ * NOTE: these templates are currently written against an Iceberg REST catalog shape
+ * (`uri` / `token` / `warehouse`). The Warehouse product is backed by DuckLake, whose external
+ * access model differs (a Postgres catalog connection + object storage). The credential triple
+ * and these snippets should be revisited with the DuckLake catalog design before GA — see the
+ * warehouse endpoints plan.
+ */
 export function getWarehouseCatalogEngineContent(
   engine: WarehouseCatalogEngine,
-  creds = WAREHOUSE_CATALOG_CREDENTIALS
+  creds: WarehouseCatalogCredentials
 ): { headerLabel: string; language: 'sql' | 'toml' | 'python'; value: string } {
   const { catalogUri, accessToken, warehouseId } = creds
 

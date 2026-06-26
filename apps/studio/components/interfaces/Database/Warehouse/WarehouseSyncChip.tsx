@@ -1,6 +1,6 @@
 import { Badge } from 'ui'
 
-import type { SyncState } from './warehouseDemoStore'
+import type { WarehouseSyncState as SyncState } from '@/data/warehouse/warehouse-types'
 
 const SYNC_LABELS: Record<SyncState, string> = {
   syncing: 'Syncing',

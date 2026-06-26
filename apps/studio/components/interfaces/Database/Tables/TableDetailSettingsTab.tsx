@@ -10,9 +10,9 @@ import {
   PageSectionTitle,
 } from 'ui-patterns/PageSection'
 
-import { TableDetailGeneralSettingsCard } from '@/components/interfaces/Database/Tables/TableDetailGeneralSettingsCard'
 import { TableDetailDataApiSection } from '@/components/interfaces/Database/Tables/TableDetailDataApiSection'
 import { TableDetailDeleteTableSection } from '@/components/interfaces/Database/Tables/TableDetailDeleteTableSection'
+import { TableDetailGeneralSettingsCard } from '@/components/interfaces/Database/Tables/TableDetailGeneralSettingsCard'
 import { TableDetailIndexAdvisorSection } from '@/components/interfaces/Database/Tables/TableDetailIndexAdvisorSection'
 import { WarehouseTableStoragePanel } from '@/components/interfaces/Database/Warehouse/WarehouseTableStoragePanel'
 import { RealtimeToggleDialog } from '@/components/interfaces/TableGridEditor/RealtimeToggleDialog'
@@ -30,7 +30,6 @@ export function TableDetailSettingsTab({ table }: TableDetailSettingsTabProps) {
   const { realtimeAll: isRealtimeFeatureEnabled } = useIsFeatureEnabled(['realtime:all'])
   const isRealtimeEnabled = useIsTableRealtimeEnabled({ id: table.id })
   const showStorage = table.entity_type === ENTITY_TYPE.TABLE
-  const tableKey = `${table.schema}.${table.name}`
 
   return (
     <>
@@ -54,7 +53,11 @@ export function TableDetailSettingsTab({ table }: TableDetailSettingsTabProps) {
               </PageSectionSummary>
             </PageSectionMeta>
             <PageSectionContent>
-              <WarehouseTableStoragePanel tableKey={tableKey} postgresSize={table.size} />
+              <WarehouseTableStoragePanel
+                schema={table.schema}
+                name={table.name}
+                postgresSize={table.size}
+              />
             </PageSectionContent>
           </PageSection>
         )}
@@ -77,7 +80,9 @@ export function TableDetailSettingsTab({ table }: TableDetailSettingsTabProps) {
                   >
                     <Button
                       variant="default"
-                      icon={<Realtime size={14} className={isRealtimeEnabled ? 'text-brand' : ''} />}
+                      icon={
+                        <Realtime size={14} className={isRealtimeEnabled ? 'text-brand' : ''} />
+                      }
                       onClick={() => setRealtimeDialogOpen(true)}
                     >
                       {isRealtimeEnabled ? 'Disable' : 'Enable'} realtime

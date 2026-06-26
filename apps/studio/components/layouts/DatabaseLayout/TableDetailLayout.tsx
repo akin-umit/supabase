@@ -4,7 +4,7 @@ import { TableEditor } from 'icons'
 import { Check, Edit, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import React, { type PropsWithChildren } from 'react'
+import { type PropsWithChildren } from 'react'
 import {
   BreadcrumbItem,
   BreadcrumbLink,
@@ -26,14 +26,9 @@ import {
   PageHeaderTitle,
 } from 'ui-patterns/PageHeader'
 import { ShimmeringLoader } from 'ui-patterns/ShimmeringLoader'
-import { useSnapshot } from 'valtio'
 
 import DatabaseLayout from './DatabaseLayout'
 import { buildTableEditorUrl } from '@/components/grid/SupabaseGrid.utils'
-import {
-  getWarehouseStorageSummaryLabel,
-  warehouseDemoStore,
-} from '@/components/interfaces/Database/Warehouse/warehouseDemoStore'
 import { WarehouseSyncChip } from '@/components/interfaces/Database/Warehouse/WarehouseSyncChip'
 import DeleteConfirmationDialogs from '@/components/interfaces/TableGridEditor/DeleteConfirmationDialogs'
 import { SidePanelEditor } from '@/components/interfaces/TableGridEditor/SidePanelEditor/SidePanelEditor'
@@ -41,6 +36,8 @@ import { EntityTypeIcon } from '@/components/ui/EntityTypeIcon'
 import { useDatabasePublicationsQuery } from '@/data/database-publications/database-publications-query'
 import { useTableEditorQuery } from '@/data/table-editor/table-editor-query'
 import { isTableLike } from '@/data/table-editor/table-editor-types'
+import { useWarehouseTableStates } from '@/data/warehouse/warehouse-tables-query'
+import { getWarehouseStorageSummaryLabel } from '@/data/warehouse/warehouse-types'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { useTableEditorStateSnapshot } from '@/state/table-editor'
@@ -79,12 +76,12 @@ export function TableDetailLayout({
     selectedTable?.id !== undefined &&
     (realtimePublication?.tables ?? []).some((table) => table.id === selectedTable.id)
 
-  const warehouseSnap = useSnapshot(warehouseDemoStore)
+  const warehouseStates = useWarehouseTableStates()
   const tableKey =
     selectedTable?.schema !== undefined && selectedTable?.name !== undefined
       ? `${selectedTable.schema}.${selectedTable.name}`
       : undefined
-  const warehouseState = tableKey ? warehouseSnap.tables[tableKey] : undefined
+  const warehouseState = tableKey ? warehouseStates.get(tableKey) : undefined
 
   const { can: canUpdateTables } = useAsyncCheckPermissions(
     PermissionAction.TENANT_SQL_ADMIN_WRITE,

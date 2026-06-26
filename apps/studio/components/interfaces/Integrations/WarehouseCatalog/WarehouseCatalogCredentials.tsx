@@ -2,29 +2,42 @@ import { useCallback } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'ui'
 import { CodeBlock } from 'ui-patterns/CodeBlock'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
+import { ShimmeringLoader } from 'ui-patterns/ShimmeringLoader'
 
 import {
   buildWarehouseCatalogEnv,
   getWarehouseCatalogEngineContent,
-  WAREHOUSE_CATALOG_CREDENTIALS,
   WAREHOUSE_CATALOG_ENGINES,
   WAREHOUSE_CATALOG_ENV_VARS,
   type WarehouseCatalogEngine,
 } from './warehouseCatalog.constants'
 import { EnvRow } from '@/components/interfaces/ConnectSheet/content/server/common/EnvRow'
 import CopyButton from '@/components/ui/CopyButton'
+import type { WarehouseCatalogCredentials as CatalogCredentials } from '@/data/warehouse/warehouse-catalog-query'
 
 interface WarehouseCatalogCredentialsProps {
   queryEngine: WarehouseCatalogEngine
   onQueryEngineChange?: (engine: WarehouseCatalogEngine) => void
+  credentials?: CatalogCredentials
+}
+
+function maskToken(token: string): string {
+  return `${token.slice(0, 4)}${'•'.repeat(16)}`
 }
 
 export function WarehouseCatalogCredentials({
   queryEngine,
   onQueryEngineChange,
+  credentials,
 }: WarehouseCatalogCredentialsProps) {
-  const buildCatalogEnv = useCallback(() => buildWarehouseCatalogEnv(), [])
-  const engineContent = getWarehouseCatalogEngineContent(queryEngine)
+  const buildCatalogEnv = useCallback(
+    () => (credentials ? buildWarehouseCatalogEnv(credentials) : ''),
+    [credentials]
+  )
+
+  const engineContent = credentials
+    ? getWarehouseCatalogEngineContent(queryEngine, credentials)
+    : undefined
 
   return (
     <div className="flex flex-col gap-y-4">
@@ -51,7 +64,12 @@ export function WarehouseCatalogCredentials({
         </FormItemLayout>
       )}
 
-      {queryEngine === 'env' ? (
+      {!credentials || !engineContent ? (
+        <div className="space-y-2">
+          <ShimmeringLoader />
+          <ShimmeringLoader className="w-3/4" delayIndex={1} />
+        </div>
+      ) : queryEngine === 'env' ? (
         <div className="overflow-hidden rounded-lg border bg-surface-100">
           <div className="flex items-center justify-between border-b bg-surface-200 px-4 py-2">
             <span className="font-mono text-xs text-foreground-light">catalog.env</span>
@@ -63,40 +81,37 @@ export function WarehouseCatalogCredentials({
             />
           </div>
           <div className="divide-y">
-            <EnvRow
-              name={WAREHOUSE_CATALOG_ENV_VARS.catalogUri}
-              value={WAREHOUSE_CATALOG_CREDENTIALS.catalogUri}
-            >
+            <EnvRow name={WAREHOUSE_CATALOG_ENV_VARS.catalogUri} value={credentials.catalogUri}>
               <CopyButton
                 variant="default"
                 size="tiny"
                 iconOnly
                 aria-label="Copy catalog URI"
-                text={WAREHOUSE_CATALOG_CREDENTIALS.catalogUri}
+                text={credentials.catalogUri}
               />
             </EnvRow>
             <EnvRow
               name={WAREHOUSE_CATALOG_ENV_VARS.accessToken}
-              value={WAREHOUSE_CATALOG_CREDENTIALS.accessTokenMasked}
+              value={maskToken(credentials.accessToken)}
             >
               <CopyButton
                 variant="default"
                 size="tiny"
                 iconOnly
                 aria-label="Copy access token"
-                text={WAREHOUSE_CATALOG_CREDENTIALS.accessToken}
+                text={credentials.accessToken}
               />
             </EnvRow>
             <EnvRow
               name={WAREHOUSE_CATALOG_ENV_VARS.warehouseIdentifier}
-              value={WAREHOUSE_CATALOG_CREDENTIALS.warehouseId}
+              value={credentials.warehouseId}
             >
               <CopyButton
                 variant="default"
                 size="tiny"
                 iconOnly
                 aria-label="Copy warehouse identifier"
-                text={WAREHOUSE_CATALOG_CREDENTIALS.warehouseId}
+                text={credentials.warehouseId}
               />
             </EnvRow>
           </div>

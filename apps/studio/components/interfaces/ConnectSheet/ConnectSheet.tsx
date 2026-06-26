@@ -2,7 +2,7 @@ import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { useParams } from 'common'
 import { parseAsBoolean, useQueryState } from 'nuqs'
 import { useEffect, useMemo, useRef } from 'react'
-import { cn, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from 'ui'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from 'ui'
 
 import type { ConnectMode, ProjectKeys } from './Connect.types'
 import { CONNECT_MODES } from './Connect.types'

@@ -3,7 +3,6 @@ import { useMemo } from 'react'
 import type { ChartConfig } from 'ui'
 import { Card, CardContent } from 'ui'
 import { Chart, ChartContent, ChartLine, ChartMetric, type ChartLineTick } from 'ui-patterns/Chart'
-import { useSnapshot } from 'valtio'
 
 import {
   buildTableOverviewSparklineData,
@@ -12,11 +11,9 @@ import {
   TABLE_ROW_COUNT_CHART_CONFIG,
   TABLE_SIZE_CHART_CONFIG,
 } from './TableDetailOverview.utils'
-import {
-  getWarehouseStorageSummaryLabel,
-  warehouseDemoStore,
-} from '@/components/interfaces/Database/Warehouse/warehouseDemoStore'
 import type { TableLike } from '@/data/table-editor/table-editor-types'
+import { useWarehouseTableStates } from '@/data/warehouse/warehouse-tables-query'
+import { getWarehouseStorageSummaryLabel } from '@/data/warehouse/warehouse-types'
 import { formatBytes } from '@/lib/helpers'
 
 const DATE_TIME_FORMAT = 'MMM D'
@@ -69,9 +66,9 @@ interface TableDetailOverviewMetricsProps {
 }
 
 export function TableDetailOverviewMetrics({ table }: TableDetailOverviewMetricsProps) {
-  const warehouseSnap = useSnapshot(warehouseDemoStore)
+  const warehouseStates = useWarehouseTableStates()
   const tableKey = `${table.schema}.${table.name}`
-  const warehouseState = warehouseSnap.tables[tableKey]
+  const warehouseState = warehouseStates.get(tableKey)
 
   const rowCount = table.live_rows_estimate ?? 0
   const columnCount = table.columns?.length ?? 0

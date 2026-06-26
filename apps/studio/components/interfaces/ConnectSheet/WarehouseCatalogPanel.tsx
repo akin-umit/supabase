@@ -2,11 +2,10 @@ import { useParams } from 'common'
 import Link from 'next/link'
 import { Button } from 'ui'
 import { Admonition } from 'ui-patterns'
-import { useSnapshot } from 'valtio'
 
 import type { WarehouseCatalogEngine } from '@/components/interfaces/Integrations/WarehouseCatalog/warehouseCatalog.constants'
 import { WarehouseCatalogCredentials } from '@/components/interfaces/Integrations/WarehouseCatalog/WarehouseCatalogCredentials'
-import { warehouseDemoStore } from '@/components/interfaces/Database/Warehouse/warehouseDemoStore'
+import { useWarehouseCatalogQuery } from '@/data/warehouse/warehouse-catalog-query'
 
 interface WarehouseCatalogPanelProps {
   queryEngine?: WarehouseCatalogEngine
@@ -14,7 +13,8 @@ interface WarehouseCatalogPanelProps {
 
 export function WarehouseCatalogPanel({ queryEngine = 'env' }: WarehouseCatalogPanelProps) {
   const { ref: projectRef } = useParams()
-  const { catalogEnabled } = useSnapshot(warehouseDemoStore)
+  const { data: catalog } = useWarehouseCatalogQuery({ projectRef })
+  const catalogEnabled = catalog?.enabled ?? false
 
   return (
     <div className="flex flex-col divide-y">
@@ -34,7 +34,10 @@ export function WarehouseCatalogPanel({ queryEngine = 'env' }: WarehouseCatalogP
             ]}
           />
         ) : (
-          <WarehouseCatalogCredentials queryEngine={queryEngine} />
+          <WarehouseCatalogCredentials
+            queryEngine={queryEngine}
+            credentials={catalog?.credentials}
+          />
         )}
       </div>
     </div>
