@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'ui'
+import { Admonition } from 'ui-patterns'
 import { CodeBlock } from 'ui-patterns/CodeBlock'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import { ShimmeringLoader } from 'ui-patterns/ShimmeringLoader'
@@ -90,6 +91,12 @@ export function WarehouseCatalogCredentials({
 
   return (
     <div className="flex flex-col gap-y-4">
+      <Admonition
+        type="default"
+        title="Read-only access"
+        description="Warehouse Catalog credentials can only be used to query Warehouse tables for now. Writes through external DuckLake clients are not supported yet."
+      />
+
       {onQueryEngineChange && (
         <FormItemLayout isReactForm={false} layout="horizontal" label="Query engine">
           <Select
