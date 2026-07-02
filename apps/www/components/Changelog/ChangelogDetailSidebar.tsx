@@ -3,11 +3,10 @@
 import { useCopyMarkdownFromUrl } from 'common'
 import { Chatgpt, Claude } from 'icons'
 import { Check, Copy } from 'lucide-react'
-import { Badge, cn } from 'ui'
+import { cn } from 'ui'
 
-import { ProductBadges } from '@/components/Changelog/ChangelogTimelineList'
+import { ChangeTypeBadge, ProductBadges } from '@/components/Changelog/ChangelogTimelineList'
 import type { ChangelogEntryFrontmatter } from '@/lib/changelog-repo'
-import { CHANGE_TYPE_DISPLAY } from '@/lib/changelog.utils'
 import { SITE_ORIGIN } from '@/lib/constants'
 
 type Props = {
@@ -21,7 +20,6 @@ export function ChangelogDetailSidebar({ slug, frontmatter, className }: Props) 
   const mdPath = `/changelog/${slug}.md`
   const mdAbs = `${SITE_ORIGIN}${mdPath}`
   const aiPrompt = `Read from ${mdAbs} so I can ask questions about its contents`
-  const changeType = CHANGE_TYPE_DISPLAY[frontmatter.change_type]
   const affectedProducts = frontmatter.affected_products ?? []
 
   return (
@@ -33,7 +31,7 @@ export function ChangelogDetailSidebar({ slug, frontmatter, className }: Props) 
         >
           Change type
         </h2>
-        <Badge variant={changeType.badgeVariant}>{changeType.label}</Badge>
+        <ChangeTypeBadge type={frontmatter.change_type} />
       </section>
 
       <div className="border-default border-t" role="presentation" />

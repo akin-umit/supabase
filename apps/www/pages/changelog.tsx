@@ -13,16 +13,23 @@ import { useEffect, useMemo, useState } from 'react'
 import { Badge, Button, cn, IconYCombinator, Input } from 'ui'
 
 import { ChangelogLlmMarkdownButton } from '@/components/Changelog/ChangelogLlmMarkdownButton'
-import { ChangelogTimelineList } from '@/components/Changelog/ChangelogTimelineList'
+import {
+  ChangelogTimelineList,
+  ChangeTypeBadge,
+} from '@/components/Changelog/ChangelogTimelineList'
 import CTABanner from '@/components/CTABanner'
 import DefaultLayout from '@/components/Layouts/Default'
-import { getChangelogEntries } from '@/lib/changelog-repo'
+import { getChangelogEntries, type ChangeType } from '@/lib/changelog-repo'
 import {
+  CHANGE_TYPE_DISPLAY,
+  CHANGE_TYPES,
   CHANGELOG_PRODUCT_TAGS,
   changelogTagFilterUrl,
+  isChangelogChangeType,
   isChangelogProductSlug,
   itemMatchesChangelogSearch,
   itemMatchesChangelogSelectedTags,
+  itemMatchesChangelogSelectedTypes,
   toChangelogTimelineIndexItem,
   type ChangelogTimelineIndexItem,
 } from '@/lib/changelog.utils'
@@ -94,6 +101,10 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
     'tags',
     parseAsArrayOf(parseAsString).withOptions(nuqsUrlOptions)
   )
+  const [queryTypes, setQueryTypes] = useQueryState(
+    'types',
+    parseAsArrayOf(parseAsString).withOptions(nuqsUrlOptions)
+  )
 
   const isMobile = useBreakpoint('lg')
   const [filterPanelOpen, setFilterPanelOpen] = useState(false)
@@ -106,10 +117,17 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
     }
     return next
   }, [queryTags])
+  const selectedTypes = useMemo(() => {
+    const next = new Set<ChangeType>()
+    for (const raw of queryTypes ?? []) {
+      if (isChangelogChangeType(raw)) next.add(raw)
+    }
+    return next
+  }, [queryTypes])
 
   const hasNuqsFilters = useMemo(
-    () => filterSearch.trim().length > 0 || selectedTags.size > 0,
-    [filterSearch, selectedTags]
+    () => filterSearch.trim().length > 0 || selectedTags.size > 0 || selectedTypes.size > 0,
+    [filterSearch, selectedTags, selectedTypes]
   )
 
   useEffect(() => {
@@ -120,15 +138,17 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
     const q = filterSearch
     const hasSearch = q.trim().length > 0
     const hasTags = selectedTags.size > 0
-    if (!hasSearch && !hasTags) return null
+    const hasTypes = selectedTypes.size > 0
+    if (!hasSearch && !hasTags && !hasTypes) return null
     return allIndex
       .filter(
         (item) =>
           itemMatchesChangelogSearch(item, q) &&
-          itemMatchesChangelogSelectedTags(item, selectedTags)
+          itemMatchesChangelogSelectedTags(item, selectedTags) &&
+          itemMatchesChangelogSelectedTypes(item, selectedTypes)
       )
       .sort((a, b) => dayjs(b.sortDate).diff(dayjs(a.sortDate)))
-  }, [allIndex, filterSearch, selectedTags])
+  }, [allIndex, filterSearch, selectedTags, selectedTypes])
 
   const toggleProductTag = (slug: string) => {
     const current = (queryTags ?? []).filter(isChangelogProductSlug)
@@ -137,9 +157,17 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
     void setQueryTags(next.length > 0 ? next : null)
   }
 
+  const toggleChangeType = (type: ChangeType) => {
+    const current = (queryTypes ?? []).filter(isChangelogChangeType)
+    const has = current.includes(type)
+    const next = has ? current.filter((t) => t !== type) : [...current, type]
+    void setQueryTypes(next.length > 0 ? next : null)
+  }
+
   const clearFilters = () => {
     void setQuerySearch(null)
     void setQueryTags(null)
+    void setQueryTypes(null)
   }
 
   const isSingleQueryTag = queryTags?.length === 1
@@ -235,7 +263,9 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
                       void setQuerySearch(v.length === 0 ? null : v)
                     }}
                   />
-                  {(filterSearch.trim().length > 0 || selectedTags.size > 0) && (
+                  {(filterSearch.trim().length > 0 ||
+                    selectedTags.size > 0 ||
+                    selectedTypes.size > 0) && (
                     <Button
                       variant="outline"
                       size="tiny"
@@ -248,9 +278,33 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
                   )}
                 </div>
               </div>
-              <div>
-                <p className="sr-only">Filter by tags</p>
+              <div className="py-1">
+                <p className="text-foreground-lighter text-xs font-mono uppercase tracking-wide">
+                  Change types
+                </p>
                 <div className="flex flex-wrap gap-1.5">
+                  {CHANGE_TYPES.map((type) => {
+                    const { label } = CHANGE_TYPE_DISPLAY[type]
+                    const on = selectedTypes.has(type)
+                    return (
+                      <button key={type} type="button" onClick={() => toggleChangeType(type)}>
+                        <Badge
+                          variant={on ? 'success' : 'default'}
+                          className={cn(!on && 'hover:text-foreground')}
+                        >
+                          {label}
+                        </Badge>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="border-default border-t" role="presentation" />
+              <div className="py-1">
+                <p className="text-foreground-lighter text-xs font-mono uppercase tracking-wide">
+                  Products
+                </p>
+                <div className="flex flex-wrap gap-x-1.5 gap-y-1">
                   {CHANGELOG_PRODUCT_TAGS.map(({ slug, label }) => {
                     const on = selectedTags.has(slug)
                     return (
@@ -333,9 +387,12 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
                               </h3>
                             </Link>
                           )}
-                          <p className="text-foreground-lighter font-mono text-xs">
-                            {dayjs(entry.created_at).format('MMM D, YYYY')}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-foreground-lighter font-mono text-xs">
+                              {dayjs(entry.created_at).format('MMM D, YYYY')}
+                            </p>
+                            <ChangeTypeBadge type={entry.changeType} />
+                          </div>
                           {entry.affectedProducts.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 pt-1.5">
                               {entry.affectedProducts.map((product) => (

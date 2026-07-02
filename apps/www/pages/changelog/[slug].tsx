@@ -46,9 +46,11 @@ const ChangelogDetailPage = ({ title, created_at, slug, frontmatter, source }: P
         </nav>
         <header className="border-default mb-8 flex flex-col gap-2 border-b pb-6">
           <h1 className="h1 text-2xl sm:text-3xl">{title}</h1>
-          <p className="text-foreground-lighter font-mono text-xs">
-            {dayjs(created_at).format('MMM D, YYYY')}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-foreground-lighter font-mono text-xs">
+              {dayjs(created_at).format('MMM D, YYYY')}
+            </p>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10 mb-8 lg:mb-20">

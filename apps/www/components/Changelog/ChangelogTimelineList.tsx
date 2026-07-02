@@ -1,4 +1,10 @@
-import { changelogTagFilterUrl, type ChangelogTimelineIndexItem } from '~/lib/changelog.utils'
+import type { ChangeType } from '~/lib/changelog-repo'
+import {
+  CHANGE_TYPE_DISPLAY,
+  changelogTagFilterUrl,
+  changelogTypeFilterUrl,
+  type ChangelogTimelineIndexItem,
+} from '~/lib/changelog.utils'
 import dayjs from 'dayjs'
 import { GitCommit } from 'lucide-react'
 import Link from 'next/link'
@@ -17,6 +23,29 @@ function groupChangelogIndexByYear(
     map.get(y)!.push(item)
   }
   return [...map.entries()].sort((a, b) => b[0] - a[0])
+}
+
+export function ChangeTypeBadge({
+  type,
+  onBadgeClick,
+  className,
+}: {
+  type: ChangeType
+  onBadgeClick?: (e: MouseEvent) => void
+  className?: string
+}) {
+  const { label, badgeVariant } = CHANGE_TYPE_DISPLAY[type]
+  return (
+    <a
+      href={changelogTypeFilterUrl(type)}
+      className="inline-flex shrink-0 no-underline focus-visible:ring-brand-default rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
+      onClick={onBadgeClick}
+    >
+      <Badge variant={badgeVariant} className={className}>
+        {label}
+      </Badge>
+    </a>
+  )
 }
 
 export function ProductBadges({
@@ -49,8 +78,8 @@ export function ProductBadges({
             className={cn(
               'tracking-normal lowercase border-default',
               tiny
-                ? 'text-foreground-lighter hover:text-foreground-light rounded-full border px-0.5 py-px text-[8px] font-medium leading-none'
-                : 'text-foreground-light hover:text-foreground rounded-full border px-1.5 py-px text-[11px] font-medium leading-tight'
+                ? 'text-foreground-lighter hover:text-foreground-light px-0.5 py-px text-[8px] leading-none'
+                : 'text-foreground-light hover:text-foreground px-1.5 py-px text-[11px] leading-tight'
             )}
           >
             {product}
@@ -82,6 +111,7 @@ function TimelineRow({ item, href }: { item: ChangelogTimelineIndexItem; href: s
         >
           {dateLabel}
         </time>
+        <ChangeTypeBadge type={item.changeType} onBadgeClick={(e) => e.stopPropagation()} />
         <ProductBadges products={item.affectedProducts} onBadgeClick={(e) => e.stopPropagation()} />
       </div>
     </div>
