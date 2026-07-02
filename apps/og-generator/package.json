@@ -1,8 +1,8 @@
 {
-  "name": "og-generator",
+  "name": "supaimage",
   "version": "0.0.0",
   "private": true,
-  "description": "Internal tool to generate on-brand OG & thumbnail images for supabase.com/blog posts",
+  "description": "Internal tool to generate on-brand social images (OG, Thumb, Twitter/X, more) for Supabase and its sub-brands",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "dev": "next dev --port 3030",

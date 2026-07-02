@@ -692,7 +692,7 @@ export default function Page() {
           is one continuous surface, not two boxes split by a shared edge. */}
       <aside className="absolute right-4 top-4 bottom-4 z-10 flex w-[340px] flex-col overflow-hidden rounded-xl border border-default bg-background shadow-lg">
         <div className="flex h-14 shrink-0 items-center justify-between border-b border-default px-5">
-          <span className="text-sm font-medium text-foreground">OG Image Generator</span>
+          <span className="text-sm font-medium text-foreground">Supaimage</span>
           <label className="flex items-center gap-1.5 text-xs text-foreground-light">
             <input
               type="checkbox"

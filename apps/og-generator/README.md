@@ -1,18 +1,24 @@
-# OG Image Generator
+# Supaimage
 
-Internal, self-serve tool to generate two on-brand images for every
-`supabase.com/blog` post — without opening Figma:
+Internal, self-serve tool to generate on-brand social images — without opening
+Figma — for Supabase **and** its sub-brands (Multigres so far), across
+multiple formats:
 
 - **OG image** — 1200×630, dark mode, abbreviated headline (≤2 lines). The social share preview.
 - **Thumb image** — same canvas & illustration system, no headline text.
+- **Twitter / X post** — 1200×675, same layout system, sized for X's link-card preview.
 
-Both are drawn programmatically (SVG → PNG via `satori`/`resvg`, through Next's
-`next/og`) so output is pixel-exact and on-brand by construction.
+Both Brand and Format are explicit, code-defined dimensions (`lib/design/brands/`,
+`lib/design/formats.ts`) — adding a new sub-brand or platform format doesn't
+touch the render/layout logic.
 
-> Status: **v1 editor**. Full sidebar editor at `/` — AI art direction, 4
-> templates, an icon library, background patterns, OG + Thumb output, WCAG
-> contrast checks, and 1×/2× export. Uploadable assets + team auth land with the
-> Supabase backend.
+Every image is drawn programmatically (SVG → PNG via `satori`/`resvg`, through
+Next's `next/og`) so output is pixel-exact and on-brand by construction.
+
+> Status: **v1 editor**. Full sidebar editor at `/` — Brand + Format selectors,
+> AI art direction, 4 templates, an icon library, background patterns, OG +
+> Thumb output, WCAG contrast checks, and 1×/2× export. Uploadable assets are
+> scoped per brand.
 
 ## Running it locally
 
@@ -20,7 +26,7 @@ From the **repo root** (`supabase/`):
 
 ```bash
 pnpm install            # once, to register this app in the workspace
-pnpm dev --filter=og-generator
+pnpm dev --filter=supaimage
 ```
 
 Then open <http://localhost:3030>.

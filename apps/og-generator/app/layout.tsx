@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'OG Image Generator — Supabase',
+  title: 'Supaimage — Supabase',
   description:
-    'Internal tool to generate on-brand OG & thumbnail images for supabase.com/blog posts',
+    'Internal tool to generate on-brand social images (OG, Thumb, Twitter/X, more) for Supabase and its sub-brands',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
