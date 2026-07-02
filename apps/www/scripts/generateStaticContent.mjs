@@ -382,9 +382,8 @@ try {
 // No fallback source: if this fails, it throws and fails the build loudly rather
 // than silently degrading to a stale/partial data source.
 {
-  const { getPublishedChangelogEntries, fetchChangelogEntryFilesFromTarball } = await import(
-    '../lib/changelog-entries-core.mjs'
-  )
+  const { getPublishedChangelogEntries, fetchChangelogEntryFilesFromTarball, CHANGE_TYPE_LABELS } =
+    await import('../lib/changelog-entries-core.mjs')
   const { generateChangelogRssXml, generateChangelogTagRssXml, labelToFileSlug } = await import(
     '../lib/changelog-rss.mjs'
   )
@@ -442,9 +441,11 @@ try {
   // LLM-friendly changelog markdown index (RSS remains canonical syndication format).
   const mdSections = entries.map((entry) => {
     const date = dayjs(entry.sortDate).isValid() ? dayjs(entry.sortDate).format('YYYY-MM-DD') : ''
+    const changeType = CHANGE_TYPE_LABELS[entry.frontmatter.change_type] ?? entry.frontmatter.change_type
     const products = (entry.frontmatter.affected_products ?? []).join(', ')
     const meta = [
       date,
+      changeType,
       products,
       `[supabase.com/changelog/${entry.slug}](https://supabase.com/changelog/${entry.slug})`,
     ]

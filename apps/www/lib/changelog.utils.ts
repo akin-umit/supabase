@@ -1,5 +1,6 @@
 import changelogProductTags from '~/data/changelog-product-tags.json'
 
+import { CHANGE_TYPE_LABELS } from './changelog-entries-core.mjs'
 import type { ChangelogEntry, ChangeType } from './changelog-repo'
 
 export type ChangelogTimelineIndexItem = {
@@ -22,18 +23,31 @@ export function toChangelogTimelineIndexItem(entry: ChangelogEntry): ChangelogTi
   }
 }
 
+const CHANGE_TYPE_BADGE_VARIANT: Record<
+  ChangeType,
+  'default' | 'warning' | 'success' | 'destructive'
+> = {
+  'breaking-change': 'destructive',
+  deprecation: 'warning',
+  'new-feature': 'success',
+  improvement: 'default',
+  'bug-fix': 'warning',
+  security: 'destructive',
+  policy: 'default',
+}
+
 export const CHANGE_TYPE_DISPLAY: Record<
   ChangeType,
   { label: string; badgeVariant: 'default' | 'warning' | 'success' | 'destructive' }
-> = {
-  'breaking-change': { label: 'Breaking Change', badgeVariant: 'destructive' },
-  deprecation: { label: 'Deprecation', badgeVariant: 'warning' },
-  'new-feature': { label: 'New Feature', badgeVariant: 'success' },
-  improvement: { label: 'Improvement', badgeVariant: 'default' },
-  'bug-fix': { label: 'Bug Fix', badgeVariant: 'warning' },
-  security: { label: 'Security', badgeVariant: 'destructive' },
-  policy: { label: 'Policy', badgeVariant: 'default' },
-}
+> = Object.fromEntries(
+  (Object.keys(CHANGE_TYPE_LABELS) as ChangeType[]).map((type) => [
+    type,
+    { label: CHANGE_TYPE_LABELS[type], badgeVariant: CHANGE_TYPE_BADGE_VARIANT[type] },
+  ])
+) as Record<
+  ChangeType,
+  { label: string; badgeVariant: 'default' | 'warning' | 'success' | 'destructive' }
+>
 
 /** Internal changelog index URL with preselected tag filter (nuqs `tags` param). */
 export function changelogTagFilterUrl(productSlug: string) {

@@ -11,6 +11,17 @@ import { Readable } from 'stream'
 import * as tarStream from 'tar-stream'
 import zlib from 'zlib'
 
+/** Display labels for `change_type`, shared with lib/changelog.utils.ts's CHANGE_TYPE_DISPLAY (which adds badge variants on top). */
+export const CHANGE_TYPE_LABELS = {
+  'breaking-change': 'Breaking Change',
+  deprecation: 'Deprecation',
+  'new-feature': 'New Feature',
+  improvement: 'Improvement',
+  'bug-fix': 'Bug Fix',
+  security: 'Security',
+  policy: 'Policy',
+}
+
 /**
  * Fetches the whole repo as a single tarball and extracts `entries/*.md` in
  * memory. One API call regardless of entry count — fetching each file
