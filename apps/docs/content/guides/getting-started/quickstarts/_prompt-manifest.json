@@ -9,10 +9,10 @@
       "steps_count": 7,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "b1ec796e-dbf0-4eb2-b472-686a29ac874f"
       }
     },
     "expo-react-native": {
@@ -23,10 +23,10 @@
       "steps_count": 6,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "33010b82-c62a-4c6a-a8a8-3e1af7dbb6e9"
       }
     },
     "flask": {
@@ -37,10 +37,10 @@
       "steps_count": 5,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "3c5f6457-6970-431e-8ebc-db4cb0ae690b"
       }
     },
     "flutter": {
@@ -51,10 +51,10 @@
       "steps_count": 5,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "7bc43aa8-3aa2-4c9f-a899-9c6e248e316f"
       }
     },
     "hono": {
@@ -65,10 +65,10 @@
       "steps_count": 4,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "0d3a1a53-af65-4776-9fa5-c833a1477292"
       }
     },
     "ios-swiftui": {
@@ -79,10 +79,10 @@
       "steps_count": 6,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "f5b07679-a460-438c-929f-958adf5dfc11"
       }
     },
     "kotlin": {
@@ -93,10 +93,10 @@
       "steps_count": 7,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "09743053-6c1d-4408-bf00-a17e33136d86"
       }
     },
     "laravel": {
@@ -107,10 +107,10 @@
       "steps_count": 6,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "f3092a88-257b-4d19-958f-ca958cfac142"
       }
     },
     "nextjs": {
@@ -121,10 +121,10 @@
       "steps_count": 4,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "27d59387-0c3a-45ea-a953-4e4b59a56c48"
       }
     },
     "nuxtjs": {
@@ -135,10 +135,10 @@
       "steps_count": 5,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "555cdf46-1ddb-4f20-9fc4-858ff976980a"
       }
     },
     "reactjs": {
@@ -149,10 +149,10 @@
       "steps_count": 5,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "c7888041-0159-41a5-8ef0-eee437a93946"
       }
     },
     "redwoodjs": {
@@ -163,10 +163,10 @@
       "steps_count": 7,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "3378ccb1-22d3-4dbe-8771-10179067f0f8"
       }
     },
     "refine": {
@@ -177,24 +177,24 @@
       "steps_count": 5,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "98a29005-4217-49f6-b8f8-295f4a161d7b"
       }
     },
     "ruby-on-rails": {
       "title": "Use Supabase with Ruby on Rails",
       "path": "apps/docs/content/guides/getting-started/quickstarts/ruby-on-rails.mdx",
       "partial_path": "apps/docs/content/_partials/ai/quickstart_prompt_ruby-on-rails.mdx",
-      "prompt": "Help me add Supabase to my Ruby on Rails project. Create a Supabase project at database.new and copy the Session Pooler connection string. Then: 1. Run `rails new blog -d=postgresql` to scaffold a new Rails project. 2. Set `DATABASE_URL` to the Supabase Session Pooler connection string in `.env`. 3. Generate a model and run migrations with `bin/rails generate model Article title:string body:text && bin/rails db:migrate`. 4. Use `bin/rails console` to create and query records. 5. Run `bin/rails server` and open http://127.0.0.1:3000.",
+      "prompt": "Help me add Supabase to my Ruby on Rails project. Create a Supabase project at database.new and run the instruments table SQL. Then: 1. Run `rails new blog -d=postgresql` to scaffold a new Rails project. 2. Set `DATABASE_URL` to the Supabase Session Pooler connection string in `.env`. 3. Generate an Instrument model and run migrations with `bin/rails generate model Instrument name:string && bin/rails db:migrate`. 4. Use `bin/rails console` to create and query instruments. 5. Run `bin/rails server` and open http://127.0.0.1:3000.",
       "steps_count": 5,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "d53bef1b-a21d-4c29-bb6a-bfc7feaffa1e"
       }
     },
     "solidjs": {
@@ -205,10 +205,10 @@
       "steps_count": 5,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "5f044f35-084c-4ea1-957f-1e79829397dc"
       }
     },
     "sveltekit": {
@@ -219,10 +219,10 @@
       "steps_count": 6,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "30bf196d-a1bf-428d-a711-d1976bb2ae28"
       }
     },
     "tanstack": {
@@ -233,10 +233,10 @@
       "steps_count": 6,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "b271dfc4-66d7-4dbc-800e-a0c1502f080a"
       }
     },
     "vue": {
@@ -247,10 +247,10 @@
       "steps_count": 6,
       "generated_at": "2026-07-02T17:51:00.000Z",
       "last_test": {
-        "ran_at": null,
-        "structural_valid": null,
-        "sandbox_status": null,
-        "run_id": null
+        "ran_at": "2026-07-02T17:55:00.000Z",
+        "structural_valid": true,
+        "sandbox_status": "skipped",
+        "run_id": "342d7877-0945-4f03-a52c-3758ad3d1373"
       }
     }
   }
