@@ -94,25 +94,32 @@ function TimelineRow({ item, href }: { item: ChangelogTimelineIndexItem; href: s
   const dateLabel = dayjs(item.sortDate).format('MMM D')
 
   return (
-    <div
-      className="group border-default flex w-full flex-col gap-0.5 border-b py-3 text-left scroll-mt-16"
-      id={item.slug}
-    >
-      <div className="min-w-0">
-        <Link href={href} prefetch={false} className="min-w-0 text-left">
-          <h3 className="text-foreground text-lg leading-snug hover:underline">{item.title}</h3>
-        </Link>
-      </div>
-      {item.summary && <p className="text-foreground-lighter text-sm">{item.summary}</p>}
-      <div className="flex min-w-0 gap-2 pt-0.5">
-        <time
-          dateTime={item.sortDate}
-          className="text-foreground-lighter text-xs font-mono tracking-normal"
-        >
-          {dateLabel}
-        </time>
+    <div className="relative group flex w-full gap-3 text-left scroll-mt-16" id={item.slug}>
+      <div className="absolute top-[-3px] right-[calc(100%+0.75rem)] hidden shrink-0 lg:block lg:pt-3">
         <ChangeTypeBadge type={item.changeType} onBadgeClick={(e) => e.stopPropagation()} />
-        <ProductBadges products={item.affectedProducts} onBadgeClick={(e) => e.stopPropagation()} />
+      </div>
+      <div className="border-default timeline-row-content flex min-w-0 flex-1 flex-col gap-0.5 border-b py-3">
+        <div className="min-w-0">
+          <Link href={href} prefetch={false} className="min-w-0 text-left">
+            <h3 className="text-foreground text-lg leading-snug hover:underline">{item.title}</h3>
+          </Link>
+        </div>
+        {item.summary && <p className="text-foreground-lighter text-sm">{item.summary}</p>}
+        <div className="flex min-w-0 gap-2 pt-0.5">
+          <time
+            dateTime={item.sortDate}
+            className="text-foreground-lighter text-xs font-mono tracking-normal"
+          >
+            {dateLabel}
+          </time>
+          <span className="lg:hidden">
+            <ChangeTypeBadge type={item.changeType} onBadgeClick={(e) => e.stopPropagation()} />
+          </span>
+          <ProductBadges
+            products={item.affectedProducts}
+            onBadgeClick={(e) => e.stopPropagation()}
+          />
+        </div>
       </div>
     </div>
   )
@@ -178,11 +185,11 @@ export function ChangelogTimelineList(props: Props) {
           <div
             className={
               yearIndex === yearGroups.length - 1
-                ? 'grid lg:grid-cols-12 lg:gap-4 pt-2 lg:pt-2'
-                : 'grid lg:grid-cols-12 lg:gap-4 pb-8 lg:pb-20 lg:py-2'
+                ? 'grid lg:grid-cols-12 lg:gap-8 pt-2 lg:pt-2'
+                : 'grid lg:grid-cols-12 lg:gap-8 pb-8 lg:pb-20 lg:py-2'
             }
           >
-            <div className="relative hidden lg:col-span-2 lg:block">
+            <div className="relative hidden lg:col-span-4 lg:block">
               <div className="ml-[-42px] text-foreground lg:sticky lg:top-[calc(65px+1rem)] lg:pt-4">
                 <div className="text-foreground-light mb-1 flex items-center gap-2">
                   <div className="bg-border border-muted flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border drop-shadow-xs">
@@ -199,7 +206,7 @@ export function ChangelogTimelineList(props: Props) {
               </div>
             </div>
 
-            <div className="min-w-0 lg:col-span-10 [&>*:last-child]:border-b-0">
+            <div className="min-w-0 lg:col-span-8 [&>*:last-child>.timeline-row-content]:border-b-0">
               {yearItems.map((item) => (
                 <TimelineRow key={item.slug} item={item} href={`/changelog/${item.slug}`} />
               ))}

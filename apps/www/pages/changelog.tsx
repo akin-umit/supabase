@@ -387,27 +387,12 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
                               </h3>
                             </Link>
                           )}
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mb-2">
                             <p className="text-foreground-lighter font-mono text-xs">
                               {dayjs(entry.created_at).format('MMM D, YYYY')}
                             </p>
-                            <ChangeTypeBadge type={entry.changeType} />
                           </div>
-                          {entry.affectedProducts.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-1.5">
-                              {entry.affectedProducts.map((product) => (
-                                <a
-                                  key={`${entry.slug}-${product}`}
-                                  href={changelogTagFilterUrl(product)}
-                                  className="group inline-flex no-underline focus-visible:ring-brand-default rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
-                                >
-                                  <Badge className="group-hover:text-foreground-light text-foreground-lighter group-hover:border-foreground-muted px-1.5 py-px text-[11px] tracking-normal lowercase">
-                                    {product}
-                                  </Badge>
-                                </a>
-                              ))}
-                            </div>
-                          )}
+                          <ChangeTypeBadge type={entry.changeType} />
                         </div>
                       </div>
                     </div>
@@ -419,6 +404,21 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
                           <MDXClient {...entry.source} components={mdxComponents('blog')} />
                         )}
                       </article>
+                      {entry.affectedProducts.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-2">
+                          {entry.affectedProducts.map((product) => (
+                            <a
+                              key={`${entry.slug}-${product}`}
+                              href={changelogTagFilterUrl(product)}
+                              className="group inline-flex no-underline focus-visible:ring-brand-default rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
+                            >
+                              <Badge className="group-hover:text-foreground-light text-foreground-lighter group-hover:border-foreground-muted px-1.5 py-px text-[11px] tracking-normal lowercase">
+                                {product}
+                              </Badge>
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -431,7 +431,7 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
               )}
               <div className="hidden lg:grid">
                 <div className="col-span-12 -ml-8 mb-8 lg:mb-0 self-start lg:sticky lg:top-0 lg:col-span-4 lg:-mt-20 lg:pt-20">
-                  <div className="flex w-full items-baseline border-b pb-4 lg:gap-4 lg:border-none lg:pb-0">
+                  <div className="flex w-full items-baseline border-b pb-4 lg:gap-8 lg:border-none lg:pb-0">
                     <Link
                       href="https://www.ycombinator.com/companies/supabase"
                       target="_blank"
