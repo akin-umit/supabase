@@ -128,7 +128,7 @@ export default function PartnerCatalogDetail({ partner, serializedListings }: Pr
                   layout="fixed"
                   width={56}
                   height={56}
-                  className="bg-surface-200 shrink-0 h-14 w-14 rounded-full border"
+                  className="bg-white p-1 shrink-0 h-14 w-14 rounded-full border"
                   src={partner.logo}
                   alt={partner.title}
                 />

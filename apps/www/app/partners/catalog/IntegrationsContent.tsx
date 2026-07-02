@@ -250,7 +250,7 @@ export default function IntegrationsContent({
                             src={p.logo}
                             alt={p.title}
                             fill
-                            className="object-cover"
+                            className="object-cover bg-white rounded-full overflow-hidden p-1"
                             sizes="40px"
                           />
                         </div>
@@ -326,9 +326,10 @@ export default function IntegrationsContent({
                           <Image
                             src={p.logo}
                             alt={p.title}
-                            fill
-                            className="object-contain p-6 lg:p-10"
-                            sizes="(max-width: 768px) 80px, 200px"
+                            width={60}
+                            height={60}
+                            className="border w-14 h-14 aspect-square p-1 bg-white rounded-full overflow-hidden"
+                            sizes="60px"
                           />
                         </div>
                         <div className="md:p-2 md:pt-1 flex flex-col h-full md:h-auto grow gap-0.5 md:gap-1.5 justify-center md:justify-start min-w-0">
@@ -369,7 +370,7 @@ export default function IntegrationsContent({
                           src={p.logo}
                           alt={p.title}
                           fill
-                          className="object-cover"
+                          className="object-cover bg-white rounded-full overflow-hidden p-1"
                           sizes="40px"
                         />
                       </div>
