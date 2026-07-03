@@ -12,6 +12,7 @@ import {
   KeyboardShortcut,
 } from 'ui'
 
+import { SqlEditorSearchPathSelector } from './SqlEditorSearchPathSelector'
 import { SqlRunButton } from './UtilityPanel/RunButton'
 import SavingIndicator from './UtilityPanel/SavingIndicator'
 import { SqlEditorLimitSelector } from './UtilityPanel/SqlEditorLimitSelector'
@@ -133,6 +134,7 @@ export function SqlEditorQueryBar({
             onSelectId={onSelectDatabase}
           />
         )}
+        <SqlEditorSearchPathSelector />
         <RoleImpersonationPopover serviceRoleLabel="postgres" header="Run SQL query as a role" />
         <SqlEditorLimitSelector />
         <SqlRunButton
