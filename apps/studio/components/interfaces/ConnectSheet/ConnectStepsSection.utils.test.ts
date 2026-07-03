@@ -2,41 +2,56 @@ import { describe, expect, test } from 'vitest'
 
 import type { ConnectMode } from './Connect.types'
 import {
-  DATA_API_DEPENDENT_CONNECT_MODES,
-  isDataApiDependentConnectMode,
-  shouldShowDataApiConfigLoading,
-  shouldShowDataApiDisabledNotice,
+  mcpSelectionRequiresDataApi,
+  shouldFetchDataApiConfig,
+  shouldShowDataApiDisabledWarning,
 } from './ConnectStepsSection.utils'
 
 const ALL_MODES: ConnectMode[] = ['framework', 'direct', 'orm', 'mcp', 'server', 'catalog']
 
-describe('DATA_API_DEPENDENT_CONNECT_MODES', () => {
-  test('includes framework, server, and mcp only', () => {
-    expect(DATA_API_DEPENDENT_CONNECT_MODES).toEqual(['framework', 'server', 'mcp'])
+describe('mcpSelectionRequiresDataApi', () => {
+  test('returns true when no features are selected (server default includes database)', () => {
+    expect(mcpSelectionRequiresDataApi(undefined)).toBe(true)
+    expect(mcpSelectionRequiresDataApi([])).toBe(true)
   })
 
-  test('excludes catalog so warehouse catalog gating stays in WarehouseCatalogPanel', () => {
-    expect(DATA_API_DEPENDENT_CONNECT_MODES).not.toContain('catalog')
+  test('returns true when database is selected', () => {
+    expect(mcpSelectionRequiresDataApi(['database'])).toBe(true)
+    expect(mcpSelectionRequiresDataApi(['docs', 'database'])).toBe(true)
   })
-})
 
-describe('isDataApiDependentConnectMode', () => {
-  test.each([
-    ['framework', true],
-    ['server', true],
-    ['mcp', true],
-    ['direct', false],
-    ['orm', false],
-    ['catalog', false],
-  ] as const)('returns %s for %s mode', (mode, expected) => {
-    expect(isDataApiDependentConnectMode(mode)).toBe(expected)
+  test('returns false when database is not selected', () => {
+    expect(mcpSelectionRequiresDataApi(['docs'])).toBe(false)
+    expect(mcpSelectionRequiresDataApi(['docs', 'account'])).toBe(false)
   })
 })
 
-describe('shouldShowDataApiDisabledNotice', () => {
+describe('shouldFetchDataApiConfig', () => {
+  test('returns true for framework mode', () => {
+    expect(shouldFetchDataApiConfig({ mode: 'framework' })).toBe(true)
+  })
+
+  test('returns true for mcp when database tools may be used', () => {
+    expect(shouldFetchDataApiConfig({ mode: 'mcp', mcpFeatures: [] })).toBe(true)
+    expect(shouldFetchDataApiConfig({ mode: 'mcp', mcpFeatures: ['database'] })).toBe(true)
+  })
+
+  test('returns false for mcp when database is excluded', () => {
+    expect(shouldFetchDataApiConfig({ mode: 'mcp', mcpFeatures: ['docs'] })).toBe(false)
+  })
+
+  test.each(['direct', 'orm', 'server', 'catalog'] as const)(
+    'returns false for %s mode',
+    (mode) => {
+      expect(shouldFetchDataApiConfig({ mode })).toBe(false)
+    }
+  )
+})
+
+describe('shouldShowDataApiDisabledWarning', () => {
   test.each(ALL_MODES)('returns false while pending for %s mode', (mode) => {
     expect(
-      shouldShowDataApiDisabledNotice({
+      shouldShowDataApiDisabledWarning({
         mode,
         isDataApiEnabled: false,
         isPending: true,
@@ -45,40 +60,81 @@ describe('shouldShowDataApiDisabledNotice', () => {
     ).toBe(false)
   })
 
-  test.each(['framework', 'server', 'mcp'] as const)(
-    'returns false when %s mode config query errored',
-    (mode) => {
-      expect(
-        shouldShowDataApiDisabledNotice({
-          mode,
-          isDataApiEnabled: false,
-          isPending: false,
-          isError: true,
-        })
-      ).toBe(false)
-    }
-  )
+  test('returns false when config query errored', () => {
+    expect(
+      shouldShowDataApiDisabledWarning({
+        mode: 'framework',
+        isDataApiEnabled: false,
+        isPending: false,
+        isError: true,
+      })
+    ).toBe(false)
+  })
 
-  test.each(['framework', 'server', 'mcp'] as const)(
-    'returns true when %s mode has Data API disabled',
-    (mode) => {
-      expect(
-        shouldShowDataApiDisabledNotice({
-          mode,
-          isDataApiEnabled: false,
-          isPending: false,
-          isError: false,
-        })
-      ).toBe(true)
-    }
-  )
+  test('returns true for framework when Data API is disabled', () => {
+    expect(
+      shouldShowDataApiDisabledWarning({
+        mode: 'framework',
+        isDataApiEnabled: false,
+        isPending: false,
+        isError: false,
+      })
+    ).toBe(true)
+  })
 
-  test.each(['framework', 'server', 'mcp'] as const)(
+  test('returns true for mcp with database tools when Data API is disabled', () => {
+    expect(
+      shouldShowDataApiDisabledWarning({
+        mode: 'mcp',
+        mcpFeatures: ['database'],
+        isDataApiEnabled: false,
+        isPending: false,
+        isError: false,
+      })
+    ).toBe(true)
+  })
+
+  test('returns false for mcp without database tools when Data API is disabled', () => {
+    expect(
+      shouldShowDataApiDisabledWarning({
+        mode: 'mcp',
+        mcpFeatures: ['docs'],
+        isDataApiEnabled: false,
+        isPending: false,
+        isError: false,
+      })
+    ).toBe(false)
+  })
+
+  test('returns false for server when Data API is disabled', () => {
+    expect(
+      shouldShowDataApiDisabledWarning({
+        mode: 'server',
+        isDataApiEnabled: false,
+        isPending: false,
+        isError: false,
+      })
+    ).toBe(false)
+  })
+
+  test('returns false for catalog when Data API is disabled', () => {
+    expect(
+      shouldShowDataApiDisabledWarning({
+        mode: 'catalog',
+        isDataApiEnabled: false,
+        isPending: false,
+        isError: false,
+      })
+    ).toBe(false)
+  })
+
+  test.each(['framework', 'mcp'] as const)(
     'returns false when %s mode has Data API enabled',
     (mode) => {
       expect(
-        shouldShowDataApiDisabledNotice({
+        shouldShowDataApiDisabledWarning({
           mode,
+          mcpFeatures: mode === 'mcp' ? ['database'] : undefined,
           isDataApiEnabled: true,
           isPending: false,
           isError: false,
@@ -86,50 +142,4 @@ describe('shouldShowDataApiDisabledNotice', () => {
       ).toBe(false)
     }
   )
-
-  test.each(['direct', 'orm', 'catalog'] as const)(
-    'returns false when %s mode has Data API disabled',
-    (mode) => {
-      expect(
-        shouldShowDataApiDisabledNotice({
-          mode,
-          isDataApiEnabled: false,
-          isPending: false,
-          isError: false,
-        })
-      ).toBe(false)
-    }
-  )
-})
-
-describe('shouldShowDataApiConfigLoading', () => {
-  test.each(['framework', 'server', 'mcp'] as const)(
-    'returns true while pending for %s mode',
-    (mode) => {
-      expect(
-        shouldShowDataApiConfigLoading({
-          mode,
-          isPending: true,
-        })
-      ).toBe(true)
-    }
-  )
-
-  test.each(['direct', 'orm', 'catalog'] as const)('returns false while pending for %s mode', (mode) => {
-    expect(
-      shouldShowDataApiConfigLoading({
-        mode,
-        isPending: true,
-      })
-    ).toBe(false)
-  })
-
-  test.each(ALL_MODES)('returns false when not pending for %s mode', (mode) => {
-    expect(
-      shouldShowDataApiConfigLoading({
-        mode,
-        isPending: false,
-      })
-    ).toBe(false)
-  })
 })

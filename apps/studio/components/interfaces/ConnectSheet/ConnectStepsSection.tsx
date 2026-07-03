@@ -17,9 +17,8 @@ import type {
 } from './Connect.types'
 import { ConnectSheetStep } from './ConnectSheetStep'
 import {
-  isDataApiDependentConnectMode,
-  shouldShowDataApiConfigLoading,
-  shouldShowDataApiDisabledNotice,
+  shouldFetchDataApiConfig,
+  shouldShowDataApiDisabledWarning,
 } from './ConnectStepsSection.utils'
 import { CopyPromptAdmonition } from './CopyPromptAdmonition'
 import { buildConnectionStringPooler, getConnectionStrings } from './DatabaseSettings.utils'
@@ -202,21 +201,21 @@ export function ConnectStepsSection({ steps, state, projectKeys }: ConnectStepsS
 
   const showSelfHostedMcpNotice = deploymentMode.isSelfHosted && state.mode === 'mcp'
 
-  const isDataApiDependentMode = isDataApiDependentConnectMode(state.mode)
+  const shouldFetchDataApiStatus = shouldFetchDataApiConfig({
+    mode: state.mode,
+    mcpFeatures: state.mcpFeatures,
+  })
   const {
     isEnabled: isDataApiEnabled,
     isPending: isDataApiConfigPending,
     isError: isDataApiConfigError,
   } = useIsDataApiEnabled({
     projectRef: ref,
-    enabled: isDataApiDependentMode,
+    enabled: shouldFetchDataApiStatus,
   })
-  const showDataApiConfigLoading = shouldShowDataApiConfigLoading({
+  const showDataApiDisabledWarning = shouldShowDataApiDisabledWarning({
     mode: state.mode,
-    isPending: isDataApiConfigPending,
-  })
-  const showDataApiDisabledNotice = shouldShowDataApiDisabledNotice({
-    mode: state.mode,
+    mcpFeatures: state.mcpFeatures,
     isDataApiEnabled,
     isPending: isDataApiConfigPending,
     isError: isDataApiConfigError,
@@ -229,36 +228,24 @@ export function ConnectStepsSection({ steps, state, projectKeys }: ConnectStepsS
 
   if (steps.length === 0) return null
 
-  if (showDataApiConfigLoading) {
-    return (
-      <div className="bg-muted/50 flex-1 p-8">
-        <GenericSkeletonLoader />
-      </div>
-    )
-  }
-
-  if (showDataApiDisabledNotice) {
-    return (
-      <div className="bg-muted/50 flex-1 p-8">
-        <Admonition
-          type="warning"
-          layout="responsive"
-          title="Data API is disabled"
-          description="Enable the Data API to use these connection instructions."
-          actions={[
-            <Button asChild key="enable" variant="default">
-              <Link href={`/project/${ref}/integrations/data_api/settings`}>Enable Data API</Link>
-            </Button>,
-          ]}
-        />
-      </div>
-    )
-  }
-
   return (
     <div className="bg-muted/50 flex-1">
       <div className="p-8 flex flex-col gap-y-6">
         <h3>Connect your app</h3>
+
+        {showDataApiDisabledWarning && (
+          <Admonition
+            type="warning"
+            layout="responsive"
+            title="Database access requires the Data API"
+            description="Client library database queries (such as .from().select()) will not work until the Data API is enabled. Auth, environment variables, and other Supabase services in the steps below still work."
+            actions={[
+              <Button asChild key="enable" variant="default">
+                <Link href={`/project/${ref}/integrations/data_api/settings`}>Enable Data API</Link>
+              </Button>,
+            ]}
+          />
+        )}
 
         {showIpv4AddonNotice && (
           <Admonition

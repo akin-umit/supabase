@@ -176,14 +176,14 @@ Remove `warehouseDemoStore` when list/detail queries return `WarehouseTableMetad
 
 Warehouse catalog credentials in the Connect sheet are isolated from Data API gating in `ConnectStepsSection`:
 
-| Surface                 | Mode                         | Disabled warning                           | Enable CTA                 |
-| ----------------------- | ---------------------------- | ------------------------------------------ | -------------------------- |
-| `ConnectStepsSection`   | `framework`, `server`, `mcp` | Data API off (PostgREST `db_schema` empty) | Data API settings          |
-| `WarehouseCatalogPanel` | `catalog`                    | Catalog integration off                    | Warehouse catalog overview |
+| Surface                 | Mode                                     | Disabled warning                                                             | Enable CTA                 |
+| ----------------------- | ---------------------------------------- | ---------------------------------------------------------------------------- | -------------------------- |
+| `ConnectStepsSection`   | `framework`, `mcp` (database tools only) | Inline warning when Data API off; steps remain visible (auth/env still work) | Data API settings          |
+| `WarehouseCatalogPanel` | `catalog`                                | Catalog integration off                                                      | Warehouse catalog overview |
 
 **Mode visibility:** `catalog` appears in the Connect mode selector only when at least one warehouse-linked table exists (`hasWarehouseTables()`). If the last linked table is removed while `catalog` is selected, Studio falls back to the first available connect mode.
 
-**Status query behavior (target API):** When `catalogEnabled` is backed by an API query, follow the same fail-open pattern as Data API connect gating — do not show the disabled notice while loading or when the query errors; show credentials/steps instead.
+**Status query behavior (target API):** When `catalogEnabled` is backed by an API query, follow the same fail-open pattern as Data API connect gating — do not show the disabled notice while loading or when the query errors. For Data API, show an inline warning (not a full panel block) so auth and env setup steps remain available.
 
 ## Observability
 
