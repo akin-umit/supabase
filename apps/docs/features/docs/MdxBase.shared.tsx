@@ -28,7 +28,7 @@ import { TabPanel, Tabs } from '~/features/ui/Tabs'
 import { ArrowDown, Check, Sparkles, X } from 'lucide-react'
 import Link from 'next/link'
 import { type ComponentPropsWithoutRef } from 'react'
-import { Badge, Button, cn } from 'ui'
+import { Badge, Button } from 'ui'
 import { Admonition, type AdmonitionProps } from 'ui-patterns/admonition'
 import { GlassPanel } from 'ui-patterns/GlassPanel'
 import { IconPanel } from 'ui-patterns/IconPanel'
@@ -41,20 +41,6 @@ import { McpConfigPanel } from '../ui/McpConfigPanel'
 
 // Wrap Admonition for Docs-specific styling (within MDX prose, requires a margin-bottom)
 const AdmonitionWithMargin = (props: AdmonitionProps) => {
-  // #region agent log
-  fetch('http://127.0.0.1:7411/ingest/d6ca9f28-e805-4c59-802b-dacf8d719b5f', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'd0cf15' },
-    body: JSON.stringify({
-      sessionId: 'd0cf15',
-      location: 'MdxBase.shared.tsx:AdmonitionWithMargin',
-      message: 'AdmonitionWithMargin props.className',
-      data: { incomingClassName: props.className, title: props.title, hasIcon: !!props.icon },
-      timestamp: Date.now(),
-      hypothesisId: 'H1',
-    }),
-  }).catch(() => {})
-  // #endregion
   return <Admonition {...props} className="mb-8" />
 }
 
