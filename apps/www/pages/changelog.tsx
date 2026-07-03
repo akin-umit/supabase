@@ -23,11 +23,17 @@ import { getChangelogEntries, type ChangeType } from '@/lib/changelog-repo'
 import {
   CHANGE_TYPE_DISPLAY,
   CHANGE_TYPES,
+  CHANGELOG_PRODUCT_STAGES,
   CHANGELOG_PRODUCT_TAGS,
+  CHANGELOG_SELF_HOSTED_OPTIONS,
   changelogTagFilterUrl,
   isChangelogChangeType,
   isChangelogProductSlug,
+  isChangelogProductStageSlug,
+  isChangelogSelfHostedSlug,
   itemMatchesChangelogSearch,
+  itemMatchesChangelogSelectedSelfHosted,
+  itemMatchesChangelogSelectedStages,
   itemMatchesChangelogSelectedTags,
   itemMatchesChangelogSelectedTypes,
   toChangelogTimelineIndexItem,
@@ -105,6 +111,14 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
     'types',
     parseAsArrayOf(parseAsString).withOptions(nuqsUrlOptions)
   )
+  const [queryStages, setQueryStages] = useQueryState(
+    'stages',
+    parseAsArrayOf(parseAsString).withOptions(nuqsUrlOptions)
+  )
+  const [querySelfHosted, setQuerySelfHosted] = useQueryState(
+    'selfHosted',
+    parseAsArrayOf(parseAsString).withOptions(nuqsUrlOptions)
+  )
 
   const isMobile = useBreakpoint('lg')
   const [filterPanelOpen, setFilterPanelOpen] = useState(false)
@@ -124,10 +138,29 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
     }
     return next
   }, [queryTypes])
+  const selectedStages = useMemo(() => {
+    const next = new Set<string>()
+    for (const raw of queryStages ?? []) {
+      if (isChangelogProductStageSlug(raw)) next.add(raw)
+    }
+    return next
+  }, [queryStages])
+  const selectedSelfHosted = useMemo(() => {
+    const next = new Set<string>()
+    for (const raw of querySelfHosted ?? []) {
+      if (isChangelogSelfHostedSlug(raw)) next.add(raw)
+    }
+    return next
+  }, [querySelfHosted])
 
   const hasNuqsFilters = useMemo(
-    () => filterSearch.trim().length > 0 || selectedTags.size > 0 || selectedTypes.size > 0,
-    [filterSearch, selectedTags, selectedTypes]
+    () =>
+      filterSearch.trim().length > 0 ||
+      selectedTags.size > 0 ||
+      selectedTypes.size > 0 ||
+      selectedStages.size > 0 ||
+      selectedSelfHosted.size > 0,
+    [filterSearch, selectedTags, selectedTypes, selectedStages, selectedSelfHosted]
   )
 
   useEffect(() => {
@@ -139,16 +172,20 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
     const hasSearch = q.trim().length > 0
     const hasTags = selectedTags.size > 0
     const hasTypes = selectedTypes.size > 0
-    if (!hasSearch && !hasTags && !hasTypes) return null
+    const hasStages = selectedStages.size > 0
+    const hasSelfHosted = selectedSelfHosted.size > 0
+    if (!hasSearch && !hasTags && !hasTypes && !hasStages && !hasSelfHosted) return null
     return allIndex
       .filter(
         (item) =>
           itemMatchesChangelogSearch(item, q) &&
           itemMatchesChangelogSelectedTags(item, selectedTags) &&
-          itemMatchesChangelogSelectedTypes(item, selectedTypes)
+          itemMatchesChangelogSelectedTypes(item, selectedTypes) &&
+          itemMatchesChangelogSelectedStages(item, selectedStages) &&
+          itemMatchesChangelogSelectedSelfHosted(item, selectedSelfHosted)
       )
       .sort((a, b) => dayjs(b.sortDate).diff(dayjs(a.sortDate)))
-  }, [allIndex, filterSearch, selectedTags, selectedTypes])
+  }, [allIndex, filterSearch, selectedTags, selectedTypes, selectedStages, selectedSelfHosted])
 
   const toggleProductTag = (slug: string) => {
     const current = (queryTags ?? []).filter(isChangelogProductSlug)
@@ -164,10 +201,26 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
     void setQueryTypes(next.length > 0 ? next : null)
   }
 
+  const toggleProductStage = (slug: string) => {
+    const current = (queryStages ?? []).filter(isChangelogProductStageSlug)
+    const has = current.includes(slug)
+    const next = has ? current.filter((s) => s !== slug) : [...current, slug]
+    void setQueryStages(next.length > 0 ? next : null)
+  }
+
+  const toggleSelfHosted = (slug: string) => {
+    const current = (querySelfHosted ?? []).filter(isChangelogSelfHostedSlug)
+    const has = current.includes(slug)
+    const next = has ? current.filter((s) => s !== slug) : [...current, slug]
+    void setQuerySelfHosted(next.length > 0 ? next : null)
+  }
+
   const clearFilters = () => {
     void setQuerySearch(null)
     void setQueryTags(null)
     void setQueryTypes(null)
+    void setQueryStages(null)
+    void setQuerySelfHosted(null)
   }
 
   const isSingleQueryTag = queryTags?.length === 1
@@ -265,7 +318,9 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
                   />
                   {(filterSearch.trim().length > 0 ||
                     selectedTags.size > 0 ||
-                    selectedTypes.size > 0) && (
+                    selectedTypes.size > 0 ||
+                    selectedStages.size > 0 ||
+                    selectedSelfHosted.size > 0) && (
                     <Button
                       variant="outline"
                       size="tiny"
@@ -309,6 +364,48 @@ function ChangelogIndex({ featured, restIndex, allIndex }: PageProps) {
                     const on = selectedTags.has(slug)
                     return (
                       <button key={slug} type="button" onClick={() => toggleProductTag(slug)}>
+                        <Badge
+                          variant={on ? 'success' : 'default'}
+                          className={cn(!on && 'hover:text-foreground')}
+                        >
+                          {label}
+                        </Badge>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="border-default border-t" role="presentation" />
+              <div className="py-1">
+                <p className="text-foreground-lighter text-xs font-mono uppercase tracking-wide">
+                  Product stage
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {CHANGELOG_PRODUCT_STAGES.map(({ slug, label }) => {
+                    const on = selectedStages.has(slug)
+                    return (
+                      <button key={slug} type="button" onClick={() => toggleProductStage(slug)}>
+                        <Badge
+                          variant={on ? 'success' : 'default'}
+                          className={cn(!on && 'hover:text-foreground')}
+                        >
+                          {label}
+                        </Badge>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="border-default border-t" role="presentation" />
+              <div className="py-1">
+                <p className="text-foreground-lighter text-xs font-mono uppercase tracking-wide">
+                  Self-hosted
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {CHANGELOG_SELF_HOSTED_OPTIONS.map(({ slug, label }) => {
+                    const on = selectedSelfHosted.has(slug)
+                    return (
+                      <button key={slug} type="button" onClick={() => toggleSelfHosted(slug)}>
                         <Badge
                           variant={on ? 'success' : 'default'}
                           className={cn(!on && 'hover:text-foreground')}

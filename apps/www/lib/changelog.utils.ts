@@ -10,6 +10,8 @@ export type ChangelogTimelineIndexItem = {
   sortDate: string
   changeType: ChangeType
   affectedProducts: string[]
+  productStage: string | null
+  affectsSelfHosted: boolean | null
 }
 
 export function toChangelogTimelineIndexItem(entry: ChangelogEntry): ChangelogTimelineIndexItem {
@@ -20,6 +22,8 @@ export function toChangelogTimelineIndexItem(entry: ChangelogEntry): ChangelogTi
     sortDate: entry.sortDate,
     changeType: entry.frontmatter.change_type,
     affectedProducts: entry.frontmatter.affected_products ?? [],
+    productStage: entry.frontmatter.product_stage ?? null,
+    affectsSelfHosted: entry.frontmatter.affects_self_hosted ?? null,
   }
 }
 
@@ -76,6 +80,40 @@ export function isChangelogChangeType(value: string): value is ChangeType {
   return Object.prototype.hasOwnProperty.call(CHANGE_TYPE_DISPLAY, value)
 }
 
+/** Matches the `product_stage` enum in supabase/changelog's entry schema. */
+export const CHANGELOG_PRODUCT_STAGES = [
+  { slug: 'private-alpha', label: 'Private Alpha' },
+  { slug: 'public-alpha', label: 'Public Alpha' },
+  { slug: 'beta', label: 'Beta' },
+  { slug: 'public-beta', label: 'Public Beta' },
+  { slug: 'general-availability', label: 'General Availability' },
+] as const
+
+const CHANGELOG_PRODUCT_STAGE_SLUG_SET = new Set<string>(
+  CHANGELOG_PRODUCT_STAGES.map((stage) => stage.slug)
+)
+
+export function isChangelogProductStageSlug(value: string) {
+  return CHANGELOG_PRODUCT_STAGE_SLUG_SET.has(value)
+}
+
+function productStageToSlug(productStage: string) {
+  return productStage.toLowerCase().replace(/\s+/g, '-')
+}
+
+export const CHANGELOG_SELF_HOSTED_OPTIONS = [
+  { slug: 'yes', label: 'Affects self-hosted' },
+  { slug: 'no', label: "Doesn't affect self-hosted" },
+] as const
+
+const CHANGELOG_SELF_HOSTED_SLUG_SET = new Set<string>(
+  CHANGELOG_SELF_HOSTED_OPTIONS.map((option) => option.slug)
+)
+
+export function isChangelogSelfHostedSlug(value: string) {
+  return CHANGELOG_SELF_HOSTED_SLUG_SET.has(value)
+}
+
 export function itemMatchesChangelogSearch(item: ChangelogTimelineIndexItem, query: string) {
   const normalizedQuery = query.trim().toLowerCase()
   if (!normalizedQuery) return true
@@ -101,4 +139,22 @@ export function itemMatchesChangelogSelectedTypes(
 ) {
   if (selectedTypes.size === 0) return true
   return selectedTypes.has(item.changeType)
+}
+
+export function itemMatchesChangelogSelectedStages(
+  item: ChangelogTimelineIndexItem,
+  selectedStages: Set<string>
+) {
+  if (selectedStages.size === 0) return true
+  if (!item.productStage) return false
+  return selectedStages.has(productStageToSlug(item.productStage))
+}
+
+export function itemMatchesChangelogSelectedSelfHosted(
+  item: ChangelogTimelineIndexItem,
+  selectedSelfHosted: Set<string>
+) {
+  if (selectedSelfHosted.size === 0) return true
+  const key = item.affectsSelfHosted === true ? 'yes' : 'no'
+  return selectedSelfHosted.has(key)
 }
