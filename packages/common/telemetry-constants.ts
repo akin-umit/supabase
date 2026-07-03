@@ -480,6 +480,12 @@ export interface OrganizationCreationFormExposedEvent {
  */
 export interface OrganizationCreationCompletedEvent {
   action: 'organization_creation_completed'
+  properties: {
+    /**
+     * Billing tier provisioned at creation. tier_payg is uncapped PRO.
+     */
+    tier: 'tier_free' | 'tier_pro' | 'tier_payg' | 'tier_team'
+  }
   groups: Omit<TelemetryGroups, 'project'>
 }
 
@@ -925,6 +931,19 @@ export interface Docs404RecommendationClickedEvent {
      * The path of the "not found" page where the recommendation was shown.
      */
     sourcePath: string
+  }
+}
+
+/**
+ * User clicked the copy button on a project config variable in the docs.
+ *
+ * @group Events
+ * @source docs
+ */
+export interface DocsProjectConfigVariablesCopyButtonClickedEvent {
+  action: 'docs_project_config_variables_copy_button_clicked'
+  properties: {
+    variable: 'url' | 'publishable' | 'anon' | 'sessionPooler'
   }
 }
 
@@ -2930,7 +2949,14 @@ export interface DashboardErrorCreatedEvent {
      */
     errorCategory?: 'validation' | 'api' | 'network' | 'payment' | 'unknown'
     /**
-     * Controlled-vocabulary slug describing the reason (no free text, no PII)
+     * Controlled-vocabulary slug describing the reason (no free text, no PII).
+     *
+     * Typed `string` rather than a literal union on purpose: the source-of-truth
+     * union `FunnelErrorReason` lives in `apps/studio/lib/telemetry/funnel-errors.ts`,
+     * and this `common` package cannot import from an app. The constraint is enforced
+     * at the only emit site instead: `useTrackFunnelError` accepts a classified
+     * `FunnelErrorReason`, so free text never reaches this field. Do not widen usage by
+     * setting `errorReason` from a raw error message.
      */
     errorReason?: string
     /**
@@ -3092,7 +3118,7 @@ export interface IntegrationUninstallCompletedEvent {
  *
  * @group Events
  * @source studio
- * @page /project/{ref}/auth/policies
+ * @page /project/{ref}/database/policies
  */
 export interface RlsEventTriggerBannerCreateButtonClickedEvent {
   action: 'rls_event_trigger_banner_create_button_clicked'
@@ -3322,6 +3348,7 @@ export interface UnifiedLogsRowClickedEvent {
      * reaching the table; anything else is rejected upstream so the union here is exhaustive.
      */
     logType:
+      | 'edge'
       | 'postgres'
       | 'postgrest'
       | 'auth'
@@ -3571,6 +3598,7 @@ export type TelemetryEvent =
   | AskAiClickedEvent
   | DocsContentListingClickedEvent
   | Docs404RecommendationClickedEvent
+  | DocsProjectConfigVariablesCopyButtonClickedEvent
   | HomepageFrameworkQuickstartClickedEvent
   | HomepageProductCardClickedEvent
   | WwwPricingPlanCtaClickedEvent
