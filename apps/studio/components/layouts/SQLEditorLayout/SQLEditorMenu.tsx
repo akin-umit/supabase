@@ -29,7 +29,7 @@ import { useLocalStorage } from '@/hooks/misc/useLocalStorage'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { useProfile } from '@/lib/profile'
 import { getAppStateSnapshot } from '@/state/app-state'
-import { useSqlEditorV2StateSnapshot } from '@/state/sql-editor-v2'
+import { useSqlEditorV2StateSnapshot } from '@/state/sql-editor/sql-editor-state'
 
 export const SQLEditorMenu = () => {
   const router = useRouter()
@@ -159,7 +159,9 @@ export const SQLEditorMenu = () => {
             ) : (
               <InnerSideBarFilterSortDropdown
                 value={sort}
-                onValueChange={(value: 'name' | 'inserted_at') => setSort(value)}
+                onValueChange={(value) => {
+                  if (value === 'name' || value === 'inserted_at') setSort(value)
+                }}
               >
                 <InnerSideBarFilterSortDropdownItem key="name" value="name">
                   Alphabetical

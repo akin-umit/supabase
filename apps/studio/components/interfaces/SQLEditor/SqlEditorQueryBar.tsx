@@ -21,7 +21,8 @@ import { useLocalStorageQuery } from '@/hooks/misc/useLocalStorage'
 import { IS_PLATFORM } from '@/lib/constants'
 import { hotkeyToKeys } from '@/state/shortcuts/formatShortcut'
 import { SHORTCUT_DEFINITIONS, SHORTCUT_IDS } from '@/state/shortcuts/registry'
-import { useSqlEditorV2StateSnapshot } from '@/state/sql-editor-v2'
+import { useSqlEditorSessionSnapshot } from '@/state/sql-editor/sql-editor-session-state'
+import { useSqlEditorV2StateSnapshot } from '@/state/sql-editor/sql-editor-state'
 
 export type SqlEditorQueryBarProps = {
   id: string
@@ -42,6 +43,7 @@ export function SqlEditorQueryBar({
 }: SqlEditorQueryBarProps) {
   const { ref } = useParams()
   const snapV2 = useSqlEditorV2StateSnapshot()
+  const sessionSnap = useSqlEditorSessionSnapshot()
 
   const [intelliSenseEnabled, setIntellisenseEnabled] = useLocalStorageQuery(
     LOCAL_STORAGE_KEYS.SQL_EDITOR_INTELLISENSE,
@@ -72,7 +74,7 @@ export function SqlEditorQueryBar({
   }
 
   const onSelectDatabase = (databaseId: string) => {
-    snapV2.resetResults(id)
+    sessionSnap.resetResults(id)
     setLastSelectedDb(databaseId)
   }
 

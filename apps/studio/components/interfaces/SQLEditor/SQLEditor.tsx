@@ -12,7 +12,7 @@ import { IS_PLATFORM, LOCAL_STORAGE_KEYS, useFlag, useParams } from 'common'
 import { Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { cn, ResizableHandle, ResizablePanel, ResizablePanelGroup } from 'ui'
 
@@ -51,7 +51,6 @@ import {
 } from '@/components/interfaces/ExplainVisualizer/ExplainVisualizer.utils'
 import { SIDEBAR_KEYS } from '@/components/layouts/ProjectLayout/LayoutSidebar/LayoutSidebarProvider'
 import ResizableAIWidget from '@/components/ui/AIEditor/ResizableAIWidget'
-import { GridFooter } from '@/components/ui/GridFooter'
 import { useSqlTitleGenerateMutation } from '@/data/ai/sql-title-mutation'
 import { useDatabaseEventTriggersQuery } from '@/data/database-event-triggers/database-event-triggers-query'
 import { constructHeaders, isValidConnString } from '@/data/fetchers'
@@ -78,8 +77,12 @@ import {
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import { useShortcut } from '@/state/shortcuts/useShortcut'
 import { useSidebarManagerSnapshot } from '@/state/sidebar-manager-state'
-import { getSqlEditorV2StateSnapshot, useSqlEditorV2StateSnapshot } from '@/state/sql-editor-v2'
+import { useSqlEditorDiffRequestSnapshot } from '@/state/sql-editor/sql-editor-diff-request'
 import { useSqlEditorSessionSnapshot } from '@/state/sql-editor/sql-editor-session-state'
+import {
+  getSqlEditorV2StateSnapshot,
+  useSqlEditorV2StateSnapshot,
+} from '@/state/sql-editor/sql-editor-state'
 import { createTabId, useTabsStateSnapshot } from '@/state/tabs'
 
 // Load the monaco editor client-side only (does not behave well server-side)
@@ -107,10 +110,10 @@ export const SQLEditor = () => {
   const { openSidebar } = useSidebarManagerSnapshot()
   const snapV2 = useSqlEditorV2StateSnapshot()
   const sessionSnap = useSqlEditorSessionSnapshot()
+  const diffRequest = useSqlEditorDiffRequestSnapshot()
   const getImpersonatedRoleState = useGetImpersonatedRoleState()
   const databaseSelectorState = useDatabaseSelectorStateSnapshot()
   const { aiOptInLevel } = useOrgAiOptInLevel()
-  const showPrettyExplain = useFlag('ShowPrettyExplain')
 
   // [Ali] Kill switch to hide the SQL Editor Explain tab and its entry points
   const disablePrettyExplain = useFlag('DisablePrettyExplainOnSqlEditor')
@@ -140,6 +143,9 @@ export const SQLEditor = () => {
   const [potentialIssues, setPotentialIssues] = useState<PotentialIssues>()
 
   const [showWidget, setShowWidget] = useState(false)
+  // Bumped on every editor mount (including the keyed remount on snippet switch)
+  // so a diff request that arrived before the editor was ready gets re-processed.
+  const [editorMountCount, setEditorMountCount] = useState(0)
   const [activeUtilityTab, setActiveUtilityTab] = useState<string>('results')
 
   const refocusEditor = useCallback(() => {
@@ -216,7 +222,7 @@ export const SQLEditor = () => {
       if (id) {
         sessionSnap.addResult(id, data.result, vars.autoLimit)
 
-        if (!disablePrettyExplain && showPrettyExplain && isExplainQuery(data.result)) {
+        if (!disablePrettyExplain && isExplainQuery(data.result)) {
           sessionSnap.addExplainResult(id, data.result)
           setActiveUtilityTab('explain')
         } else if (activeUtilityTab === 'explain') {
@@ -557,6 +563,8 @@ export const SQLEditor = () => {
   )
 
   const onMount = (editor: IStandaloneCodeEditor) => {
+    setEditorMountCount((count) => count + 1)
+
     const tabId = createTabId('sql', { id })
     const tabData = tabs.tabsMap[tabId]
 
@@ -812,30 +820,40 @@ export const SQLEditor = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuccessReadReplicas, databases, ref])
 
-  useEffect(() => {
-    if (snapV2.diffContent !== undefined) {
-      const { diffType, sql }: { diffType: DiffType; sql: string } = snapV2.diffContent
-      const editorModel = editorRef.current?.getModel()
-      if (!editorModel) return
+  const drainDiffRequest = useEffectEvent(() => {
+    const request = diffRequest.pending
+    if (request === undefined) return
 
-      const existingValue = editorRef.current?.getValue() ?? ''
-      if (existingValue.length === 0) {
-        // if the editor is empty, just copy over the code
-        editorRef.current?.executeEdits('apply-ai-message', [
-          {
-            text: `${sql}`,
-            range: editorModel.getFullModelRange(),
-          },
-        ])
-      } else {
-        const currentSql = editorRef.current?.getValue()
-        const diff = { original: currentSql || '', modified: sql }
-        setSourceSqlDiff(diff)
-        setSelectedDiffType(diffType)
-      }
+    const editorModel = editorRef.current?.getModel()
+    // Editor isn't ready yet; leave the request pending. editorMountCount bumps
+    // on mount and re-runs this effect, so the request applies once mounted.
+    if (!editorModel) return
+
+    const { diffType, sql } = request
+    const existingValue = editorRef.current?.getValue() ?? ''
+    if (existingValue.length === 0) {
+      // if the editor is empty, just copy over the code
+      editorRef.current?.executeEdits('apply-ai-message', [
+        {
+          text: `${sql}`,
+          range: editorModel.getFullModelRange(),
+        },
+      ])
+    } else {
+      const currentSql = editorRef.current?.getValue()
+      const diff = { original: currentSql || '', modified: sql }
+      setSourceSqlDiff(diff)
+      setSelectedDiffType(diffType)
     }
+
+    // One-shot: drain the request so it can't re-apply to a later editor or session.
+    diffRequest.consumeDiffRequest()
+  })
+  useEffect(() => {
+    drainDiffRequest()
+    // until we can upgrade eslint to ignore useEffectEvent
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snapV2.diffContent])
+  }, [diffRequest.pending, editorMountCount])
 
   // We want to check if the diff editor is mounted and if it is, we want to show the widget
   // We also want to cleanup the widget when the diff editor is closed
