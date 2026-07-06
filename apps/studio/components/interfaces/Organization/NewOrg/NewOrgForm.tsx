@@ -298,13 +298,17 @@ export const NewOrgForm = ({
   }
 
   const onOrganizationCreated = (org: { slug: string }) => {
-    if (submittedTier.current) {
-      track(
-        'organization_creation_completed',
-        { tier: submittedTier.current },
-        { organization: org.slug }
+    if (!submittedTier.current) {
+      console.warn(
+        'organization_creation_completed emitted without a tier: submittedTier ref was not set before org creation completed'
       )
     }
+
+    track(
+      'organization_creation_completed',
+      submittedTier.current ? { tier: submittedTier.current } : {},
+      { organization: org.slug }
+    )
 
     const prefilledProjectName = user.profile?.username
       ? user.profile.username + `'s Project`

@@ -484,7 +484,7 @@ export interface OrganizationCreationCompletedEvent {
     /**
      * Billing tier provisioned at creation. tier_payg is uncapped PRO.
      */
-    tier: 'tier_free' | 'tier_pro' | 'tier_payg' | 'tier_team'
+    tier?: 'tier_free' | 'tier_pro' | 'tier_payg' | 'tier_team'
   }
   groups: Omit<TelemetryGroups, 'project'>
 }
