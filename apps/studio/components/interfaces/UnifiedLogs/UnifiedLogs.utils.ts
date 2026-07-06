@@ -1,23 +1,29 @@
 import { type Table as TTable } from '@tanstack/react-table'
 import { cn } from 'ui'
 
+import { LOG_TYPES_LABELS } from './UnifiedLogs.constants'
 import { FacetMetadataSchema } from './UnifiedLogs.schema'
 import { LEVELS } from '@/components/ui/DataTable/DataTable.constants'
 
-export const logEventBus = {
-  listeners: new Map<string, Set<(rowId: string) => void>>(),
+export type UnifiedLogType = keyof typeof LOG_TYPES_LABELS
 
-  on(event: 'selectTraceTab', callback: (rowId: string) => void) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set())
-    }
-    this.listeners.get(event)?.add(callback)
-    return () => this.listeners.get(event)?.delete(callback)
-  },
-
-  emit(event: 'selectTraceTab', rowId: string) {
-    this.listeners.get(event)?.forEach((callback) => callback(rowId))
-  },
+export const buildUnifiedLogsUrl = ({
+  projectRef,
+  logType,
+  start,
+  end,
+}: {
+  projectRef: string
+  logType: UnifiedLogType
+  start?: string | Date
+  end?: string | Date
+}) => {
+  const params = new URLSearchParams()
+  params.append('filter', `log_type:eq:${logType}`)
+  if (start && end) {
+    params.set('date', `${new Date(start).valueOf()}-${new Date(end).valueOf()}`)
+  }
+  return `/project/${projectRef}/logs?${params.toString()}`
 }
 
 export const getFacetedUniqueValues = <TData>(facets?: Record<string, FacetMetadataSchema>) => {
@@ -111,6 +117,9 @@ export function formatServiceTypeForDisplay(serviceType: string): string {
     postgres: 'Postgres',
     auth: 'Auth',
     storage: 'Storage',
+    realtime: 'Realtime',
+    supavisor: 'Supavisor',
+    pgbouncer: 'PgBouncer',
   }
 
   return specialCases[serviceType.toLowerCase()] || serviceType

@@ -24,23 +24,6 @@ const formatStorageDate = (dateString: string): string => {
 // NETWORK FIELDS
 // =============================================================================
 
-// Field configurations - using filterable field IDs where possible
-export const originFields: BlockFieldConfig[] = [
-  {
-    id: 'date', // Matches filterFields 'date' (timerange) - FILTERABLE
-    label: 'Time',
-    getValue: (data) => {
-      if (!data?.timestamp && !data?.date) return null
-      try {
-        const timestamp = data?.timestamp || data?.date
-        return new Date(timestamp).toLocaleString()
-      } catch {
-        return 'Invalid date'
-      }
-    },
-  },
-]
-
 // Primary Network Fields (Always Visible) - FILTERABLE
 export const networkPrimaryFields: BlockFieldConfig[] = [
   {
@@ -689,6 +672,20 @@ export const postgresPrimaryFields: BlockFieldConfig[] = [
     label: 'User',
     getValue: (data, enrichedData) => enrichedData?.database_user || data?.database_user,
     requiresEnrichedData: true,
+  },
+  {
+    id: 'query',
+    label: 'Query',
+    getValue: (data, enrichedData) => enrichedData?.query || data?.query,
+    requiresEnrichedData: true,
+    wrap: true,
+  },
+  {
+    id: 'detail',
+    label: 'Details',
+    getValue: (data, enrichedData) => enrichedData?.detail || data?.detail,
+    requiresEnrichedData: true,
+    wrap: true,
   },
 ]
 

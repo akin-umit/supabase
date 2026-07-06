@@ -9,11 +9,13 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  type ChartConfig,
 } from 'ui'
 import { ChartEmptyState, ChartLoadingState } from 'ui-patterns/Chart'
 import { LogsBarChart } from 'ui-patterns/LogsBarChart'
 
 import type { LogsBarChartDatum } from '../ProjectHome/ProjectUsage.metrics'
+import type { UnifiedLogType } from '../UnifiedLogs/UnifiedLogs.utils'
 import { getHealthStatus, type ServiceKey } from './ObservabilityOverview.utils'
 
 type ServiceConfig = {
@@ -21,6 +23,7 @@ type ServiceConfig = {
   name: string
   description: string
   reportUrl?: string
+  logType: UnifiedLogType
   logsUrl: string
 }
 
@@ -36,7 +39,7 @@ type ServiceData = {
 export type ServiceHealthTableProps = {
   services: ServiceConfig[]
   serviceData: Record<string, ServiceData>
-  onBarClick: (logsUrl: string) => (datum: LogsBarChartDatum) => void
+  onBarClick: (service: ServiceConfig) => (datum: LogsBarChartDatum) => void
   datetimeFormat: string
 }
 
@@ -45,6 +48,12 @@ const colorClassMap: Record<string, string> = {
   destructive: 'bg-destructive',
   warning: 'bg-warning',
   brand: 'bg-brand',
+}
+
+const LEVEL_CHART_CONFIG: ChartConfig = {
+  error_count: { label: 'Errors' },
+  warning_count: { label: 'Warnings' },
+  ok_count: { label: 'Infos' },
 }
 
 const SERVICE_DESCRIPTIONS: Record<ServiceKey, string> = {
@@ -146,7 +155,7 @@ const ServiceCell = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                type="text"
+                variant="text"
                 size="tiny"
                 className="relative z-10 px-1 text-foreground-lighter group-hover:text-foreground transition-colors shrink-0"
                 aria-label={`Go to ${service.name} report`}
@@ -169,7 +178,9 @@ const ServiceCell = ({
           <LogsBarChart
             isFullHeight
             hideDateRange
+            hideXAxis
             data={data.eventChartData}
+            chartConfig={LEVEL_CHART_CONFIG}
             DateTimeFormat={datetimeFormat}
             onBarClick={onBarClick}
             EmptyState={<ChartEmptyState className="h-full" description="No traffic" />}
@@ -198,19 +209,21 @@ export const ServiceHealthTable = ({
 
               const isFirst = index === 0
               const isLeftColumn = !isFirst && (index - 1) % 2 === 0
-              const isLastService = index === services.length - 1
+              const restCount = services.length - 1
+              const lastRowCount = restCount % 2 === 0 ? 2 : 1
+              const isInLastRow = !isFirst && index >= services.length - lastRowCount
 
               return (
                 <ServiceCell
                   key={service.key}
                   service={service}
                   data={data}
-                  onBarClick={onBarClick(service.logsUrl)}
+                  onBarClick={onBarClick(service)}
                   datetimeFormat={datetimeFormat}
                   className={cn(
                     'border-default border-b',
                     isFirst && 'md:col-span-2',
-                    isLastService && 'md:border-b-0',
+                    isInLastRow && 'md:border-b-0',
                     isLeftColumn && 'md:border-r'
                   )}
                 />
