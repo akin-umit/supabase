@@ -2514,7 +2514,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Gets the project's last-used API keys from the OTel/ClickHouse backend */
+    /** Gets the project's last-used API keys */
     get: operations['ApiKeysLastUsedController_getApiKeysLastUsed']
     put?: never
     post?: never
