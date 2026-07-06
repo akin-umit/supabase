@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as Sentry from '@sentry/nextjs'
 import { Elements } from '@stripe/react-stripe-js'
 import type { PaymentIntentResult, PaymentMethod, StripeElementsOptions } from '@stripe/stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
@@ -84,6 +83,18 @@ const formSchema = organizationDetailsSchema.extend({
 })
 
 type FormState = z.infer<typeof formSchema>
+
+type OrgTier = 'tier_free' | 'tier_pro' | 'tier_payg' | 'tier_team'
+
+/**
+ * Derives the telemetry tier from the (non-null) submitted form values. This is the single source
+ * of truth for translating a plan + spend cap into a tier, so callers can never emit an
+ * organization creation event without a valid tier.
+ */
+const deriveTier = (plan: (typeof plans)[number], spendCap: boolean): OrgTier => {
+  const dbTier = plan === 'PRO' && !spendCap ? 'PAYG' : plan
+  return ('tier_' + dbTier.toLowerCase()) as OrgTier
+}
 
 const stripePromise = loadStripe(STRIPE_PUBLIC_KEY)
 
@@ -250,7 +261,10 @@ export const NewOrgForm = ({
       if ('pending_payment_intent_secret' in org && org.pending_payment_intent_secret) {
         setPaymentIntentSecret(org.pending_payment_intent_secret)
       } else {
-        onOrganizationCreated(org as { slug: string })
+        onOrganizationCreated(
+          org as { slug: string },
+          deriveTier(form.getValues('plan'), form.getValues('spend_cap'))
+        )
       }
     },
     onError: (data) => {
@@ -263,7 +277,10 @@ export const NewOrgForm = ({
   const { mutate: confirmPendingSubscriptionChange } = useConfirmPendingSubscriptionCreateMutation({
     onSuccess: (data) => {
       if (data && 'slug' in data) {
-        onOrganizationCreated({ slug: data.slug })
+        onOrganizationCreated(
+          { slug: data.slug },
+          deriveTier(form.getValues('plan'), form.getValues('spend_cap'))
+        )
       }
     },
     onError: (error) => {
@@ -298,18 +315,8 @@ export const NewOrgForm = ({
     }
   }
 
-  const onOrganizationCreated = (org: { slug: string }) => {
-    if (submittedTier.current) {
-      track(
-        'organization_creation_completed',
-        { tier: submittedTier.current },
-        { organization: org.slug }
-      )
-    } else {
-      Sentry.captureMessage(
-        'organization_creation_completed not emitted: submittedTier ref was not set before org creation completed'
-      )
-    }
+  const onOrganizationCreated = (org: { slug: string }, tier: OrgTier) => {
+    track('organization_creation_completed', { tier }, { organization: org.slug })
 
     const prefilledProjectName = user.profile?.username
       ? user.profile.username + `'s Project`
@@ -337,8 +344,6 @@ export const NewOrgForm = ({
     } as StripeElementsOptions
   }, [paymentIntentSecret, resolvedTheme])
 
-  const submittedTier = useRef<'tier_free' | 'tier_pro' | 'tier_payg' | 'tier_team' | null>(null)
-
   async function createOrg(
     formValues: z.infer<typeof formSchema>,
     paymentMethodId?: string,
@@ -348,13 +353,8 @@ export const NewOrgForm = ({
       tax_id: CustomerTaxId | null
     }
   ) {
-    const dbTier = formValues.plan === 'PRO' && !formValues.spend_cap ? 'PAYG' : formValues.plan
-    const tier = ('tier_' + dbTier.toLowerCase()) as
-      | 'tier_payg'
-      | 'tier_pro'
-      | 'tier_free'
-      | 'tier_team'
-    submittedTier.current = tier
+    const isFreeTier = formValues.plan === 'FREE'
+    const tier = deriveTier(formValues.plan, formValues.spend_cap)
 
     createOrganization({
       name: formValues.name,
@@ -362,9 +362,9 @@ export const NewOrgForm = ({
       tier,
       ...(formValues.kind == 'COMPANY' ? { size: formValues.size } : {}),
       payment_method: paymentMethodId,
-      billing_name: dbTier === 'FREE' ? undefined : customerData?.billing_name,
-      address: dbTier === 'FREE' ? null : customerData?.address,
-      tax_id: dbTier === 'FREE' ? undefined : (customerData?.tax_id ?? undefined),
+      billing_name: isFreeTier ? undefined : customerData?.billing_name,
+      address: isFreeTier ? null : customerData?.address,
+      tax_id: isFreeTier ? undefined : (customerData?.tax_id ?? undefined),
     })
   }
 
