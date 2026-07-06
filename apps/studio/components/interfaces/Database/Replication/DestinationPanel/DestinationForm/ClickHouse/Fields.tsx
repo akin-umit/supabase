@@ -80,6 +80,8 @@ export const ClickHouseFields = ({ form }: { form: UseFormReturn<DestinationPane
                       <Button
                         variant="default"
                         className="w-7"
+                        title={showPassword ? 'Hide password' : 'Show password'}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                         icon={showPassword ? <Eye /> : <EyeOff />}
                         onClick={() => setShowPassword(!showPassword)}
                       />
