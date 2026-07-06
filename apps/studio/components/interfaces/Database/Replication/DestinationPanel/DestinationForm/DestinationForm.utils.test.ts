@@ -72,12 +72,12 @@ const baseSnowflakeFormData = {
   ducklakeS3UseSsl: undefined,
   ducklakeMetadataSchema: undefined,
   snowflakeAccountId: ' MYORG-MYACCOUNT ',
-  snowflakeUser: ' ETL_USER ',
+  snowflakeUser: ' PIPELINES_USER ',
   snowflakePrivateKey: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
   snowflakePrivateKeyPassphrase: ' secret passphrase ',
   snowflakeDatabase: ' ANALYTICS ',
   snowflakeSchema: ' PUBLIC ',
-  snowflakeRole: ' ETL_ROLE ',
+  snowflakeRole: ' PIPELINES_ROLE ',
 }
 
 const baseClickHouseFormData = {
@@ -191,6 +191,42 @@ describe('DestinationForm.utils DuckLake', () => {
       { path: 'ducklakeS3SecretAccessKey', message: 'S3 Secret Access Key is required' },
       { path: 'ducklakeS3Region', message: 'S3 Region is required' },
       { path: 'ducklakeS3Endpoint', message: 'S3 Endpoint is required' },
+    ])
+  })
+
+  it('allows omitted DuckLake secrets in edit mode', () => {
+    const issues = getDucklakeValidationIssues(
+      {
+        ducklakeCatalogUrl: '',
+        ducklakeDataPath: 's3://bucket/path',
+        ducklakeS3AccessKeyId: '',
+        ducklakeS3SecretAccessKey: '',
+        ducklakeS3Region: 'eu-west-1',
+        ducklakeS3Endpoint: 's3.example.com',
+        ducklakeMetadataSchema: '',
+      },
+      { secretsOptional: true }
+    )
+
+    expect(issues).toEqual([])
+  })
+
+  it('requires both DuckLake S3 key fields when replacing one secret in edit mode', () => {
+    const issues = getDucklakeValidationIssues(
+      {
+        ducklakeCatalogUrl: '',
+        ducklakeDataPath: 's3://bucket/path',
+        ducklakeS3AccessKeyId: 'access-key',
+        ducklakeS3SecretAccessKey: '',
+        ducklakeS3Region: 'eu-west-1',
+        ducklakeS3Endpoint: 's3.example.com',
+        ducklakeMetadataSchema: '',
+      },
+      { secretsOptional: true }
+    )
+
+    expect(issues).toEqual([
+      { path: 'ducklakeS3SecretAccessKey', message: 'S3 Secret Access Key is required' },
     ])
   })
 
@@ -370,7 +406,7 @@ describe('DestinationForm.utils Snowflake', () => {
     expect(config).toEqual({
       snowflake: {
         accountId: 'MYORG-MYACCOUNT',
-        user: 'ETL_USER',
+        user: 'PIPELINES_USER',
         privateKey: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
         privateKeyPassphrase: undefined,
         database: 'ANALYTICS',
@@ -395,12 +431,12 @@ describe('DestinationForm.utils Snowflake', () => {
     expect(config).toEqual({
       snowflake: {
         accountId: 'MYORG-MYACCOUNT',
-        user: 'ETL_USER',
+        user: 'PIPELINES_USER',
         privateKey: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
         privateKeyPassphrase: ' secret passphrase ',
         database: 'ANALYTICS',
         schema: 'PUBLIC',
-        role: 'ETL_ROLE',
+        role: 'PIPELINES_ROLE',
       },
     })
     expect(createS3AccessKey).not.toHaveBeenCalled()
@@ -423,6 +459,21 @@ describe('DestinationForm.utils Snowflake', () => {
       { path: 'snowflakeDatabase', message: 'Database is required' },
       { path: 'snowflakeSchema', message: 'Schema is required' },
     ])
+  })
+
+  it('allows an omitted Snowflake private key in edit mode', () => {
+    const issues = getSnowflakeValidationIssues(
+      {
+        snowflakeAccountId: 'MYORG-MYACCOUNT',
+        snowflakeUser: 'PIPELINES_USER',
+        snowflakePrivateKey: '',
+        snowflakeDatabase: 'ANALYTICS',
+        snowflakeSchema: 'PUBLIC',
+      },
+      { secretsOptional: true }
+    )
+
+    expect(issues).toEqual([])
   })
 })
 
@@ -546,6 +597,19 @@ describe('DestinationForm.utils BigQuery', () => {
 
     expect(issues).toEqual([])
   })
+
+  it('allows an omitted BigQuery service account key in edit mode', () => {
+    const issues = getBigQueryValidationIssues(
+      {
+        projectId: 'my-project',
+        datasetId: 'my_dataset',
+        serviceAccountKey: '',
+      },
+      { secretsOptional: true }
+    )
+
+    expect(issues).toEqual([])
+  })
 })
 
 describe('DestinationForm.utils Analytics Bucket', () => {
@@ -611,6 +675,56 @@ describe('DestinationForm.utils Analytics Bucket', () => {
     })
 
     expect(issues).toEqual([])
+  })
+
+  it('allows omitted S3 key fields in edit mode', () => {
+    const issues = getAnalyticsBucketValidationIssues(
+      {
+        warehouseName: 'bucket',
+        namespace: 'analytics',
+        newNamespaceName: '',
+        s3Region: 'us-east-1',
+        s3AccessKeyId: '',
+        s3SecretAccessKey: '',
+      },
+      { secretsOptional: true }
+    )
+
+    expect(issues).toEqual([])
+  })
+
+  it('allows an omitted S3 secret for an unchanged Analytics Bucket key in edit mode', () => {
+    const issues = getAnalyticsBucketValidationIssues(
+      {
+        warehouseName: 'bucket',
+        namespace: 'analytics',
+        newNamespaceName: '',
+        s3Region: 'us-east-1',
+        s3AccessKeyId: 'stored-key',
+        s3SecretAccessKey: '',
+      },
+      { secretsOptional: true, storedS3AccessKeyId: 'stored-key' }
+    )
+
+    expect(issues).toEqual([])
+  })
+
+  it('requires an S3 secret when replacing an Analytics Bucket key in edit mode', () => {
+    const issues = getAnalyticsBucketValidationIssues(
+      {
+        warehouseName: 'bucket',
+        namespace: 'analytics',
+        newNamespaceName: '',
+        s3Region: 'us-east-1',
+        s3AccessKeyId: 'new-key',
+        s3SecretAccessKey: '',
+      },
+      { secretsOptional: true, storedS3AccessKeyId: 'stored-key' }
+    )
+
+    expect(issues).toEqual([
+      { path: 's3SecretAccessKey', message: 'S3 Secret Access Key is required' },
+    ])
   })
 
   it('returns no issues for a complete configuration', () => {
