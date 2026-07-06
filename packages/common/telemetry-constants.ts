@@ -3357,6 +3357,7 @@ export interface UnifiedLogsRowClickedEvent {
       | 'realtime'
       | 'supavisor'
       | 'pgbouncer'
+      | 'database upgrades'
   }
   groups: TelemetryGroups
 }

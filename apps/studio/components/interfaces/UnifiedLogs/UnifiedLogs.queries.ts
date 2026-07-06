@@ -64,6 +64,7 @@ const LOG_TYPE_CONDITION: Record<string, SafeLogSqlFragment> = {
   realtime: safeSql`source = 'realtime_logs'`,
   supavisor: safeSql`source = 'supavisor_logs'`,
   pgbouncer: safeSql`source = 'pgbouncer_logs'`,
+  'database upgrades': safeSql`source = 'pg_upgrade_logs'`,
 }
 
 // Derived `log_type` column for SELECT / GROUP BY / countIf use.
@@ -79,6 +80,7 @@ const LOG_TYPE_EXPR: SafeLogSqlFragment = safeSql`CASE
       WHEN source = 'realtime_logs' THEN 'realtime'
       WHEN source = 'supavisor_logs' THEN 'supavisor'
       WHEN source = 'pgbouncer_logs' THEN 'pgbouncer'
+      WHEN source = 'pg_upgrade_logs' THEN 'database upgrades'
       ELSE source
     END`
 
