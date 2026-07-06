@@ -115,7 +115,7 @@ async function updateDestinationPipeline(
       clickhouse: {
         url,
         user,
-        password,
+        password: optionalSecret(password),
         database,
         engine,
       },

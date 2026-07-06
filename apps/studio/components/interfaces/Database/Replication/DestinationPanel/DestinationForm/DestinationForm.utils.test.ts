@@ -484,7 +484,7 @@ describe('DestinationForm.utils ClickHouse', () => {
       selectedType: 'ClickHouse',
       data: {
         ...baseClickHouseFormData,
-        clickhousePassword: '   ',
+        clickhousePassword: '',
       },
     })
 
@@ -515,7 +515,7 @@ describe('DestinationForm.utils ClickHouse', () => {
       clickHouse: {
         url: 'https://your-cluster.clickhouse.cloud:8443',
         user: 'default',
-        password: 'secret password',
+        password: ' secret password ',
         database: 'analytics',
         engine: 'replacing_merge_tree',
       },

@@ -179,7 +179,7 @@ const buildClickHouseConfig = (
 ): ClickHouseDestinationConfig => ({
   url: normalizeRequiredString(data.clickhouseUrl),
   user: normalizeRequiredString(data.clickhouseUser),
-  password: normalizeOptionalString(data.clickhousePassword),
+  password: normalizeOptionalUntrimmedString(data.clickhousePassword),
   database: normalizeRequiredString(data.clickhouseDatabase),
   engine: data.clickhouseEngine,
 })
