@@ -46,6 +46,13 @@ services:
       - "host.docker.internal:host-gateway"
 
   studio:
+    # docker/docker-compose.yml pins an older Studio build than the e2e suite
+    # in this branch expects (e.g. the RLS Policies page moved in a July 1
+    # restructuring the pinned 2026.06.03 image predates, 404ing the route
+    # this suite navigates to). Bumping the shared default is a separate,
+    # coordinated version bump (see docker/versions.md) — override it here
+    # instead, scoped to just this e2e run.
+    image: supabase/studio:2026.07.06-sha-66cf431
     # Publish Studio so the Playwright e2e suite can reach it on the host.
     ports:
       - "8082:3000"
