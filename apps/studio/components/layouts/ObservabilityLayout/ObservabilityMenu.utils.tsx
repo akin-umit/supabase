@@ -63,6 +63,11 @@ export function generateObservabilityMenuItems(
             shortcutId: SHORTCUT_IDS.NAV_OBSERVABILITY_QUERY_PERFORMANCE,
           },
         ]),
+    {
+      name: 'Database Activity',
+      key: 'database-activity',
+      url: `/project/${ref}/observability/database-activity${preservedQueryParams}`,
+    },
     ...(isPlatform
       ? [
           {
