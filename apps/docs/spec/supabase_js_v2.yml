@@ -575,11 +575,11 @@ functions:
     notes: |
       The OAuth Server API allows you to build custom OAuth consent screens for your application.
       Only relevant when the OAuth 2.1 server is enabled in Supabase Auth.
-  - id: auth-js-authoauthserverapi-approveauthorization
+  - id: oauth-approve-authorization
     $ref: '@supabase/auth-js.AuthOAuthServerApi.approveAuthorization'
-  - id: auth-js-authoauthserverapi-denyauthorization
+  - id: oauth-deny-authorization
     $ref: '@supabase/auth-js.AuthOAuthServerApi.denyAuthorization'
-  - id: auth-js-authoauthserverapi-getauthorizationdetails
+  - id: oauth-get-authorization-details
     $ref: '@supabase/auth-js.AuthOAuthServerApi.getAuthorizationDetails'
   - id: auth-js-authoauthserverapi-listgrants
     $ref: '@supabase/auth-js.AuthOAuthServerApi.listGrants'

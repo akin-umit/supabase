@@ -55,6 +55,8 @@ const HEADER_IDS = new Set([
   'passkey-api',
   'admin-api',
   'admin-passkey-api',
+  'admin-custom-providers-api',
+  'oauth-server-api',
   'file-buckets',
 ])
 

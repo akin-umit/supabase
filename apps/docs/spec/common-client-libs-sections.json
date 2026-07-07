@@ -812,21 +812,21 @@
         "type": "function",
         "items": [
           {
-            "id": "auth-js-authoauthserverapi-getauthorizationdetails",
+            "id": "oauth-get-authorization-details",
             "title": "Get authorization details",
             "slug": "auth-admin-oauth-getauthorizationdetails",
             "product": "auth-admin",
             "type": "function"
           },
           {
-            "id": "auth-js-authoauthserverapi-approveauthorization",
+            "id": "oauth-approve-authorization",
             "title": "Approve authorization",
             "slug": "auth-admin-oauth-approveauthorization",
             "product": "auth-admin",
             "type": "function"
           },
           {
-            "id": "auth-js-authoauthserverapi-denyauthorization",
+            "id": "oauth-deny-authorization",
             "title": "Deny authorization",
             "slug": "auth-admin-oauth-denyauthorization",
             "product": "auth-admin",
@@ -943,6 +943,51 @@
                 "id": "admin-delete-passkey",
                 "title": "Delete a passkey",
                 "slug": "auth-admin-passkey-deletepasskey",
+                "product": "auth-admin",
+                "type": "function"
+              }
+            ]
+          },
+          {
+            "id": "admin-custom-providers-api",
+            "isFunc": false,
+            "title": "Custom Provider Admin",
+            "slug": "auth-admin-customproviders-api",
+            "product": "auth-admin",
+            "type": "function",
+            "items": [
+              {
+                "id": "admin-custom-providers-list",
+                "title": "List custom providers",
+                "slug": "auth-admin-customproviders-listproviders",
+                "product": "auth-admin",
+                "type": "function"
+              },
+              {
+                "id": "admin-custom-providers-create",
+                "title": "Create a custom provider",
+                "slug": "auth-admin-customproviders-createprovider",
+                "product": "auth-admin",
+                "type": "function"
+              },
+              {
+                "id": "admin-custom-providers-get",
+                "title": "Get a custom provider",
+                "slug": "auth-admin-customproviders-getprovider",
+                "product": "auth-admin",
+                "type": "function"
+              },
+              {
+                "id": "admin-custom-providers-update",
+                "title": "Update a custom provider",
+                "slug": "auth-admin-customproviders-updateprovider",
+                "product": "auth-admin",
+                "type": "function"
+              },
+              {
+                "id": "admin-custom-providers-delete",
+                "title": "Delete a custom provider",
+                "slug": "auth-admin-customproviders-deleteprovider",
                 "product": "auth-admin",
                 "type": "function"
               }
@@ -1136,6 +1181,13 @@
         "id": "get-channels",
         "title": "Retrieve all channels",
         "slug": "getchannels",
+        "product": "realtime",
+        "type": "function"
+      },
+      {
+        "id": "on-heartbeat",
+        "title": "Listen to heartbeat status",
+        "slug": "onheartbeat",
         "product": "realtime",
         "type": "function"
       },
