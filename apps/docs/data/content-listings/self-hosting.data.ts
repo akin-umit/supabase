@@ -13,6 +13,7 @@ export const selfHostingGetStarted: ContentListingGroup = {
       href: '/guides/self-hosting/docker',
       icon: '/docs/img/icons/docker',
       description: 'Deploy Supabase within your own infrastructure using Docker Compose.',
+      badge: 'Official',
     },
   ],
 }
