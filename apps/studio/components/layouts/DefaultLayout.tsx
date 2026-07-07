@@ -4,6 +4,7 @@ import { PropsWithChildren, useEffect, useState } from 'react'
 import { ResizablePanel, ResizablePanelGroup, SidebarProvider } from 'ui'
 
 import { BannerStack } from '../ui/BannerStack/BannerStack'
+import { CriticalNotificationBannerManager } from '../ui/BannerStack/CriticalNotificationBannerManager'
 import { LayoutHeader } from './Navigation/LayoutHeader/LayoutHeader'
 import MobileNavigationBar from './Navigation/NavigationBar/MobileNavigationBar'
 import { MobileSheetProvider } from './Navigation/NavigationBar/MobileSheetContext'
@@ -124,6 +125,7 @@ export const DefaultLayout = ({
             </div>
 
             <BannerStack />
+            <CriticalNotificationBannerManager />
             <StudioMobileSheetNav />
           </MobileSheetProvider>
         </ProjectContextProvider>

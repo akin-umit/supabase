@@ -11,7 +11,11 @@ export const BANNER_ID = {
   UNIFIED_LOGS: 'unified-logs-banner',
 } as const
 
-export type BannerId = (typeof BANNER_ID)[keyof typeof BANNER_ID]
+export const CRITICAL_NOTIFICATION_BANNER_PRIORITY = 10
+
+export type BannerId =
+  | (typeof BANNER_ID)[keyof typeof BANNER_ID]
+  | `critical-notification:${string}`
 
 export interface Banner {
   id: BannerId
@@ -41,7 +45,7 @@ export const BannerStackProvider = ({ children }: { children: React.ReactNode })
     })
   }, [])
 
-  const dismissBanner = useCallback((id: string) => {
+  const dismissBanner = useCallback((id: BannerId) => {
     setBanners((prev) => prev.map((b) => (b.id === id ? { ...b, isDismissed: true } : b)))
     setTimeout(() => {
       setBanners((prev) => prev.filter((b) => b.id !== id))

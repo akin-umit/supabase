@@ -3478,6 +3478,34 @@ export interface HeaderAdvisorButtonClickedEvent {
 }
 
 /**
+ * User clicked the view details CTA on a critical notification banner.
+ *
+ * @group Events
+ * @source studio
+ */
+export interface CriticalNotificationBannerCtaClickedEvent {
+  action: 'critical_notification_banner_cta_clicked'
+  properties: {
+    notificationId: string
+  }
+  groups: Partial<TelemetryGroups>
+}
+
+/**
+ * User clicked archive on a critical notification banner.
+ *
+ * @group Events
+ * @source studio
+ */
+export interface CriticalNotificationBannerArchiveClickedEvent {
+  action: 'critical_notification_banner_archive_clicked'
+  properties: {
+    notificationId: string
+  }
+  groups: Partial<TelemetryGroups>
+}
+
+/**
  * User clicked the Inline SQL Editor toggle button in the page header.
  *
  * @group Events
@@ -3739,6 +3767,8 @@ export type TelemetryEvent =
   | HeaderConnectButtonClickedEvent
   | HeaderFeedbackDropdownOpenedEvent
   | HeaderAdvisorButtonClickedEvent
+  | CriticalNotificationBannerCtaClickedEvent
+  | CriticalNotificationBannerArchiveClickedEvent
   | HeaderInlineEditorButtonClickedEvent
   | HeaderAssistantButtonClickedEvent
   | HeaderUserDropdownOpenedEvent

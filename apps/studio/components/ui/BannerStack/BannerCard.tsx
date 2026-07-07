@@ -7,24 +7,40 @@ interface BannerCardProps {
   onDismiss?: () => void
   children: React.ReactNode
   className?: string
+  variant?: 'default' | 'critical'
 }
 
-export const BannerCard = ({ onDismiss, children, className }: BannerCardProps) => {
+export const BannerCard = ({
+  onDismiss,
+  children,
+  className,
+  variant = 'default',
+}: BannerCardProps) => {
+  const isCritical = variant === 'critical'
+
   return (
-    <Card className={cn('relative overflow-hidden shadow-lg rounded-2xl', className)}>
-      <div className="absolute -inset-16 z-0 opacity-100 pointer-events-none">
-        <img
-          src={`${BASE_PATH}/img/reports/bg-grafana-dark.svg`}
-          alt="Background pattern"
-          className="w-full h-full object-cover object-right hidden dark:block"
-        />
-        <img
-          src={`${BASE_PATH}/img/reports/bg-grafana-light.svg`}
-          alt="Background pattern"
-          className="w-full h-full object-cover object-right dark:hidden"
-        />
-        <div className="absolute inset-0 bg-linear-to-r from-background-alternative to-transparent" />
-      </div>
+    <Card
+      className={cn(
+        'relative overflow-hidden shadow-lg rounded-2xl',
+        isCritical && 'border-destructive-400',
+        className
+      )}
+    >
+      {!isCritical && (
+        <div className="absolute -inset-16 z-0 opacity-100 pointer-events-none">
+          <img
+            src={`${BASE_PATH}/img/reports/bg-grafana-dark.svg`}
+            alt="Background pattern"
+            className="w-full h-full object-cover object-right hidden dark:block"
+          />
+          <img
+            src={`${BASE_PATH}/img/reports/bg-grafana-light.svg`}
+            alt="Background pattern"
+            className="w-full h-full object-cover object-right dark:hidden"
+          />
+          <div className="absolute inset-0 bg-linear-to-r from-background-alternative to-transparent" />
+        </div>
+      )}
 
       <CardContent className="relative z-10 p-6">
         {onDismiss && (
