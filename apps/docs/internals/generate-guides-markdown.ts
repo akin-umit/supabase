@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { parsePartialVariables, substitutePartialVars } from '~/lib/partials.utils'
 import matter from 'gray-matter'
 import type { Content, Parent, Root } from 'mdast'
 import { fromMarkdown } from 'mdast-util-from-markdown'
@@ -92,10 +93,15 @@ async function inlinePartials(parent: Parent): Promise<void> {
   const next: Content[] = []
   for (const child of parent.children as Content[]) {
     if (isJsx(child) && child.name === '$Partial') {
-      const partialPath = String(propsFrom(child).path ?? '')
+      const props = propsFrom(child)
+      const partialPath = String(props.path ?? '')
       try {
         const raw = await fs.readFile(path.join(PARTIALS_DIR, partialPath), 'utf8')
-        const subtree = parseMdx(matter(raw).content)
+        const content = substitutePartialVars(
+          matter(raw).content,
+          parsePartialVariables(props.variables)
+        )
+        const subtree = parseMdx(content)
         await inlinePartials(subtree)
         next.push(...(subtree.children as Content[]))
       } catch {
