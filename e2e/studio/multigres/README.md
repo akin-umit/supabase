@@ -7,17 +7,19 @@ Studio E2E suite can run against it.
 ## Prerequisites
 
 1. **Docker** running.
-2. **Multigres** running with its gateway on `127.0.0.1:15432`, built on a
-   [`supabase/postgres`](https://hub.docker.com/r/supabase/postgres/tags?name=multigres)
-   `*-multigres` base image so the Supabase roles/schemas/extensions already
-   exist via that image's `initdb` (pick the latest tag matching
-   `*-multigres`, excluding `-orioledb-` and `_amd64`/`_arm64` variants):
+2. **Multigres** running with its gateway on `127.0.0.1:15432`, using the
+   prebuilt [`multigres-cluster-supabase`](https://github.com/multigres/multigres/pkgs/container/multigres-cluster-supabase)
+   image, which is already built on a `supabase/postgres:*-multigres` base so
+   the Supabase roles/schemas/extensions exist via that image's `initdb`.
+   `MULTIGRES_PG_EXTRA_CONF` sets `shared_preload_libraries` so pg_cron/pg_net
+   can load (they can't be enabled at runtime otherwise):
    ```bash
-   git clone https://github.com/multigres/multigres
-   cd multigres
-   MULTIGRES_POSTGRES_IMAGE=supabase/postgres:<tag>-multigres \
-   MULTIGRES_PROVISION_PG_PACKAGES=false \
-   docker compose up --build -d   # wait ~30s for healthy
+   docker run -d --name multigres-multigres-1 \
+     -p 15432:15432 -p 15100:15100 -p 15000:15000 \
+     -e MULTIGRES_NUM_CELLS=2 \
+     -e MULTIGRES_GATEWAY_PG_PORT=15432 \
+     -e MULTIGRES_PG_EXTRA_CONF="shared_preload_libraries = 'pg_cron,pg_net'" \
+     ghcr.io/multigres/multigres-cluster-supabase:latest   # wait ~30s for healthy
    ```
 
 ## Usage
