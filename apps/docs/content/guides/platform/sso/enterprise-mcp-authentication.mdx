@@ -21,11 +21,11 @@ This is Supabase's implementation of the MCP [Enterprise-Managed Authorization](
 
 ## Who's involved
 
-| Party | Role |
-|---|---|
-| **Identity provider (IdP)** (e.g. Okta) | Signs your members in via SSO, and issues the MCP client an ID-JAG scoped for Supabase when asked |
-| **MCP client** (e.g. Claude, Cursor) | The AI tool your members use. It signs the member in to the IdP, requests the ID-JAG, then presents it to Supabase |
-| **Supabase** | Runs the MCP Server your client ultimately calls, and the OAuth server that validates the ID-JAG and issues the access token used to call it |
+| Party                                   | Role                                                                                                                                         |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Identity provider (IdP)** (e.g. Okta) | Signs your members in via SSO, and issues the MCP client an ID-JAG scoped for Supabase when asked                                            |
+| **MCP client** (e.g. Claude, Cursor)    | The AI tool your members use. It signs the member in to the IdP, requests the ID-JAG, then presents it to Supabase                           |
+| **Supabase**                            | Runs the MCP Server your client ultimately calls, and the OAuth server that validates the ID-JAG and issues the access token used to call it |
 
 ## How it works
 
