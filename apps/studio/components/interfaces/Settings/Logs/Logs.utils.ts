@@ -372,6 +372,13 @@ export const resolveLogTimestamp = (value?: string): Dayjs => {
   return value && parsed.isValid() ? parsed : dayjs()
 }
 
+// Like `resolveLogTimestamp` but keeps `null` for "no date selected" instead of defaulting to now.
+export const parseSelectedDate = (value?: string | null): Date | null => {
+  if (!value) return null
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed.toDate() : null
+}
+
 /** calculates how much the chart start datetime should be offset given the current datetime filter params */
 const calcChartStart = (
   params: Partial<LogsEndpointParams>

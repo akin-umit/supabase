@@ -91,7 +91,15 @@ export const FeatureFlagProvider = ({
   ) => Promise<{ settingKey: string; settingValue: boolean | number | string | null | undefined }[]>
 }>) => {
   const { session, isLoading } = useAuth()
-  const userEmail = session?.user?.user_metadata.email ?? session?.user?.email
+  const sessionUser = session?.user
+  // auth-js swaps `session.user` for a proxy that throws on any property access when `userStorage`
+  // is configured but no user is persisted yet. `__isUserNotAvailableProxy` is the one property it allows.
+  const isSessionUserAvailable =
+    !!sessionUser &&
+    (sessionUser as { __isUserNotAvailableProxy?: boolean }).__isUserNotAvailableProxy !== true
+  const userEmail = isSessionUserAvailable
+    ? (sessionUser?.user_metadata?.email ?? sessionUser?.email)
+    : undefined
   const params = useParams()
   const resolvedOrganizationSlug = organizationSlug ?? params.slug
   const resolvedProjectRef = projectRef ?? params.ref

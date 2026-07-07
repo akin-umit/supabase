@@ -18,6 +18,7 @@ import {
 
 import { LOGS_LARGE_DATE_RANGE_DAYS_THRESHOLD } from './Logs.constants'
 import type { DatetimeHelper } from './Logs.types'
+import { parseSelectedDate, resolveLogTimestamp } from './Logs.utils'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { TimeSplitInput } from '@/components/ui/DatePicker/TimeSplitInput'
 import { ShortcutTooltip } from '@/components/ui/ShortcutTooltip'
@@ -139,13 +140,13 @@ export const LogsDatePicker = ({
   useEffect(() => {
     if (!open) {
       setCustomValue('')
-      setStartDate(value.from ? new Date(value.from) : null)
-      const defaultEndDate = value.to ? new Date(value.to) : new Date()
+      setStartDate(parseSelectedDate(value.from))
+      const defaultEndDate = resolveLogTimestamp(value.to).toDate()
       setEndDate(defaultEndDate)
       setCurrentMonth(new Date(defaultEndDate))
 
-      const fromDate = value.from ? new Date(value.from) : null
-      const toDate = value.to ? new Date(value.to) : null
+      const fromDate = parseSelectedDate(value.from)
+      const toDate = parseSelectedDate(value.to)
 
       setStartTime({
         HH: fromDate?.getHours().toString().padStart(2, '0') || '00',
@@ -180,10 +181,10 @@ export const LogsDatePicker = ({
     setOpen(false)
   }
 
-  const [startDate, setStartDate] = useState<Date | null>(value.from ? new Date(value.from) : null)
-  const [endDate, setEndDate] = useState<Date | null>(value.to ? new Date(value.to) : new Date())
+  const [startDate, setStartDate] = useState<Date | null>(parseSelectedDate(value.from))
+  const [endDate, setEndDate] = useState<Date | null>(() => resolveLogTimestamp(value.to).toDate())
   const [currentMonth, setCurrentMonth] = useState<Date>(() =>
-    value.to ? new Date(value.to) : new Date()
+    resolveLogTimestamp(value.to).toDate()
   )
 
   const [startTime, setStartTime] = useState({

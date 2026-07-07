@@ -96,7 +96,9 @@ export const LogsExplorerPage: NextPageWithLayout = () => {
   const { profile } = useProfile()
   const { data: project } = useSelectedProjectQuery()
   const { data: organization } = useSelectedOrganizationQuery()
-  const { ref, q, queryId } = useParams()
+  const { ref, q: rawQ, queryId } = useParams()
+  // `useParams` types this as `string`, but router.query can be `string[]` for repeated keys.
+  const q = Array.isArray(rawQ) ? rawQ[0] : rawQ
   const track = useTrack()
   const projectRef = ref as string
   const { logsShowMetadataIpTemplate } = useIsFeatureEnabled(['logs:show_metadata_ip_template'])
