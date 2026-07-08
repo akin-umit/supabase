@@ -12,6 +12,7 @@ const PageTelemetry = () => {
       API_URL={API_URL}
       hasAcceptedConsent={hasAcceptedConsent}
       enabled={IS_PLATFORM}
+      autocapture
     />
   )
 }

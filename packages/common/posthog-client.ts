@@ -50,7 +50,7 @@ class PostHogClient {
     }
   }
 
-  init(hasConsent: boolean = true) {
+  init(hasConsent: boolean = true, options?: { autocapture?: boolean }) {
     if (this.initStarted || typeof window === 'undefined' || !hasConsent) return
 
     if (!this.config.apiKey) {
@@ -61,7 +61,7 @@ class PostHogClient {
     const config: Partial<PostHogConfig> = {
       api_host: this.config.apiHost,
       ui_host: this.config.uiHost,
-      autocapture: false, // We'll manually track events
+      autocapture: options?.autocapture ?? false,
       capture_pageview: false, // We'll manually track pageviews
       capture_pageleave: false, // We'll manually track page leaves
       loaded: (posthog) => {

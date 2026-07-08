@@ -253,12 +253,14 @@ export const PageTelemetry = ({
   API_URL,
   hasAcceptedConsent,
   enabled = true,
+  autocapture = false,
   organizationSlug,
   projectRef,
 }: {
   API_URL: string
   hasAcceptedConsent: boolean
   enabled?: boolean
+  autocapture?: boolean
   organizationSlug?: string
   projectRef?: string
 }) => {
@@ -315,9 +317,9 @@ export const PageTelemetry = ({
 
   useEffect(() => {
     if (hasAcceptedConsent && IS_PLATFORM) {
-      posthogClient.init(true)
+      posthogClient.init(true, { autocapture })
     }
-  }, [hasAcceptedConsent, IS_PLATFORM])
+  }, [hasAcceptedConsent, IS_PLATFORM, autocapture])
 
   // Waiting for router.isReady before sending to avoid dynamic route placeholders
   useEffect(() => {
