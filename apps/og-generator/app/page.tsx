@@ -180,6 +180,132 @@ function useRenderedImage(endpoint: string, enabled: boolean) {
   return { url, fit, loading, error }
 }
 
+function CopyIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <rect x="9" y="9" width="12" height="12" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M12 3v12m0 0l-4-4m4 4l4-4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ExportRow({
+  label,
+  endpoint,
+  imgUrl,
+  downloadName,
+  copied,
+  onCopy,
+  onDownload,
+}: {
+  label: string
+  endpoint: string
+  imgUrl: string | null
+  downloadName: string
+  copied: boolean
+  onCopy: () => void
+  onDownload: () => void
+}) {
+  const abs = typeof window !== 'undefined' ? window.location.origin + endpoint : endpoint
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-foreground-light">{label}</span>
+      <div className="flex gap-2">
+        <input
+          readOnly
+          value={abs}
+          onFocus={(e) => e.target.select()}
+          className="min-w-0 flex-1 truncate rounded-md border border-default bg-surface-100 px-3 py-2 text-xs text-foreground-light outline-none focus:border-strong"
+        />
+        <button
+          onClick={onCopy}
+          title="Copy URL"
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-default bg-surface-100 px-2.5 py-1 text-xs text-foreground hover:border-strong"
+        >
+          <CopyIcon />
+          {copied ? 'Copied!' : ''}
+        </button>
+        <button
+          onClick={onDownload}
+          disabled={!imgUrl}
+          title="Download"
+          className="flex shrink-0 items-center justify-center rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-background hover:bg-brand/90 disabled:opacity-50"
+        >
+          <DownloadIcon />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function ExportModal({
+  onClose,
+  scale,
+  setScale,
+  rows,
+}: {
+  onClose: () => void
+  scale: 1 | 2
+  setScale: (s: 1 | 2) => void
+  rows: {
+    label: string
+    endpoint: string
+    imgUrl: string | null
+    downloadName: string
+    copied: boolean
+    onCopy: () => void
+    onDownload: () => void
+  }[]
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+    >
+      <div
+        className="flex w-[440px] flex-col gap-4 rounded-xl border border-default bg-background p-5 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">Export images</span>
+          <button
+            onClick={onClose}
+            className="flex h-6 w-6 items-center justify-center rounded text-foreground-light hover:text-foreground"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-foreground-light">
+          <input
+            type="checkbox"
+            checked={scale === 2}
+            onChange={(e) => setScale(e.target.checked ? 2 : 1)}
+          />
+          Export @2x
+        </label>
+
+        <div className="flex flex-col gap-4 border-t border-default pt-4">
+          {rows.map((r) => (
+            <ExportRow key={r.label} {...r} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PreviewCard({
   label,
   width,
@@ -189,9 +315,6 @@ function PreviewCard({
   error,
   alt,
   showSafeArea,
-  copied,
-  onCopy,
-  onDownload,
   children,
 }: {
   label: string
@@ -202,38 +325,18 @@ function PreviewCard({
   error: string | null
   alt: string
   showSafeArea: boolean
-  copied: boolean
-  onCopy: () => void
-  onDownload: () => void
   children?: React.ReactNode
 }) {
   const safeArea = safeAreaInset(width, height)
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-foreground-light">
-          {label}
-          <span className="ml-2 font-normal text-foreground-lighter">
-            {width} × {height}
-            {loading ? ' · rendering…' : ''}
-          </span>
+      <span className="text-xs font-medium text-foreground-light">
+        {label}
+        <span className="ml-2 font-normal text-foreground-lighter">
+          {width} × {height}
+          {loading ? ' · rendering…' : ''}
         </span>
-        <div className="flex gap-2">
-          <button
-            onClick={onCopy}
-            className="rounded-md border border-default bg-surface-100 px-2.5 py-1 text-xs text-foreground hover:border-strong"
-          >
-            {copied ? 'Copied!' : 'Copy URL'}
-          </button>
-          <button
-            onClick={onDownload}
-            disabled={!imgUrl}
-            className="rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-background hover:bg-brand/90 disabled:opacity-50"
-          >
-            Download
-          </button>
-        </div>
-      </div>
+      </span>
 
       <div
         className="relative w-full overflow-hidden rounded-lg border border-default bg-surface-100"
@@ -369,6 +472,7 @@ export default function Page() {
   const [scale, setScale] = useState<1 | 2>(1)
   const [showSafeArea, setShowSafeArea] = useState(false)
   const [inContext, setInContext] = useState<InContextMode>('none')
+  const [exportOpen, setExportOpen] = useState(false)
 
   const [copied, setCopied] = useState<View | null>(null)
 
@@ -475,9 +579,6 @@ export default function Page() {
                   error={og.error}
                   alt={headline}
                   showSafeArea={showSafeArea}
-                  copied={copied === 'og'}
-                  onCopy={() => copyUrl(ogEndpoint, 'og')}
-                  onDownload={() => download(og.url, `og${suffix}.png`)}
                 >
                   <div className="flex flex-col gap-2">
                     {og.fit && (
@@ -530,9 +631,6 @@ export default function Page() {
                   error={thumb.error}
                   alt="Thumbnail preview"
                   showSafeArea={showSafeArea}
-                  copied={copied === 'thumb'}
-                  onCopy={() => copyUrl(thumbEndpoint, 'thumb')}
-                  onDownload={() => download(thumb.url, `thumb${suffix}.png`)}
                 >
                   <div className="flex flex-col gap-2">
                     {!icon && (
@@ -553,6 +651,13 @@ export default function Page() {
             main's p-8/pr-[380px] insets here to land on the same center line. */}
         <div className="pointer-events-none absolute bottom-6 left-8 right-[380px] z-10 flex justify-center">
           <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-default bg-background px-3 py-2 shadow-lg">
+            {showOg && (
+              <>
+                <span className="pl-1 text-xs font-medium text-foreground-light">Preview</span>
+                <Segmented value={inContext} onChange={setInContext} options={IN_CONTEXT_OPTS} />
+                <div className="h-5 border-l border-default" />
+              </>
+            )}
             <button
               type="button"
               onClick={() => setShowSafeArea((v) => !v)}
@@ -565,12 +670,6 @@ export default function Page() {
                 <rect x="4" y="4" width="16" height="16" rx="2" strokeDasharray="0.1 4.2" strokeLinecap="round" />
               </svg>
             </button>
-            {showOg && (
-              <>
-                <div className="h-5 border-l border-default" />
-                <Segmented value={inContext} onChange={setInContext} options={IN_CONTEXT_OPTS} />
-              </>
-            )}
           </div>
         </div>
       </main>
@@ -581,15 +680,13 @@ export default function Page() {
       <aside className="absolute right-4 top-4 bottom-4 z-10 flex w-[340px] flex-col overflow-hidden rounded-xl border border-default bg-background shadow-lg">
         <div className="flex h-14 shrink-0 items-center justify-between border-b border-default px-5">
           <span className="text-sm font-medium text-foreground">Supaimage</span>
-          <label className="flex items-center gap-1.5 text-xs text-foreground-light">
-            <input
-              type="checkbox"
-              id="toggle-scale"
-              checked={scale === 2}
-              onChange={(e) => setScale(e.target.checked ? 2 : 1)}
-            />
-            Export @2x
-          </label>
+          <button
+            type="button"
+            onClick={() => setExportOpen(true)}
+            className="rounded-md border border-default bg-surface-100 px-2.5 py-1 text-xs text-foreground hover:border-strong"
+          >
+            Export images
+          </button>
         </div>
         <div className="flex flex-col overflow-y-auto overflow-x-hidden p-5">
           <Group title="Brand & format">
@@ -829,6 +926,38 @@ export default function Page() {
           </Group>
         </div>
       </aside>
+
+      {exportOpen && (
+        <ExportModal
+          onClose={() => setExportOpen(false)}
+          scale={scale}
+          setScale={setScale}
+          rows={[
+            {
+              label: format.label,
+              endpoint: ogEndpoint,
+              imgUrl: og.url,
+              downloadName: `og${suffix}.png`,
+              copied: copied === 'og',
+              onCopy: () => copyUrl(ogEndpoint, 'og'),
+              onDownload: () => download(og.url, `og${suffix}.png`),
+            },
+            ...(hasThumb
+              ? [
+                  {
+                    label: 'Thumb',
+                    endpoint: thumbEndpoint,
+                    imgUrl: thumb.url,
+                    downloadName: `thumb${suffix}.png`,
+                    copied: copied === 'thumb',
+                    onCopy: () => copyUrl(thumbEndpoint, 'thumb'),
+                    onDownload: () => download(thumb.url, `thumb${suffix}.png`),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      )}
     </div>
   )
 }
