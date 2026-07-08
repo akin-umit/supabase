@@ -12,7 +12,7 @@ import {
 } from './functions.data'
 import { gettingStartedGetStarted } from './getting-started.data'
 import { realtimeExamples, realtimeGetStarted, realtimeResources } from './realtime.data'
-import { selfHostingCommunity, selfHostingGetStarted, selfHostingNextSteps } from './self-hosting.data'
+import { selfHostingCommunity, selfHostingGetStarted } from './self-hosting.data'
 import { storageExamples, storageGetStarted, storageResources } from './storage.data'
 
 const ALL_GROUPS: readonly ContentListingGroup[] = [
@@ -32,7 +32,6 @@ const ALL_GROUPS: readonly ContentListingGroup[] = [
   realtimeExamples,
   realtimeResources,
   selfHostingGetStarted,
-  selfHostingNextSteps,
   selfHostingCommunity,
   storageGetStarted,
   storageExamples,
