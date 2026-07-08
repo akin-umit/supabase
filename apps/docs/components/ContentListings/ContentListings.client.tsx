@@ -78,7 +78,7 @@ function ContentListingsGroup({ group }: { group: ContentListingGroup }) {
                     <GlassPanel
                       title={item.title}
                       icon={item.icon}
-                      hasLightIcon={Boolean(item.icon)}
+                      hasLightIcon={item.hasLightIcon ?? true}
                       badge={item.badge ? <Badge variant="success">{item.badge}</Badge> : undefined}
                     >
                       {item.description}

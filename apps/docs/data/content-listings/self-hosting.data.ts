@@ -30,11 +30,15 @@ export const selfHostingCommunity: ContentListingGroup = {
     {
       title: 'Kubernetes',
       href: 'https://github.com/supabase-community/supabase-kubernetes',
+      icon: '/docs/img/icons/kubernetes-icon',
+      hasLightIcon: false,
       description: 'Helm charts to deploy a Supabase on Kubernetes.',
     },
     {
       title: 'Traefik',
       href: 'https://github.com/supabase-community/supabase-traefik',
+      icon: '/docs/img/icons/traefik-icon',
+      hasLightIcon: false,
       description: 'A self-hosted Supabase setup with Traefik as a reverse proxy.',
     },
   ],
@@ -49,11 +53,13 @@ export const selfHostingResolveIssues: ContentListingGroup = {
     {
       title: 'GitHub Discussions',
       href: 'https://github.com/orgs/supabase/discussions?discussions_q=is%3Aopen+label%3Aself-hosted',
+      icon: '/docs/img/icons/github-icon',
       description: 'Questions, feature requests, and workarounds',
     },
     {
       title: 'GitHub Issues',
       href: 'https://github.com/supabase/supabase/issues?q=is%3Aissue%20state%3Aopen%20label%3Aself-hosted',
+      icon: '/docs/img/icons/github-icon',
       description: 'Known issues',
     },
   ],
@@ -68,11 +74,15 @@ export const selfHostingGetHelp: ContentListingGroup = {
     {
       title: 'Discord',
       href: 'https://discord.supabase.com',
+      icon: '/docs/img/icons/discord-icon',
+      hasLightIcon: false,
       description: 'Real-time chat and community support',
     },
     {
       title: 'Reddit',
       href: 'https://www.reddit.com/r/Supabase/',
+      icon: '/docs/img/icons/reddit-icon',
+      hasLightIcon: false,
       description: 'Official Supabase subreddit',
     },
   ],
@@ -87,6 +97,7 @@ export const selfHostingShareExperience: ContentListingGroup = {
     {
       title: 'GitHub Discussions',
       href: 'https://github.com/orgs/supabase/discussions/39820',
+      icon: '/docs/img/icons/github-icon',
       description: "Self-hosting: What's working (and what's not)?",
     },
   ],
