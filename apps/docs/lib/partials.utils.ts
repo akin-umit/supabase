@@ -14,7 +14,11 @@ export function substitutePartialVars(
   vars: Record<string, string> | undefined
 ): string {
   for (const [key, value] of Object.entries(vars ?? {})) {
-    content = content.replace(new RegExp(`(?<!\\\\)\\{\\{\\s*\\.${key}\\s*\\}\\}`, 'g'), value)
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    content = content.replace(
+      new RegExp(`(?<!\\\\)\\{\\{\\s*\\.${escapedKey}\\s*\\}\\}`, 'g'),
+      () => value
+    )
   }
 
   content = content.replace(/(?<!\\)\{\{\s*\.[\w-]+\s*\}\}/g, '')

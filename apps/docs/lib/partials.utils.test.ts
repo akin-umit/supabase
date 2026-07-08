@@ -32,6 +32,16 @@ describe('substitutePartialVars', () => {
       })
     ).toBe('This partial has hyphenated value, underscored value, and alphanumeric value.')
   })
+
+  it('handles values containing $ replacement patterns literally', () => {
+    expect(substitutePartialVars('Hello {{ .name }}', { name: '$& is literal' })).toBe(
+      'Hello $& is literal'
+    )
+  })
+
+  it('handles keys containing regex metacharacters', () => {
+    expect(substitutePartialVars('Hello {{ .a.b }}', { 'a.b': 'world' })).toBe('Hello world')
+  })
 })
 
 describe('parsePartialVariables', () => {
