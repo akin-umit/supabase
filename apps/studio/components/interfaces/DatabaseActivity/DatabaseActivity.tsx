@@ -37,6 +37,7 @@ import {
   deriveSessions,
   distinctRoles,
   formatDuration,
+  isTerminableSession,
   pluralize,
   roleAppLabel,
   type Session,
@@ -45,6 +46,7 @@ import {
 import { TerminateConnectionModal } from './TerminateConnectionModal'
 import { useDatabaseActivityQuery, useMaxConnectionsQuery } from './useDatabaseActivity'
 import ReportPadding from '@/components/interfaces/Reports/ReportPadding'
+import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { useReadReplicasQuery } from '@/data/read-replicas/replicas-query'
 import { useExecuteSqlMutation } from '@/data/sql/execute-sql-mutation'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
@@ -364,6 +366,7 @@ interface SessionRowProps {
 }
 
 const SessionRow = ({ session, onTerminate }: SessionRowProps) => {
+  const terminable = isTerminableSession(session)
   return (
     <TableRow>
       <TableCell className="font-mono text-foreground-light">{session.pid}</TableCell>
@@ -401,9 +404,22 @@ const SessionRow = ({ session, onTerminate }: SessionRowProps) => {
         )}
       </TableCell>
       <TableCell className="text-right">
-        <Button variant="default" size="tiny" onClick={onTerminate}>
+        <ButtonTooltip
+          variant="default"
+          size="tiny"
+          disabled={!terminable}
+          onClick={onTerminate}
+          tooltip={{
+            content: {
+              side: 'left',
+              text: terminable
+                ? undefined
+                : `${session.role_name ?? 'System'} connections can't be terminated here`,
+            },
+          }}
+        >
           Kill
-        </Button>
+        </ButtonTooltip>
       </TableCell>
     </TableRow>
   )

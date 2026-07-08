@@ -165,6 +165,22 @@ export function roleAppLabel(session: Pick<RawSession, 'role_name' | 'applicatio
   return app ? `${role} · ${app}` : role
 }
 
+// Supabase-managed login roles the dashboard's postgres role can't signal with
+// pg_terminate_backend (it is not a superuser and lacks pg_signal_backend for them).
+const NON_TERMINABLE_ROLES = new Set(['authenticator', 'pgbouncer', 'supavisor'])
+
+/**
+ * Whether the dashboard's postgres role can plausibly terminate this backend.
+ * System/internal connections (authenticator, supabase_*, the pooler) and
+ * roleless background workers are treated as off-limits.
+ */
+export function isTerminableSession(session: Pick<RawSession, 'role_name'>): boolean {
+  const role = session.role_name
+  if (!role) return false
+  if (role.startsWith('supabase_')) return false
+  return !NON_TERMINABLE_ROLES.has(role)
+}
+
 /**
  * Human-readable duration, delegating to the shared query-timing formatter used
  * by Query Performance / Query Insights (e.g. "0.40s", "2m 5s", "1h 1m", "28d 3h 2m").
