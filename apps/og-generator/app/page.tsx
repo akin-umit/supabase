@@ -57,9 +57,21 @@ function Hint({ text }: { text: string }) {
 
 // Section header — deliberately dominant (bold, uppercase, dark, with a divider)
 // so it reads clearly above the lighter option labels within each section.
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
+function Group({
+  title,
+  children,
+  noDivider,
+}: {
+  title: string
+  children: React.ReactNode
+  noDivider?: boolean
+}) {
   return (
-    <section className="flex flex-col gap-3 border-t border-default pt-5 first:border-t-0 first:pt-0">
+    <section
+      className={`flex flex-col gap-3 pt-5 first:pt-0 ${
+        noDivider ? '' : 'border-t border-default first:border-t-0'
+      }`}
+    >
       <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground">{title}</h2>
       {children}
     </section>
@@ -719,7 +731,7 @@ export default function Page() {
           </Group>
 
           {showOg && (
-            <Group title="Layout">
+            <Group title="Layout" noDivider>
               <div className="flex flex-col gap-2">
                 <div className="grid grid-cols-2 gap-2">
                   {activeTemplates.map((t) => (
