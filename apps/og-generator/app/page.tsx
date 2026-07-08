@@ -12,13 +12,7 @@ import {
   NEWSLETTER_TEMPLATES,
   TEMPLATES,
 } from '@/lib/design/templates'
-import {
-  IN_CONTEXT_OPTS,
-  InContextPreview,
-  PREVIEW_THEME_OPTS,
-  type InContextMode,
-  type PreviewTheme,
-} from './InContextPreview'
+import { IN_CONTEXT_OPTS, InContextPreview, type InContextMode } from './InContextPreview'
 
 /**
  * Editor. State maps 1:1 to /api/og query params (the stateless recipe, §6.9).
@@ -513,7 +507,6 @@ export default function Page() {
   const [scale, setScale] = useState<1 | 2>(1)
   const [showSafeArea, setShowSafeArea] = useState(false)
   const [inContext, setInContext] = useState<InContextMode>('none')
-  const [previewTheme, setPreviewTheme] = useState<PreviewTheme>('light')
   const [exportOpen, setExportOpen] = useState(false)
 
   const [copied, setCopied] = useState<View | null>(null)
@@ -646,7 +639,6 @@ export default function Page() {
                 headline={headline}
                 eyebrow={eyebrow.trim() || null}
                 aspect={`${format.width} / ${format.height}`}
-                theme={previewTheme}
               />
             </div>
           </div>
@@ -687,12 +679,6 @@ export default function Page() {
               <div className="h-5 border-l border-default" />
               <span className="pl-1 text-xs font-medium text-foreground-light">Preview</span>
               <Segmented value={inContext} onChange={setInContext} options={IN_CONTEXT_OPTS} />
-              {(inContext === 'twitter' || inContext === 'linkedin') && (
-                <>
-                  <div className="h-5 border-l border-default" />
-                  <Segmented value={previewTheme} onChange={setPreviewTheme} options={PREVIEW_THEME_OPTS} />
-                </>
-              )}
             </>
           )}
         </div>
@@ -707,9 +693,9 @@ export default function Page() {
           <button
             type="button"
             onClick={() => setExportOpen(true)}
-            className="rounded-md border border-default bg-surface-100 px-2.5 py-1 text-xs text-foreground hover:border-strong"
+            className="rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-background hover:bg-brand/90"
           >
-            Export images
+            Export
           </button>
         </div>
         <div className="flex flex-col overflow-y-auto overflow-x-hidden p-5">

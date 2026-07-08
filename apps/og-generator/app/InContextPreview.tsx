@@ -13,7 +13,7 @@
  */
 
 export type InContextMode = 'none' | 'twitter' | 'linkedin' | 'blog'
-export type PreviewTheme = 'light' | 'dark'
+type PreviewTheme = 'light' | 'dark'
 
 export const IN_CONTEXT_OPTS: { value: InContextMode; label: string }[] = [
   { value: 'none', label: 'None' },
@@ -21,16 +21,15 @@ export const IN_CONTEXT_OPTS: { value: InContextMode; label: string }[] = [
   { value: 'linkedin', label: 'LinkedIn' },
   { value: 'blog', label: 'Blog listing' },
 ]
-export const PREVIEW_THEME_OPTS: { value: PreviewTheme; label: string }[] = [
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-]
 
 interface Props {
   imgUrl: string | null
   headline: string
   eyebrow: string | null
   aspect: string
+}
+
+interface ThemedProps extends Props {
   theme: PreviewTheme
 }
 
@@ -45,7 +44,6 @@ const TWITTER_BLUE = '#1d9bf0'
 
 const LINKEDIN_PALETTE = {
   light: { bg: '#ffffff', text: 'rgba(0,0,0,0.9)', secondary: 'rgba(0,0,0,0.6)', border: '#e0e0e0', avatar: '#e0e0e0' },
-  dark: { bg: '#1b1f23', text: 'rgba(255,255,255,0.9)', secondary: 'rgba(255,255,255,0.6)', border: '#38434f', avatar: '#38434f' },
 }
 const LINKEDIN_BLUE = '#0a66c2'
 
@@ -73,7 +71,7 @@ function VerifiedBadge({ color }: { color: string }) {
   )
 }
 
-function TwitterCardMockup({ imgUrl, headline, aspect, theme }: Props) {
+function TwitterCardMockup({ imgUrl, headline, aspect, theme }: ThemedProps) {
   const c = TWITTER_PALETTE[theme]
   return (
     <div
@@ -107,8 +105,8 @@ function TwitterCardMockup({ imgUrl, headline, aspect, theme }: Props) {
   )
 }
 
-function LinkedInCardMockup({ imgUrl, headline, aspect, theme }: Props) {
-  const c = LINKEDIN_PALETTE[theme]
+function LinkedInCardMockup({ imgUrl, headline, aspect }: Props) {
+  const c = LINKEDIN_PALETTE.light
   return (
     <div
       className="w-full max-w-[500px] rounded-lg border p-4"
@@ -189,9 +187,23 @@ function BlogListingMockup({ imgUrl, headline, eyebrow, aspect }: Props) {
 
 export function InContextPreview({ mode, ...rest }: Props & { mode: InContextMode }) {
   if (mode === 'none') return null
+  if (mode === 'twitter') {
+    // Twitter/X always shows both themes side by side — no toggle needed.
+    return (
+      <div className="flex w-full flex-wrap justify-center gap-4 rounded-lg bg-surface-100 p-6">
+        <div className="flex flex-col gap-2">
+          <span className="text-xs text-foreground-lighter">Light</span>
+          <TwitterCardMockup {...rest} theme="light" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs text-foreground-lighter">Dark</span>
+          <TwitterCardMockup {...rest} theme="dark" />
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="flex w-full justify-center rounded-lg bg-surface-100 p-6">
-      {mode === 'twitter' && <TwitterCardMockup {...rest} />}
       {mode === 'linkedin' && <LinkedInCardMockup {...rest} />}
       {mode === 'blog' && <BlogListingMockup {...rest} />}
     </div>
