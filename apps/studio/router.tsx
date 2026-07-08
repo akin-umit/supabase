@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/tanstackstart-react'
 import type { QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
@@ -5,6 +6,7 @@ import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query
 import { routeTree } from './routeTree.gen'
 import { getQueryClient } from '@/data/query-client'
 import { BASE_PATH, IS_PLATFORM } from '@/lib/constants'
+import { buildSentryClientOptions } from '@/lib/sentry-client-config'
 
 export interface RouterContext {
   queryClient: QueryClient
@@ -86,6 +88,31 @@ export function getRouter() {
   // distinct types because each version has its own `#private` field.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setupRouterSsrQueryIntegration({ router, queryClient: context.queryClient as any })
+
+  // Initialize Sentry on the client only. Mirrors the exact gating of the
+  // Next.js client (instrumentation-client.ts) via the shared factory, so the
+  // two runtimes report identically. `router.isServer` is true during the SPA
+  // shell prerender / SSR handler — we must not double-init there (the server
+  // Sentry is initialized separately in instrument.server.mjs).
+  if (!router.isServer) {
+    // NOTE (spike finding): the canonical recipe uses
+    // `Sentry.tanstackRouterBrowserTracingIntegration(router)`, but that symbol
+    // is NOT exported from the SDK's *browser* build in 10.59.0 / 10.64.0 — it
+    // exists only as a no-op stub on the server entry. The types (index.types)
+    // still declare it, so `tsc` passes while the browser bundle gets
+    // `undefined`. Fall back to the plain browser tracing integration when the
+    // TanStack-specific one is missing so navigations are still traced.
+    const routerTracing =
+      typeof Sentry.tanstackRouterBrowserTracingIntegration === 'function'
+        ? Sentry.tanstackRouterBrowserTracingIntegration(router)
+        : Sentry.browserTracingIntegration()
+
+    const baseOptions = buildSentryClientOptions(Sentry)
+    Sentry.init({
+      ...baseOptions,
+      integrations: [...((baseOptions.integrations as unknown[]) ?? []), routerTracing] as any,
+    })
+  }
 
   return router
 }

@@ -2,6 +2,7 @@
 
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { devtools } from '@tanstack/devtools-vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
@@ -10,6 +11,12 @@ import { defineConfig, loadEnv, type Plugin } from 'vite'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 const compatRoot = path.resolve(rootDir, 'compat/next')
+
+// Re-point the app's ubiquitous `@sentry/nextjs` imports to the unified
+// `@sentry/tanstackstart-react` SDK (via a thin re-export shim) in the
+// TanStack Vite build, so a single Sentry SDK / `@sentry/core` hub is used
+// everywhere instead of shipping `@sentry/nextjs` alongside the unified SDK.
+const sentryCompatShim = path.resolve(rootDir, 'compat/sentry-nextjs.ts')
 
 // Map of Next imports we've shimmed to their TanStack-backed replacement.
 // Add an entry here + a file under compat/next/ when a new Next surface is
@@ -332,6 +339,7 @@ export default defineConfig(({ command, mode }) => {
     },
     resolve: {
       tsconfigPaths: true,
+      alias: [{ find: /^@sentry\/nextjs$/, replacement: sentryCompatShim }],
     },
     ...(basePath && { base: basePath }),
     define: {
@@ -418,31 +426,12 @@ export default defineConfig(({ command, mode }) => {
       // entire exports object `{ default: fn }`, and call sites like
       // `AwesomeDebouncePromise(fn, 500)` crash with "is not a function" at
       // SSR module evaluation. Surfaces on routes that load the table grid.
-      // `@sentry/nextjs`'s CJS entry doesn't surface `startSpan` (and other
-      // v8 APIs) onto the namespace shape Vite's SSR externalizer produces,
-      // so `import * as Sentry from '@sentry/nextjs'` + `Sentry.startSpan`
-      // crashes with "is not a function" inside the pg-meta proxy on the
-      // first table-editor request.
-      noExternal: [
-        'lodash',
-        /^next(\/|$)/,
-        'tslib',
-        'react-use',
-        'awesome-debounce-promise',
-        '@sentry/nextjs',
-      ],
-      // Vite 8.0.13's SSR module runner evaluates `@sentry/nextjs`'s
-      // CJS file via `runInlinedModule` without the CJS-compat wrapper
-      // older vite applied, crashing with "exports is not defined" at
-      // SSR. Forcing pre-bundling via esbuild rewrites it to ESM
-      // before the SSR runner sees it. Only `@sentry/nextjs` needs
-      // this — the other CJS deps in `noExternal` work via vite's SSR
-      // transform; pre-bundling React-using deps (e.g. `react-use`)
-      // inlines a duplicate React into the bundle and breaks hook
-      // dedupe at SSR (useRef → null).
-      optimizeDeps: {
-        include: ['@sentry/nextjs'],
-      },
+      //
+      // NOTE: `@sentry/nextjs` no longer needs SSR bundling — it's aliased to
+      // compat/sentry-nextjs.ts (→ `@sentry/tanstackstart-react`), whose ESM
+      // server entry exposes `startSpan` et al. as real named exports, so the
+      // default SSR externalizer handles it without the CJS-interop workaround.
+      noExternal: ['lodash', /^next(\/|$)/, 'tslib', 'react-use', 'awesome-debounce-promise'],
     },
     plugins: [
       nextCompat(),
@@ -461,6 +450,23 @@ export default defineConfig(({ command, mode }) => {
         ...(basePath && { router: { basepath: basePath } }),
       }),
       viteReact(),
+      // Sentry's TanStack Start plugin(s) MUST be last so source maps reflect
+      // every prior transform. `sentryTanstackStart` returns an ARRAY of
+      // plugins (route patterns, source-map upload, middleware auto-wrap), so
+      // it's spread. Source-map UPLOAD is skipped gracefully without
+      // SENTRY_AUTH_TOKEN (and under SKIP_ASSET_UPLOAD). We disable the
+      // middleware auto-wrap because start.ts wires the Sentry global
+      // middlewares explicitly.
+      ...sentryTanstackStart({
+        org: process.env.SENTRY_ORG ?? 'supabase',
+        project: process.env.SENTRY_PROJECT ?? 'supabase-studio-tanstack',
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        autoInstrumentMiddleware: false,
+        sourcemaps:
+          process.env.SKIP_ASSET_UPLOAD === '1' || !process.env.SENTRY_AUTH_TOKEN
+            ? { disable: true }
+            : undefined,
+      }),
     ],
   }
 })
