@@ -24,6 +24,8 @@ export const selfHostingCommunity: ContentListingGroup = {
   headingLevel: 'h2',
   type: 'grid',
   columns: 2,
+  description:
+    "There are several other options to deploy Supabase. If you're interested in helping these projects, visit our Community page.",
   items: [
     {
       title: 'Kubernetes',
