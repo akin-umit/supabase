@@ -26,7 +26,7 @@ export async function linkWarehouseTable({
   if (!projectRef) throw new Error('projectRef is required')
 
   const result = await fetchPost<WarehouseLinkedTable>(
-    `${API_URL}/platform/warehouse/${projectRef}/tables`,
+    `${API_URL?.replace('/platform', '')}/platform/warehouse/${projectRef}/tables`,
     { schema, name },
     { credentials: 'include' }
   )

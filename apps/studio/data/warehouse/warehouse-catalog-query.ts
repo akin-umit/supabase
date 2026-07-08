@@ -55,7 +55,7 @@ export async function getWarehouseCatalog(
   if (!projectRef) throw new Error('projectRef is required')
 
   const result = await fetchGet<WarehouseCatalogApiResponse>(
-    `${API_URL}/platform/warehouse/${projectRef}/catalog`,
+    `${API_URL?.replace('/platform', '')}/platform/warehouse/${projectRef}/catalog`,
     { abortSignal: signal, credentials: 'include' }
   )
   if (result instanceof ResponseError) throw result

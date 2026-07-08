@@ -30,6 +30,37 @@ export function buildWarehouseCatalogEnv(creds: WarehouseCatalogCredentials): st
 }
 
 /**
+ * Convert the Warehouse catalog Postgres URL into the libpq keyword/value connection string that
+ * DuckDB's `ducklake` extension expects (`postgres:host=… user=… …`). Passing the raw `postgres://`
+ * URI to `ATTACH 'ducklake:…'` fails — most notably with IPv6 hosts, which the URI wraps in
+ * brackets that DuckDB/libpq don't accept in this position.
+ */
+export function buildDuckDbCatalogConnectionString(catalogUrl: string): string {
+  let url: URL
+  try {
+    url = new URL(catalogUrl)
+  } catch {
+    // Not a parseable URL (already keyword/value, or malformed) — pass through unchanged.
+    return catalogUrl
+  }
+
+  const host = url.hostname.replace(/^\[/, '').replace(/\]$/, '') // unwrap IPv6 brackets
+  const dbname = decodeURIComponent(url.pathname.replace(/^\//, ''))
+
+  const params: string[] = []
+  if (host) params.push(`host=${host}`)
+  if (url.password) params.push(`password=${decodeURIComponent(url.password)}`)
+  if (url.port) params.push(`port=${url.port}`)
+  if (url.username) params.push(`user=${decodeURIComponent(url.username)}`)
+  if (dbname) params.push(`dbname=${dbname}`)
+  for (const [key, value] of url.searchParams) {
+    params.push(`${key}=${value}`)
+  }
+
+  return `postgres:${params.join(' ')}`
+}
+
+/**
  * Per-engine connection snippet for the Warehouse catalog. The Warehouse is backed by DuckLake
  * (a Postgres catalog + object storage), so DuckDB attaches it via the `ducklake` extension.
  */
@@ -56,7 +87,7 @@ CREATE SECRET supabase_warehouse_storage (
   URL_STYLE 'path'
 );
 
-ATTACH 'ducklake:${creds.catalogUrl}' AS warehouse (
+ATTACH 'ducklake:${buildDuckDbCatalogConnectionString(creds.catalogUrl)}' AS warehouse (
   DATA_PATH '${creds.dataPath}',
   METADATA_SCHEMA '${creds.metadataSchema}'
 );

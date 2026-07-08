@@ -11,7 +11,7 @@ import { useSelectedOrganizationQuery } from './useSelectedOrganization'
  * organization slug allowlist. Use `all` to enable every organization.
  */
 export function useIsWarehouseEnabled(): boolean {
-  const flagValue = useFlag('warehouse')
+  const flagValue = useFlag<string>('warehouse')
   const { data: organization } = useSelectedOrganizationQuery()
 
   const allowedOrgSlugs =

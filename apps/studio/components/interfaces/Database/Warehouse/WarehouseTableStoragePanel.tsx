@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs'
 import { useState, type ReactNode } from 'react'
 import {
+  Badge,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -18,12 +19,31 @@ import { WarehouseEnablementModal } from './WarehouseEnablementModal'
 import { buildSqlEditorWarehouseUrl, getWarehouseQualifiedTableName } from './warehouseNaming.utils'
 import { WarehouseSyncChip } from './WarehouseSyncChip'
 import { DiscardChangesConfirmationDialog } from '@/components/ui-patterns/Dialogs/DiscardChangesConfirmationDialog'
+import { useWarehouseSetupStatusQuery } from '@/data/warehouse/warehouse-setup-status-query'
 import { useWarehouseTableState } from '@/data/warehouse/warehouse-tables-query'
-import { formatWarehouseSize, type WarehouseMode } from '@/data/warehouse/warehouse-types'
+import {
+  formatWarehouseSize,
+  isWarehouseSetupInProgress,
+  WAREHOUSE_SETUP_STATUS_LABELS,
+  type WarehouseMode,
+  type WarehouseSetupStatus,
+} from '@/data/warehouse/warehouse-types'
 
 const TYPE_LABELS: Record<WarehouseMode, string> = {
   postgres: 'Postgres',
   has_warehouse_copy: 'Postgres + Warehouse',
+}
+
+const SETUP_VARIANTS: Record<
+  WarehouseSetupStatus,
+  'default' | 'success' | 'warning' | 'destructive'
+> = {
+  not_started: 'default',
+  setting_up: 'warning',
+  copying: 'warning',
+  installing_fdw: 'warning',
+  complete: 'success',
+  error: 'destructive',
 }
 
 function MetaRow({ label, children }: { label: string; children: ReactNode }) {
@@ -50,6 +70,18 @@ export function WarehouseTableStoragePanel({
   const tableKey = `${schema}.${name}`
   const state = useWarehouseTableState(tableKey)
   const { mode } = state
+
+  // Check the async Warehouse setup status whenever the table settings surface is opened; it polls
+  // while a setup phase is still running (pipeline → copy → FDW install).
+  const { data: setup } = useWarehouseSetupStatusQuery({ projectRef }, { enabled: !!projectRef })
+  const setupStatus = setup?.setup_status
+  const setupMessage = setup?.steps.find(
+    (step) => step.status === 'running' || step.status === 'error'
+  )?.message
+  const setupInProgress = isWarehouseSetupInProgress(setupStatus)
+  // The Warehouse copy is only queryable once the FDW install completes. If the status is
+  // unavailable, don't block the action.
+  const canQueryWarehouse = setupStatus === undefined || setupStatus === 'complete'
   const warehouseSize = formatWarehouseSize(state.warehouseSizeBytes)
   const warehouseQualifiedName = state.copyName ?? getWarehouseQualifiedTableName(tableKey)
 
@@ -78,6 +110,20 @@ export function WarehouseTableStoragePanel({
 
           {mode === 'has_warehouse_copy' && (
             <>
+              {setupStatus && setupStatus !== 'not_started' && (
+                <MetaRow label="Setup">
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge variant={SETUP_VARIANTS[setupStatus]}>
+                      {WAREHOUSE_SETUP_STATUS_LABELS[setupStatus]}
+                    </Badge>
+                    {setupMessage && (
+                      <span className="text-right text-xs text-foreground-lighter">
+                        {setupMessage}
+                      </span>
+                    )}
+                  </div>
+                </MetaRow>
+              )}
               {state.syncState && (
                 <MetaRow label="Sync status">
                   <WarehouseSyncChip syncState={state.syncState} />
@@ -123,7 +169,7 @@ export function WarehouseTableStoragePanel({
 
         {mode === 'has_warehouse_copy' && (
           <div className="flex w-fit">
-            {sqlEditorWarehouseUrl ? (
+            {canQueryWarehouse && sqlEditorWarehouseUrl ? (
               <Button type="button" variant="default" className="rounded-r-none hover:z-10" asChild>
                 <Link href={sqlEditorWarehouseUrl}>Query in Warehouse</Link>
               </Button>
@@ -134,7 +180,7 @@ export function WarehouseTableStoragePanel({
                 className="rounded-r-none hover:z-10"
                 disabled
               >
-                Query in Warehouse
+                {setupInProgress ? 'Preparing…' : 'Query in Warehouse'}
               </Button>
             )}
             <DropdownMenu>

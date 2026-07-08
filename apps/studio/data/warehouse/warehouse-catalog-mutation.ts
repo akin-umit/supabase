@@ -23,7 +23,7 @@ export async function updateWarehouseCatalog({
   if (!projectRef) throw new Error('projectRef is required')
 
   const result = await fetchPost(
-    `${API_URL}/platform/warehouse/${projectRef}/catalog`,
+    `${API_URL?.replace('/platform', '')}/platform/warehouse/${projectRef}/catalog`,
     { enabled },
     { credentials: 'include' }
   )

@@ -29,7 +29,7 @@ export async function detachWarehouseTable({
   // from the warehouse catalog/publication so it stops syncing. The underlying DuckLake data is
   // left in place; delete it here once the platform endpoint supports data cleanup.
   const response = await fetchHandler(
-    `${API_URL}/platform/warehouse/${projectRef}/tables/${encodeURIComponent(schema)}/${encodeURIComponent(name)}`,
+    `${API_URL?.replace('/platform', '')}/platform/warehouse/${projectRef}/tables/${encodeURIComponent(schema)}/${encodeURIComponent(name)}`,
     { method: 'DELETE', headers, credentials: 'include' }
   )
 

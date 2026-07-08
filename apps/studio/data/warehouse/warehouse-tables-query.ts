@@ -27,7 +27,7 @@ export async function getWarehouseTables(
   if (!projectRef) throw new Error('projectRef is required')
 
   const result = await fetchGet<WarehouseTablesResponse>(
-    `${API_URL}/platform/warehouse/${projectRef}/tables`,
+    `${API_URL?.replace('/platform', '')}/platform/warehouse/${projectRef}/tables`,
     { abortSignal: signal, credentials: 'include' }
   )
   if (result instanceof ResponseError) throw result
@@ -45,6 +45,11 @@ export const useWarehouseTablesQuery = <TData = WarehouseTablesData>(
     queryKey: warehouseKeys.tables(projectRef),
     queryFn: ({ signal }) => getWarehouseTables({ projectRef }, signal),
     enabled: enabled && typeof projectRef !== 'undefined',
+    // Warehouse setup is async: `POST /tables` returns immediately (202) with `state: 'syncing'`
+    // while the initial copy + FDW install run in the worker. Poll `GET /tables` while any table
+    // is still syncing so the UI advances to `live` (or `error`) on its own.
+    refetchInterval: (query) =>
+      (query.state.data ?? []).some((table) => table.state === 'syncing') ? 5000 : false,
     ...options,
   })
 

@@ -13,7 +13,7 @@ import {
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import { PageSectionTitle } from 'ui-patterns/PageSection'
 
-import AlertError from '@/components/ui/AlertError'
+import { AlertError } from '@/components/ui/AlertError'
 import { TableDetailOverviewMetrics } from '@/components/interfaces/Database/Tables/TableDetailOverviewMetrics'
 import type { TableLike } from '@/data/table-editor/table-editor-types'
 import { useTableRowsQuery } from '@/data/table-rows/table-rows-query'

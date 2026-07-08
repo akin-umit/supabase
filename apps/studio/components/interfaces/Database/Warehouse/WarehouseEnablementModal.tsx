@@ -24,7 +24,7 @@ interface WarehouseEnablementModalProps {
   onOpenChange: (open: boolean) => void
 }
 
-const ATTACH_PROGRESS = ['Creating copy', 'Running initial sync']
+const ATTACH_PROGRESS = ['Creating copy', 'Starting sync']
 const STEP_INTERVAL_MS = 1300
 
 export function WarehouseEnablementModal({
@@ -41,7 +41,9 @@ export function WarehouseEnablementModal({
 
   const { mutate: linkTable, isPending: isRunning } = useWarehouseLinkTableMutation({
     onSuccess: () => {
-      toast.success('Warehouse copy is live')
+      // Setup is async — the request is accepted (202) and the copy finishes syncing in the
+      // background. The table's storage panel polls its status until it goes live.
+      toast.success('Warehouse copy started — syncing in the background')
       onOpenChange(false)
     },
   })
