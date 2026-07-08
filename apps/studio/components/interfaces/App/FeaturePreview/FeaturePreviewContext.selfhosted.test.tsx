@@ -1,5 +1,5 @@
-import { renderHook } from '@testing-library/react'
-import { FeatureFlagContext, safeLocalStorage } from 'common'
+import { act, renderHook } from '@testing-library/react'
+import { FeatureFlagContext, LOCAL_STORAGE_KEYS, safeLocalStorage } from 'common'
 import type { PropsWithChildren } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -37,5 +37,16 @@ describe('useUnifiedLogsPreview (self-hosted)', () => {
 
     expect(result.current.isEnabled).toBe(false)
     expect(result.current.isDefaultOptIn).toBe(false)
+  })
+
+  it('stays disabled even after enable() persists the preview flag', () => {
+    const { result } = renderHook(() => useUnifiedLogsPreview(), { wrapper })
+
+    act(() => {
+      result.current.enable()
+    })
+
+    expect(safeLocalStorage.getItem(LOCAL_STORAGE_KEYS.UI_PREVIEW_UNIFIED_LOGS)).toBe('true')
+    expect(result.current.isEnabled).toBe(false)
   })
 })
