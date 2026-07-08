@@ -33,6 +33,8 @@ export interface TemplateParts {
   iconEl: ReactNode | null
   patternLayer: ReactNode | null
   hasIcon: boolean
+  /** Fallback art (data URI) for icon-less compositions — full-bleed, behind everything else. */
+  bgImage?: string | null
 }
 
 export interface Template {
@@ -59,6 +61,9 @@ function rootBase(p: TemplateParts): CSSProperties {
     display: 'flex',
     padding: `${p.padY}px ${p.padX}px`,
     backgroundColor: p.bg,
+    ...(p.bgImage
+      ? { backgroundImage: `url(${p.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+      : {}),
     fontFamily: 'Manrope',
   }
 }

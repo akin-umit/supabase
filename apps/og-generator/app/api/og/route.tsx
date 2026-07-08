@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 
 import { resolveIcon } from '@/lib/supabase/assets'
+import { randomBackgroundDataUri } from '@/lib/design/backgrounds'
 import { getBrand, color } from '@/lib/design/brands'
 import { satoriFonts, measurementFont } from '@/lib/design/fonts'
 import { getFormat } from '@/lib/design/formats'
@@ -113,6 +114,7 @@ export async function GET(req: Request) {
         ? Math.min(thumb.max, Math.max(thumb.min, Math.round(thumbNum)))
         : thumb.default
       const cfg = resolvePattern(THUMB_PATTERN_FALLBACK)
+      const thumbBgImage = iconObj ? null : randomBackgroundDataUri()
 
       const thumbRoot = (
         <div
@@ -124,6 +126,9 @@ export async function GET(req: Request) {
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: bg,
+            ...(thumbBgImage
+              ? { backgroundImage: `url(${thumbBgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+              : {}),
           }}
         >
           {patternLayer(cfg)}
@@ -216,14 +221,15 @@ export async function GET(req: Request) {
             style={{
               display: 'flex',
               marginBottom: eyebrowGap,
-              color: color('brand.default', brand),
+              color: eyebrowPill ? '#000000' : color('brand.default', brand),
+              fontFamily: 'IBM Plex Mono',
               fontSize: eyebrowSize,
               fontWeight: EYEBROW.weight,
               letterSpacing: eyebrowLetterSpacing,
               textTransform: 'uppercase',
               ...(eyebrowPill
                 ? {
-                    backgroundColor: color('brand.tint', brand),
+                    backgroundColor: '#FFFFFF',
                     borderRadius: 999,
                     padding: `${8 * s}px ${18 * s}px`,
                   }
@@ -320,6 +326,7 @@ export async function GET(req: Request) {
       iconEl,
       patternLayer: patternLayer(cfg, patternOffX, patternOffY),
       hasIcon,
+      bgImage: hasIcon ? null : randomBackgroundDataUri(),
     })
 
     return new ImageResponse(root, {

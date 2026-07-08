@@ -8,7 +8,6 @@ import { BRAND_OPTIONS, DEFAULT_BRAND_ID, color, getBrand, type BrandId } from '
 import { contrastRatio, rating } from '@/lib/design/contrast'
 import { DEFAULT_FORMAT_ID, FORMAT_OPTIONS, getFormat, type FormatId } from '@/lib/design/formats'
 import { DEFAULT_TEMPLATE_ID, TEMPLATES } from '@/lib/design/templates'
-import { typography } from '@/lib/design/tokens'
 import { IN_CONTEXT_OPTS, InContextPreview, type InContextMode } from './InContextPreview'
 
 /**
@@ -18,8 +17,6 @@ import { IN_CONTEXT_OPTS, InContextPreview, type InContextMode } from './InConte
 
 const SOFT_LIMIT = 60
 const HARD_LIMIT = 70
-const MIN_SIZE = typography.roles.headline.minSize
-const MAX_SIZE = typography.roles.headline.maxSize
 
 /** Safe-area guide: a uniform 80px margin on every side, regardless of format. */
 function safeAreaInset(width: number, height: number) {
@@ -37,14 +34,6 @@ const VIEW_OPTS: { value: View; label: string }[] = [
 const EYEBROW_STYLE_OPTS: { value: EyebrowStyle; label: string }[] = [
   { value: 'text', label: 'Plain' },
   { value: 'pill', label: 'Pill' },
-]
-
-const PLATFORMS: { name: string; aspect: string; radius: number; accent?: boolean }[] = [
-  { name: 'X / Twitter', aspect: '1.91 / 1', radius: 16 },
-  { name: 'LinkedIn', aspect: '1.91 / 1', radius: 4 },
-  { name: 'Facebook', aspect: '1.91 / 1', radius: 2 },
-  { name: 'Slack', aspect: '1.91 / 1', radius: 8, accent: true },
-  { name: 'Messages', aspect: '1 / 1', radius: 18 },
 ]
 
 interface FitInfo {
@@ -209,7 +198,6 @@ function PreviewCard({
   error,
   alt,
   showSafeArea,
-  showCrops,
   copied,
   onCopy,
   onDownload,
@@ -223,7 +211,6 @@ function PreviewCard({
   error: string | null
   alt: string
   showSafeArea: boolean
-  showCrops: boolean
   copied: boolean
   onCopy: () => void
   onDownload: () => void
@@ -282,29 +269,6 @@ function PreviewCard({
 
       {children}
 
-      {showCrops && imgUrl && (
-        <div className="mt-1">
-          <p className="mb-2 text-[11px] text-foreground-lighter">
-            Platform crops — how feeds crop &amp; round it
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {PLATFORMS.map((pf) => (
-              <div key={pf.name} className="flex flex-col gap-1">
-                <div
-                  className="relative overflow-hidden border border-default bg-surface-200"
-                  style={{ width: 120, aspectRatio: pf.aspect, borderRadius: pf.radius }}
-                >
-                  {pf.accent && <div className="absolute left-0 top-0 z-10 h-full w-1 bg-brand" />}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={imgUrl} alt="" className="h-full w-full object-cover" />
-                </div>
-                <span className="text-[10px] text-foreground-lighter">{pf.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {error && (
         <pre className="overflow-x-auto rounded-md border border-destructive-400 bg-destructive-200 p-3 text-xs text-destructive-600">
           {error}
@@ -324,11 +288,8 @@ export default function Page() {
   const [view, setView] = useState<View>('both')
   const [headline, setHeadline] = useState('Postgres full text search just got faster')
   const [eyebrow, setEyebrow] = useState('Engineering')
-  const [eyebrowStyle, setEyebrowStyle] = useState<EyebrowStyle>('text')
-  const [sentenceCase, setSentenceCase] = useState(true)
+  const [eyebrowStyle, setEyebrowStyle] = useState<EyebrowStyle>('pill')
   const [template, setTemplate] = useState(DEFAULT_TEMPLATE_ID)
-  const [autoFit, setAutoFit] = useState(true)
-  const [manualFontSize, setManualFontSize] = useState(56)
   const [icon, setIcon] = useState<string | null>(null)
   const [iconPickerOpen, setIconPickerOpen] = useState(false)
   const [uploadedIcons, setUploadedIcons] = useState<SeedIcon[]>([])
@@ -417,7 +378,6 @@ export default function Page() {
   }
   const [scale, setScale] = useState<1 | 2>(1)
   const [showSafeArea, setShowSafeArea] = useState(false)
-  const [showCrops, setShowCrops] = useState(false)
   const [inContext, setInContext] = useState<InContextMode>('none')
 
   const [copied, setCopied] = useState<View | null>(null)
@@ -434,14 +394,12 @@ export default function Page() {
       p.set('eyebrow', eyebrow.trim())
       if (eyebrowStyle === 'pill') p.set('eyebrowStyle', 'pill')
     }
-    if (!sentenceCase) p.set('sentenceCase', '0')
     p.set('template', template)
-    if (!autoFit) p.set('fontSize', String(manualFontSize))
     if (icon) p.set('icon', icon)
     if (scale === 2) p.set('scale', '2')
     return `/api/og?${p.toString()}`
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brandId, formatId, headline, eyebrow, eyebrowStyle, sentenceCase, template, autoFit, manualFontSize, icon, scale])
+  }, [brandId, formatId, headline, eyebrow, eyebrowStyle, template, icon, scale])
 
   const thumbEndpoint = useMemo(() => {
     const p = new URLSearchParams()
@@ -483,7 +441,6 @@ export default function Page() {
     a.click()
   }
 
-  const sliderValue = autoFit ? (og.fit?.fontSize ?? MAX_SIZE) : manualFontSize
   const suffix = scale === 2 ? '@2x' : ''
 
   return (
@@ -498,6 +455,16 @@ export default function Page() {
           backgroundSize: '16px 16px',
         }}
       >
+        {/* View toggle — stays pinned near the top, separate from the other
+            tools since it drives which preview cards render at all. */}
+        <div className="mb-5 flex w-full items-center justify-center">
+          <Segmented
+            value={view}
+            onChange={setView}
+            options={hasThumb ? VIEW_OPTS : VIEW_OPTS.filter((o) => o.value !== 'thumb')}
+          />
+        </div>
+
         {/* Fills the remaining canvas height; on wide/side-by-side screens the
             row centers within it. (flex-1 items don't shrink below their
             content, so this can't clip an overflowing row — it just grows.) */}
@@ -518,7 +485,6 @@ export default function Page() {
                   error={og.error}
                   alt={headline}
                   showSafeArea={showSafeArea}
-                  showCrops={showCrops}
                   copied={copied === 'og'}
                   onCopy={() => copyUrl(ogEndpoint, 'og')}
                   onDownload={() => download(og.url, `og${suffix}.png`)}
@@ -574,15 +540,11 @@ export default function Page() {
                   error={thumb.error}
                   alt="Thumbnail preview"
                   showSafeArea={showSafeArea}
-                  showCrops={showCrops}
                   copied={copied === 'thumb'}
                   onCopy={() => copyUrl(thumbEndpoint, 'thumb')}
                   onDownload={() => download(thumb.url, `thumb${suffix}.png`)}
                 >
                   <div className="flex flex-col gap-2">
-                    <p className="text-xs text-foreground-light">
-                      No headline — the Thumb is icon-only and shares the OG’s icon (§3).
-                    </p>
                     {!icon && (
                       <p className="text-xs text-warning-600">
                         ⚠ Pick an icon in Content — the Thumb has no text to fall back on.
@@ -595,14 +557,18 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Floating View / View-in-context toolbar — bottom-aligned, centered. */}
+        {/* Floating guides / view-in-context toolbar — bottom-aligned, centered. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center">
           <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-default bg-background px-3 py-2 shadow-lg">
-            <Segmented
-              value={view}
-              onChange={setView}
-              options={hasThumb ? VIEW_OPTS : VIEW_OPTS.filter((o) => o.value !== 'thumb')}
-            />
+            <label className="flex items-center gap-1.5 px-1 text-xs text-foreground-light">
+              <input
+                type="checkbox"
+                id="toggle-safe-area"
+                checked={showSafeArea}
+                onChange={(e) => setShowSafeArea(e.target.checked)}
+              />
+              Safe area
+            </label>
             {showOg && (
               <>
                 <div className="h-5 border-l border-default" />
@@ -725,53 +691,9 @@ export default function Page() {
                   placeholder="Type a blog headline…"
                 />
                 <p className="text-xs text-foreground-lighter">
-                  Press Enter for a manual line break (power-user mode). Otherwise it auto-fits.
+                  Press Enter for a manual line break. Sentence case is applied automatically — wrap
+                  text in [brackets] to keep its exact casing (e.g. type "[P]ostgreSQL").
                 </p>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground-light">
-                    Font size
-                    <Hint text="Auto-fit picks the largest size that keeps the headline to 2 lines — the highest-leverage guardrail for legibility at thumbnail size." />
-                  </span>
-                  <span className="text-xs tabular-nums text-foreground-lighter">
-                    {autoFit ? `Auto · ${og.fit?.fontSize ?? '—'}px` : `${manualFontSize}px`}
-                  </span>
-                </div>
-                <label className="flex items-center gap-2 text-xs text-foreground-light">
-                  <input
-                    type="checkbox"
-                    id="toggle-autofit"
-                    checked={autoFit}
-                    onChange={(e) => {
-                      const on = e.target.checked
-                      setAutoFit(on)
-                      if (!on) setManualFontSize(og.fit?.fontSize ?? manualFontSize)
-                    }}
-                  />
-                  Auto-fit
-                </label>
-                <input
-                  type="range"
-                  id="font-size"
-                  min={MIN_SIZE}
-                  max={MAX_SIZE}
-                  step={2}
-                  value={sliderValue}
-                  disabled={autoFit}
-                  onChange={(e) => setManualFontSize(Number(e.target.value))}
-                  className="w-full min-w-0 accent-brand disabled:opacity-40"
-                />
-
-                <label className="flex items-center gap-2 text-sm text-foreground-light">
-                  <input
-                    type="checkbox"
-                    id="toggle-sentence-case"
-                    checked={!sentenceCase}
-                    onChange={(e) => setSentenceCase(!e.target.checked)}
-                  />
-                  Disable sentence-case
-                  <Hint text="By default headlines are sentence-cased, with brand terms (Postgres, pgvector, API…) preserved automatically. Check this to type it exactly as written." />
-                </label>
               </div>
             )}
 
@@ -916,29 +838,6 @@ export default function Page() {
                 )}
               </div>
             </div>
-          </Group>
-
-          <Group title="Guides">
-            <label className="flex items-center gap-2 text-sm text-foreground-light">
-              <input
-                type="checkbox"
-                id="toggle-safe-area"
-                checked={showSafeArea}
-                onChange={(e) => setShowSafeArea(e.target.checked)}
-              />
-              Show safe-area guide
-              <Hint text="Dashed guide 80px in from every edge — editor-only, never part of the export." />
-            </label>
-            <label className="flex items-center gap-2 text-sm text-foreground-light">
-              <input
-                type="checkbox"
-                id="toggle-crops"
-                checked={showCrops}
-                onChange={(e) => setShowCrops(e.target.checked)}
-              />
-              Show platform crops
-              <Hint text="Preview how X, LinkedIn, Facebook, Slack and chat apps crop & round the image (§11.1)." />
-            </label>
           </Group>
         </div>
       </aside>
