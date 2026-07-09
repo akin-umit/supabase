@@ -1,10 +1,11 @@
 'use client'
 
-import { Check, Copy, WrapText, ArrowRightFromLine } from 'lucide-react'
-import { type MouseEvent, useCallback, useEffect, useState, useRef } from 'react'
+import { ArrowRightFromLine, Check, Copy, WrapText } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
 import { type ThemedToken } from 'shiki'
 import { type NodeHover } from 'twoslash'
 import { cn, copyToClipboard, Tooltip, TooltipContent, TooltipTrigger } from 'ui'
+
 import { getFontStyle } from './CodeBlock.utils'
 
 export function AnnotatedSpan({
@@ -136,7 +137,10 @@ export function CodeBlockControls({ content }: { content: string }) {
   }, [])
 
   return (
-    <div ref={wrapperRef} className="hidden group-hover:flex absolute top-2 right-2 gap-1">
+    <div
+      ref={wrapperRef}
+      className="opacity-0 flex group-hover:opacity-100 focus-within:opacity-100 absolute top-2 right-2 gap-1"
+    >
       <Tooltip>
         <TooltipTrigger asChild>
           <button
