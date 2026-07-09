@@ -13,6 +13,7 @@ export interface RoleImpersonationPopoverProps {
   variant?: 'regular' | 'connected-on-right' | 'connected-on-left' | 'connected-on-both'
   align?: 'center' | 'start' | 'end'
   disallowAuthenticatedOption?: boolean
+  className?: string
 }
 
 export const RoleImpersonationPopover = ({
@@ -21,6 +22,7 @@ export const RoleImpersonationPopover = ({
   variant = 'regular',
   align = 'end',
   disallowAuthenticatedOption = false,
+  className,
 }: RoleImpersonationPopoverProps) => {
   const state = useRoleImpersonationStateSnapshot()
 
@@ -38,7 +40,8 @@ export const RoleImpersonationPopover = ({
             'h-[26px] pr-3 gap-0',
             variant === 'connected-on-right' && 'rounded-r-none border-r-0',
             variant === 'connected-on-left' && 'rounded-l-none border-l-0',
-            variant === 'connected-on-both' && 'rounded-none border-x-0'
+            variant === 'connected-on-both' && 'rounded-none border-x-0',
+            className
           )}
         >
           <div className="flex items-center gap-1">

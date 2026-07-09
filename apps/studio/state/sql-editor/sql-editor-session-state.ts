@@ -1,6 +1,14 @@
 import { proxy, ref, snapshot, useSnapshot } from 'valtio'
 
 import type { QueryPlanRow } from '@/components/interfaces/ExplainVisualizer/ExplainVisualizer.types'
+import type { SqlWarehouseResultSource } from '@/components/interfaces/SQLEditor/SqlEditorWarehouseDemo'
+
+export interface SqlEditorQueryResult {
+  rows: any[]
+  error?: any
+  autoLimit?: number
+  warehouseResultSource?: SqlWarehouseResultSource
+}
 
 /**
  * Ephemeral, per-session SQL editor state that is NOT persisted: query results,
@@ -15,11 +23,7 @@ export const sqlEditorSessionState = proxy({
    * a single query with multiple statements can return multiple results.
    */
   results: {} as {
-    [snippetId: string]: {
-      rows: any[]
-      error?: any
-      autoLimit?: number
-    }[]
+    [snippetId: string]: SqlEditorQueryResult[]
   },
 
   /** EXPLAIN results, if any, keyed by snippet id. */
@@ -39,17 +43,27 @@ export const sqlEditorSessionState = proxy({
 
   setLimit: (value: number) => (sqlEditorSessionState.limit = value),
 
-  addResult: (id: string, results: any[], autoLimit?: number) => {
+  addResult: (
+    id: string,
+    results: any[],
+    autoLimit?: number,
+    warehouseResultSource?: SqlWarehouseResultSource
+  ) => {
     // Use ref() to prevent Valtio from creating proxies for each row object.
     // This is critical for large result sets - without ref(), Valtio wraps every
     // row and nested property in a Proxy, causing massive memory overhead.
     // Alright to use ref() in this case as the data is meant to be read-only and we
     // don't need to track changes to the underlying data
-    sqlEditorSessionState.results[id] = [{ rows: ref(results), autoLimit }]
+    sqlEditorSessionState.results[id] = [{ rows: ref(results), autoLimit, warehouseResultSource }]
   },
 
-  addResultError: (id: string, error: any, autoLimit?: number) => {
-    sqlEditorSessionState.results[id] = [{ rows: ref([]), error, autoLimit }]
+  addResultError: (
+    id: string,
+    error: any,
+    autoLimit?: number,
+    warehouseResultSource?: SqlWarehouseResultSource
+  ) => {
+    sqlEditorSessionState.results[id] = [{ rows: ref([]), error, autoLimit, warehouseResultSource }]
   },
 
   resetResult: (id: string) => {

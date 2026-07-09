@@ -9,32 +9,17 @@ import {
 import { wrapWithRollback } from '@supabase/pg-meta/src/query'
 import { useQueryClient } from '@tanstack/react-query'
 import { IS_PLATFORM, LOCAL_STORAGE_KEYS, useFlag, useParams } from 'common'
-import { ChevronUp, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import {
-  Button,
-  cn,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from 'ui'
+import { cn, ResizableHandle, ResizablePanel, ResizablePanelGroup } from 'ui'
 
 import { useSqlEditorDiff, useSqlEditorPrompt } from './hooks'
 import { RunQueryWarningModal } from './RunQueryWarningModal'
 import {
   generateSnippetTitle,
-  ROWS_PER_PAGE_OPTIONS,
   sqlAiDisclaimerComment,
   untitledSnippetTitle,
 } from './SQLEditor.constants'
@@ -56,7 +41,13 @@ import {
   isUpdateWithoutWhere,
   suffixWithLimit,
 } from './SQLEditor.utils'
-import { useSqlQueryTarget } from './SqlWarehouseTargetToggle'
+import { SqlEditorQueryBar } from './SqlEditorQueryBar'
+import { useSqlQueryTarget } from './SqlEditorQueryTargetSelector'
+import {
+  DEFAULT_SQL_EDITOR_SEARCH_PATH,
+  getSqlEditorSearchPathStorageKey,
+} from './SqlEditorSearchPathSelector'
+import { resolveSqlWarehouseResultSource } from './SqlEditorWarehouseDemo'
 import { useAddDefinitions } from './useAddDefinitions'
 import { UtilityPanel } from './UtilityPanel/UtilityPanel'
 import {
@@ -66,7 +57,6 @@ import {
 } from '@/components/interfaces/ExplainVisualizer/ExplainVisualizer.utils'
 import { SIDEBAR_KEYS } from '@/components/layouts/ProjectLayout/LayoutSidebar/LayoutSidebarProvider'
 import ResizableAIWidget from '@/components/ui/AIEditor/ResizableAIWidget'
-import { GridFooter } from '@/components/ui/GridFooter'
 import { useSqlTitleGenerateMutation } from '@/data/ai/sql-title-mutation'
 import { useDatabaseEventTriggersQuery } from '@/data/database-event-triggers/database-event-triggers-query'
 import { constructHeaders, isValidConnString } from '@/data/fetchers'
@@ -74,6 +64,7 @@ import { lintKeys } from '@/data/lint/keys'
 import { useReadReplicasQuery } from '@/data/read-replicas/replicas-query'
 import { useExecuteSqlMutation } from '@/data/sql/execute-sql-mutation'
 import { isError } from '@/data/utils/error-check'
+import { useLocalStorageQuery } from '@/hooks/misc/useLocalStorage'
 import { useOrgAiOptInLevel } from '@/hooks/misc/useOrgOptedIntoAi'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
@@ -128,6 +119,10 @@ export const SQLEditor = () => {
   const sessionSnap = useSqlEditorSessionSnapshot()
   const diffRequest = useSqlEditorDiffRequestSnapshot()
   const getImpersonatedRoleState = useGetImpersonatedRoleState()
+  const [searchPath] = useLocalStorageQuery(
+    getSqlEditorSearchPathStorageKey(ref ?? 'unknown'),
+    DEFAULT_SQL_EDITOR_SEARCH_PATH
+  )
   const databaseSelectorState = useDatabaseSelectorStateSnapshot()
   const { aiOptInLevel } = useOrgAiOptInLevel()
   const sqlQueryTarget = useSqlQueryTarget()
@@ -209,7 +204,6 @@ export const SQLEditor = () => {
   const id = !urlId || urlId === 'new' ? generatedId : urlId
 
   const limit = sessionSnap.limit
-  const results = sessionSnap.results[id]?.[0]
   const snippetIsLoading = !(
     id in snapV2.snippets && snapV2.snippets[id].snippet.content !== undefined
   )
@@ -238,7 +232,7 @@ export const SQLEditor = () => {
   const { mutate: execute, isPending: isExecuting } = useExecuteSqlMutation({
     onSuccess(data, vars) {
       if (id) {
-        sessionSnap.addResult(id, data.result, vars.autoLimit)
+        sessionSnap.addResult(id, data.result, vars.autoLimit, vars.warehouseResultSource)
 
         if (!disablePrettyExplain && isExplainQuery(data.result)) {
           sessionSnap.addExplainResult(id, data.result)
@@ -286,7 +280,7 @@ export const SQLEditor = () => {
           }
         }
 
-        sessionSnap.addResultError(id, error, vars.autoLimit)
+        sessionSnap.addResultError(id, error, vars.autoLimit, vars.warehouseResultSource)
       }
 
       refocusEditorAfterRunIfNeeded()
@@ -436,12 +430,18 @@ export const SQLEditor = () => {
       const userSql = rawSql(sql)
       const { appendAutoLimit } = checkIfAppendLimitRequired(userSql, limit)
       const formattedSql = suffixWithLimit(userSql, limit)
+      const warehouseResultSource = resolveSqlWarehouseResultSource(
+        userSql,
+        searchPath,
+        sqlQueryTarget
+      )
 
       execute({
         projectRef: project.ref,
         connectionString: connectionString,
         sql: wrapWithRoleImpersonation(formattedSql, impersonatedRoleState),
         autoLimit: appendAutoLimit ? limit : undefined,
+        warehouseResultSource,
         isRoleImpersonationEnabled: isRoleImpersonationEnabled(impersonatedRoleState.role),
         isStatementTimeoutDisabled: true,
         contextualInvalidation: true,
@@ -467,6 +467,8 @@ export const SQLEditor = () => {
       databases,
       eventTriggers,
       limit,
+      searchPath,
+      sqlQueryTarget,
       track,
     ]
   )
@@ -548,7 +550,7 @@ export const SQLEditor = () => {
     databaseSelectorState.selectedDatabaseId,
     databases,
     lineHighlights,
-    sessionSnap,
+    snapV2,
   ])
 
   useShortcut(SHORTCUT_IDS.SQL_EDITOR_EXPLAIN, executeExplainQuery, {
@@ -885,6 +887,121 @@ export const SQLEditor = () => {
     }
   }, [isDiffOpen, isDiffEditorMounted])
 
+  const queryResult = sessionSnap.results[id]?.[0]
+  const explainResult = sessionSnap.explainResults[id]
+  const hasExplainResult =
+    explainResult?.error !== undefined || (explainResult?.rows?.length ?? 0) > 0
+  const showUtilityPanel =
+    isExecuting || isExplainExecuting || queryResult !== undefined || hasExplainResult
+
+  const sqlEditorWorkspace = isLoading ? (
+    <div className="flex h-full w-full items-center justify-center">
+      <Loader2 className="animate-spin text-brand" />
+    </div>
+  ) : (
+    <>
+      {isDiffOpen && (
+        <div className="w-full h-full">
+          <DiffEditor
+            language="pgsql"
+            original={defaultSqlDiff.original}
+            modified={defaultSqlDiff.modified}
+            onMount={(editor) => {
+              diffEditorRef.current = editor
+              setIsDiffEditorMounted(true)
+            }}
+          />
+          {showWidget && (
+            <ResizableAIWidget
+              editor={diffEditorRef.current!}
+              id="ask-ai-diff"
+              value={promptInput}
+              onChange={setPromptInput}
+              onSubmit={(prompt: string) => {
+                handlePrompt(prompt, {
+                  beforeSelection: promptState.beforeSelection,
+                  selection: promptState.selection || defaultSqlDiff.modified,
+                  afterSelection: promptState.afterSelection,
+                })
+              }}
+              onAccept={acceptAiHandler}
+              onReject={discardAiHandler}
+              onCancel={resetPrompt}
+              isDiffVisible={true}
+              isLoading={isCompletionLoading}
+              startLineNumber={Math.max(0, promptState.startLineNumber)}
+              endLineNumber={promptState.endLineNumber}
+            />
+          )}
+        </div>
+      )}
+      <div key={id} className="w-full h-full relative">
+        <MonacoEditor
+          autoFocus
+          placeholder={
+            !promptState.isOpen && !editorRef.current?.getValue()
+              ? 'Hit ' +
+                (os === 'macos' ? 'CMD+SHIFT+K' : `CTRL+SHIFT+K`) +
+                ' to generate query or just start typing'
+              : ''
+          }
+          id={id}
+          snippetName={
+            urlId === 'new'
+              ? generatedNewSnippetName
+              : (snapV2.snippets[id]?.snippet.name ?? generatedNewSnippetName)
+          }
+          className={cn(isDiffOpen && 'hidden')}
+          editorRef={editorRef}
+          monacoRef={monacoRef}
+          executeQuery={executeQuery}
+          executeExplainQuery={executeExplainQuery}
+          showExplainAction={!disablePrettyExplain}
+          prettifyQuery={prettifyQuery}
+          onHasSelection={setHasSelection}
+          onMount={onMount}
+          onPrompt={({
+            selection,
+            beforeSelection,
+            afterSelection,
+            startLineNumber,
+            endLineNumber,
+          }) => {
+            setPromptState((prev) => ({
+              ...prev,
+              isOpen: true,
+              selection,
+              beforeSelection,
+              afterSelection,
+              startLineNumber,
+              endLineNumber,
+            }))
+          }}
+        />
+        {editorRef.current && promptState.isOpen && !isDiffOpen && (
+          <ResizableAIWidget
+            editor={editorRef.current}
+            id="ask-ai"
+            value={promptInput}
+            onChange={setPromptInput}
+            onSubmit={(prompt: string) => {
+              handlePrompt(prompt, {
+                beforeSelection: promptState.beforeSelection,
+                selection: promptState.selection,
+                afterSelection: promptState.afterSelection,
+              })
+            }}
+            onCancel={resetPrompt}
+            isDiffVisible={false}
+            isLoading={isCompletionLoading}
+            startLineNumber={Math.max(0, promptState.startLineNumber)}
+            endLineNumber={promptState.endLineNumber}
+          />
+        )}
+      </div>
+    </>
+  )
+
   return (
     <>
       <RunQueryWarningModal
@@ -918,140 +1035,35 @@ export const SQLEditor = () => {
         }}
       />
 
-      <div className="flex h-full">
-        <ResizablePanelGroup
-          className="relative"
-          orientation="vertical"
-          autoSaveId={LOCAL_STORAGE_KEYS.SQL_EDITOR_SPLIT_SIZE}
-        >
-          <ResizablePanel defaultSize="50" maxSize="70">
-            <div className="grow overflow-y-auto border-b h-full">
-              {isLoading ? (
-                <div className="flex h-full w-full items-center justify-center">
-                  <Loader2 className="animate-spin text-brand" />
-                </div>
-              ) : (
-                <>
-                  {isDiffOpen && (
-                    <div className="w-full h-full">
-                      <DiffEditor
-                        language="pgsql"
-                        original={defaultSqlDiff.original}
-                        modified={defaultSqlDiff.modified}
-                        onMount={(editor) => {
-                          diffEditorRef.current = editor
-                          setIsDiffEditorMounted(true)
-                        }}
-                      />
-                      {showWidget && (
-                        <ResizableAIWidget
-                          editor={diffEditorRef.current!}
-                          id="ask-ai-diff"
-                          value={promptInput}
-                          onChange={setPromptInput}
-                          onSubmit={(prompt: string) => {
-                            handlePrompt(prompt, {
-                              beforeSelection: promptState.beforeSelection,
-                              selection: promptState.selection || defaultSqlDiff.modified,
-                              afterSelection: promptState.afterSelection,
-                            })
-                          }}
-                          onAccept={acceptAiHandler}
-                          onReject={discardAiHandler}
-                          onCancel={resetPrompt}
-                          isDiffVisible={true}
-                          isLoading={isCompletionLoading}
-                          startLineNumber={Math.max(0, promptState.startLineNumber)}
-                          endLineNumber={promptState.endLineNumber}
-                        />
-                      )}
-                    </div>
-                  )}
-                  <div key={id} className="w-full h-full relative">
-                    <MonacoEditor
-                      autoFocus
-                      placeholder={
-                        !promptState.isOpen && !editorRef.current?.getValue()
-                          ? 'Hit ' +
-                            (os === 'macos' ? 'CMD+SHIFT+K' : `CTRL+SHIFT+K`) +
-                            ' to generate query or just start typing'
-                          : ''
-                      }
-                      id={id}
-                      snippetName={
-                        urlId === 'new'
-                          ? generatedNewSnippetName
-                          : (snapV2.snippets[id]?.snippet.name ?? generatedNewSnippetName)
-                      }
-                      className={cn(isDiffOpen && 'hidden')}
-                      editorRef={editorRef}
-                      monacoRef={monacoRef}
-                      executeQuery={executeQuery}
-                      executeExplainQuery={executeExplainQuery}
-                      showExplainAction={!disablePrettyExplain}
-                      prettifyQuery={prettifyQuery}
-                      onHasSelection={setHasSelection}
-                      onMount={onMount}
-                      onPrompt={({
-                        selection,
-                        beforeSelection,
-                        afterSelection,
-                        startLineNumber,
-                        endLineNumber,
-                      }) => {
-                        setPromptState((prev) => ({
-                          ...prev,
-                          isOpen: true,
-                          selection,
-                          beforeSelection,
-                          afterSelection,
-                          startLineNumber,
-                          endLineNumber,
-                        }))
-                      }}
-                    />
-                    {editorRef.current && promptState.isOpen && !isDiffOpen && (
-                      <ResizableAIWidget
-                        editor={editorRef.current}
-                        id="ask-ai"
-                        value={promptInput}
-                        onChange={setPromptInput}
-                        onSubmit={(prompt: string) => {
-                          handlePrompt(prompt, {
-                            beforeSelection: promptState.beforeSelection,
-                            selection: promptState.selection,
-                            afterSelection: promptState.afterSelection,
-                          })
-                        }}
-                        onCancel={resetPrompt}
-                        isDiffVisible={false}
-                        isLoading={isCompletionLoading}
-                        startLineNumber={Math.max(0, promptState.startLineNumber)}
-                        endLineNumber={promptState.endLineNumber}
-                      />
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </ResizablePanel>
+      <div className="flex h-full flex-col">
+        {!isLoading && (
+          <SqlEditorQueryBar
+            id={id}
+            isExecuting={isExecuting}
+            isDisabled={isDiffOpen}
+            hasSelection={hasSelection}
+            prettifyQuery={prettifyQuery}
+            executeQuery={executeQueryFromButton}
+          />
+        )}
+        {showUtilityPanel ? (
+          <ResizablePanelGroup
+            className="relative min-h-0 flex-1"
+            orientation="vertical"
+            autoSaveId={LOCAL_STORAGE_KEYS.SQL_EDITOR_SPLIT_SIZE}
+          >
+            <ResizablePanel defaultSize="50" maxSize="70">
+              <div className="grow overflow-y-auto h-full">{sqlEditorWorkspace}</div>
+            </ResizablePanel>
 
-          <ResizableHandle withHandle />
+            <ResizableHandle withHandle />
 
-          <ResizablePanel defaultSize="50" maxSize="70">
-            {isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Loader2 className="animate-spin text-brand" />
-              </div>
-            ) : (
+            <ResizablePanel defaultSize="50" maxSize="70">
               <UtilityPanel
                 id={id}
                 isExecuting={isExecuting}
                 isExplainExecuting={isExplainExecuting}
                 isDisabled={isDiffOpen}
-                hasSelection={hasSelection}
-                prettifyQuery={prettifyQuery}
-                executeQuery={executeQueryFromButton}
                 executeExplainQuery={executeExplainQuery}
                 showExplainTab={!disablePrettyExplain}
                 onDebug={onDebug}
@@ -1059,71 +1071,11 @@ export const SQLEditor = () => {
                 activeTab={activeUtilityTab}
                 onActiveTabChange={setActiveUtilityTab}
               />
-            )}
-          </ResizablePanel>
-
-          <div className="h-9">
-            {results?.rows !== undefined && !isExecuting && (
-              <GridFooter className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <p className="text-xs">
-                        <span className="text-foreground">
-                          {results.rows.length} row{results.rows.length > 1 ? 's' : ''}
-                        </span>
-                        <span className="text-foreground-lighter ml-1">
-                          {results.autoLimit !== undefined &&
-                            ` (Limited to only ${results.autoLimit} rows)`}
-                        </span>
-                      </p>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p className="flex flex-col gap-y-1">
-                        <span>
-                          Results are automatically limited to preserve browser performance, in
-                          particular if your query returns an exceptionally large number of rows.
-                        </span>
-
-                        <span className="text-foreground-light">
-                          You may change or remove this limit from the dropdown on the right
-                        </span>
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                  {sqlQueryTarget === 'warehouse' && (
-                    <p className="text-xs text-foreground-light">Served by: Warehouse</p>
-                  )}
-                </div>
-                {results.autoLimit !== undefined && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="default" iconRight={<ChevronUp size={14} />}>
-                        Limit results to:{' '}
-                        {
-                          ROWS_PER_PAGE_OPTIONS.find((opt) => opt.value === sessionSnap.limit)
-                            ?.label
-                        }
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-40" align="end">
-                      <DropdownMenuRadioGroup
-                        value={sessionSnap.limit.toString()}
-                        onValueChange={(val) => sessionSnap.setLimit(Number(val))}
-                      >
-                        {ROWS_PER_PAGE_OPTIONS.map((option) => (
-                          <DropdownMenuRadioItem key={option.label} value={option.value.toString()}>
-                            {option.label}
-                          </DropdownMenuRadioItem>
-                        ))}
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </GridFooter>
-            )}
-          </div>
-        </ResizablePanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        ) : (
+          <div className="relative min-h-0 flex-1 overflow-y-auto">{sqlEditorWorkspace}</div>
+        )}
       </div>
     </>
   )

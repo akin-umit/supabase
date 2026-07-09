@@ -8,13 +8,8 @@ import {
 } from '@/components/interfaces/App/FeaturePreview/FeaturePreviewContext'
 import { IS_PLATFORM } from '@/lib/constants'
 import { useTrack } from '@/lib/telemetry/track'
-import { hasUnsavedChanges } from '@/state/sql-editor/sql-editor-lifecycle'
-import { useSqlEditorV2StateSnapshot } from '@/state/sql-editor/sql-editor-state'
 
-export type AutosaveStatusProps = { id: string }
-
-export const AutosaveStatus = ({ id }: AutosaveStatusProps) => {
-  const snapV2 = useSqlEditorV2StateSnapshot()
+export const AutosaveStatus = () => {
   const track = useTrack()
   const isManualSaveEnabled = useIsSqlEditorManualSaveEnabled()
   const { selectFeaturePreview } = useFeaturePreviewModal()
@@ -27,21 +22,7 @@ export const AutosaveStatus = ({ id }: AutosaveStatusProps) => {
   const sqlEditorManualSaveFlag = useFlag('sqlEditorManualSave')
   const canEnableManualSave = IS_PLATFORM && sqlEditorManualSaveFlag
 
-  if (isManualSaveEnabled) {
-    const snippet = snapV2.snippets[id]
-    // A snippet only enters the store on its first edit, so a snippet that
-    // isn't in the store yet is a fresh, blank, untouched "new query" tab —
-    // there's nothing to report a save status for.
-    if (snippet === undefined) return null
-
-    const unsavedChanges = hasUnsavedChanges(snippet.snippet.status)
-
-    return (
-      <span className="text-xs text-foreground-lighter">
-        {unsavedChanges ? 'Unsaved edits' : 'Saved'}
-      </span>
-    )
-  }
+  if (isManualSaveEnabled) return null
 
   return (
     <div className="flex items-center gap-1">

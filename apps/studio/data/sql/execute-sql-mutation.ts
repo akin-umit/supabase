@@ -11,6 +11,7 @@ import {
   calculateSummary,
   createNodeTree,
 } from '@/components/interfaces/ExplainVisualizer/ExplainVisualizer.parser'
+import type { SqlWarehouseResultSource } from '@/components/interfaces/SQLEditor/SqlEditorWarehouseDemo'
 import { handleError as handleErrorFetchers, post } from '@/data/fetchers'
 import { MB } from '@/lib/constants'
 import { sqlEventParser } from '@/lib/sql-event-parser'
@@ -65,6 +66,7 @@ type ExecuteSqlVariables = {
 type ExecuteSqlMutationVariables = ExecuteSqlVariables & {
   autoLimit?: number
   contextualInvalidation?: boolean
+  warehouseResultSource?: SqlWarehouseResultSource
 }
 
 /**

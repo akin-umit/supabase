@@ -19,6 +19,7 @@ import {
 
 import { ButtonTooltip } from '../ui/ButtonTooltip'
 import { useFeaturePreviewModal } from './App/FeaturePreview/FeaturePreviewContext'
+import { SqlEditorWarehouseDemoMenu } from './UserDropdown/SqlEditorWarehouseDemoMenu'
 import { TimezoneDropdown } from './UserDropdown/TimezoneDropdown'
 import { ProfileImage } from '@/components/ui/ProfileImage'
 import { UpgradePlanButton } from '@/components/ui/UpgradePlanButton'
@@ -136,6 +137,7 @@ export function UserDropdown({
                   Changelog
                 </Link>
               </DropdownMenuItem>
+              <SqlEditorWarehouseDemoMenu />
               <DropdownMenuSeparator />
             </DropdownMenuGroup>
           </>

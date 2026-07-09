@@ -2,8 +2,9 @@ import { useParams } from 'common'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'ui'
 
+import { SqlWarehouseResultStatus } from '../SqlEditorWarehouseDemo'
 import { ChartConfig } from './ChartConfig'
-import { UtilityActions } from './UtilityActions'
+import { SqlResultsSummary } from './SqlResultsSummary'
 import { UtilityTabExplain } from './UtilityTabExplain'
 import { UtilityTabResults } from './UtilityTabResults'
 import { DownloadResultsButton } from '@/components/ui/DownloadResultsButton'
@@ -19,9 +20,6 @@ export type UtilityPanelProps = {
   isExplainExecuting?: boolean
   isDebugging?: boolean
   isDisabled?: boolean
-  hasSelection: boolean
-  prettifyQuery: () => void
-  executeQuery: () => void
   executeExplainQuery: () => void
   showExplainTab?: boolean
   onDebug: () => void
@@ -45,9 +43,6 @@ export const UtilityPanel = ({
   isExplainExecuting,
   isDebugging,
   isDisabled,
-  hasSelection,
-  prettifyQuery,
-  executeQuery,
   executeExplainQuery,
   showExplainTab = true,
   onDebug,
@@ -62,6 +57,11 @@ export const UtilityPanel = ({
 
   const snippet = snapV2.snippets[id]?.snippet
   const result = sessionSnap.results[id]?.[0]
+  const showResultsSummary =
+    (activeTab === 'results' || activeTab === 'chart') &&
+    result?.rows !== undefined &&
+    !isExecuting &&
+    !result.error
 
   const handleTabChange = (tab: string) => {
     // When switching to the explain tab, trigger the explain query
@@ -131,8 +131,8 @@ export const UtilityPanel = ({
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full h-full flex flex-col">
-      <TabsList className="flex justify-between gap-2 px-4 overflow-x-auto min-h-[42px]">
-        <div className="flex items-center gap-4">
+      <div className="flex min-h-[42px] shrink-0 items-center justify-between gap-2 overflow-x-auto border-b pl-3 pr-2">
+        <TabsList className="h-auto gap-4 border-b-0 p-0">
           <TabsTrigger className="py-3 text-xs" value="results">
             <span className="translate-y-px">Results</span>
           </TabsTrigger>
@@ -144,12 +144,23 @@ export const UtilityPanel = ({
           <TabsTrigger className="py-3 text-xs" value="chart">
             <span className="translate-y-px">Chart</span>
           </TabsTrigger>
+        </TabsList>
+
+        <div className="flex min-w-0 items-center gap-x-3">
+          {showResultsSummary && (
+            <>
+              {result.warehouseResultSource && (
+                <SqlWarehouseResultStatus source={result.warehouseResultSource} />
+              )}
+              <SqlResultsSummary rowCount={result.rows.length} autoLimit={result.autoLimit} />
+            </>
+          )}
 
           {result?.rows && (
             <DownloadResultsButton
-              variant="text"
               results={result.rows as any[]}
               fileName={`Supabase Snippet ${snippet?.name ?? 'Results'}`}
+              align="end"
               onDownloadAsCSV={() => track('sql_editor_result_download_csv_clicked')}
               onCopyAsMarkdown={() => track('sql_editor_result_copy_markdown_clicked')}
               onCopyAsJSON={() => track('sql_editor_result_copy_json_clicked')}
@@ -157,16 +168,7 @@ export const UtilityPanel = ({
             />
           )}
         </div>
-
-        <UtilityActions
-          id={id}
-          isExecuting={isExecuting}
-          isDisabled={isDisabled}
-          hasSelection={hasSelection}
-          prettifyQuery={prettifyQuery}
-          executeQuery={executeQuery}
-        />
-      </TabsList>
+      </div>
 
       <TabsContent asChild value="results" className="mt-0 grow">
         <UtilityTabResults

@@ -22,6 +22,19 @@ describe('sqlEditorSessionState', () => {
       expect(result?.error).toBeUndefined()
     })
 
+    it('addResult stores Warehouse result metadata', () => {
+      sqlEditorSessionState.addResult('a', [{ x: 1 }], undefined, {
+        type: 'search_path',
+        schema: 'public_warehouse',
+      })
+
+      const result = sqlEditorSessionState.results['a']?.[0]
+      expect(result?.warehouseResultSource).toEqual({
+        type: 'search_path',
+        schema: 'public_warehouse',
+      })
+    })
+
     it('addResultError stores the error with empty rows', () => {
       sqlEditorSessionState.addResultError('a', { message: 'boom' }, 25)
 
