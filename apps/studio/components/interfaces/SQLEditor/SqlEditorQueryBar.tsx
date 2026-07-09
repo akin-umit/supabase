@@ -25,9 +25,12 @@ import {
   SqlEditorSearchPathSelector,
 } from './SqlEditorSearchPathSelector'
 import { sqlEditorWarehouseDemoStore } from './SqlEditorWarehouseDemo'
+import { AutosaveStatus } from './UtilityPanel/AutosaveStatus'
 import { SqlRunButton } from './UtilityPanel/RunButton'
+import { SqlSaveButton } from './UtilityPanel/SaveButton'
 import SavingIndicator from './UtilityPanel/SavingIndicator'
 import { SqlEditorLimitSelector } from './UtilityPanel/SqlEditorLimitSelector'
+import { useIsSqlEditorManualSaveEnabled } from '@/components/interfaces/App/FeaturePreview/FeaturePreviewContext'
 import { RoleImpersonationPopover } from '@/components/interfaces/RoleImpersonationSelector/RoleImpersonationPopover'
 import { DatabaseSelector } from '@/components/ui/DatabaseSelector'
 import { useLocalStorageQuery } from '@/hooks/misc/useLocalStorage'
@@ -60,6 +63,7 @@ export function SqlEditorQueryBar({
   const { ref } = useParams()
   const snapV2 = useSqlEditorV2StateSnapshot()
   const sessionSnap = useSqlEditorSessionSnapshot()
+  const isManualSaveEnabled = useIsSqlEditorManualSaveEnabled()
   const roleImpersonationState = useRoleImpersonationStateSnapshot()
   const warehouseDemoSnap = useSnapshot(sqlEditorWarehouseDemoStore)
   const queryBarRef = useRef<HTMLDivElement>(null)
@@ -138,7 +142,12 @@ export function SqlEditorQueryBar({
       ref={queryBarRef}
       className="flex h-10 shrink-0 items-center justify-between border-b bg-dash-sidebar px-2 dark:bg-surface-100 @container"
     >
-      <div className="flex min-w-0 items-center">{IS_PLATFORM && <SavingIndicator id={id} />}</div>
+      <div className="flex min-w-0 items-center gap-x-2">
+        {IS_PLATFORM && <AutosaveStatus id={id} />}
+        {/* SavingIndicator reports auto-save progress (spinner/checkmark). In manual
+            mode AutosaveStatus + the Save button own the status, so hide it there. */}
+        {IS_PLATFORM && !isManualSaveEnabled && <SavingIndicator id={id} />}
+      </div>
 
       <div className="flex items-center gap-x-2">
         <DropdownMenu>
@@ -209,12 +218,16 @@ export function SqlEditorQueryBar({
           />
         )}
         <SqlEditorLimitSelector />
-        <SqlRunButton
-          hasSelection={hasSelection}
-          isDisabled={isDisabled || isExecuting}
-          isExecuting={isExecuting}
-          onClick={executeQuery}
-        />
+        <div className="flex items-center">
+          {isManualSaveEnabled && <SqlSaveButton id={id} className="rounded-r-none" />}
+          <SqlRunButton
+            hasSelection={hasSelection}
+            isDisabled={isDisabled || isExecuting}
+            isExecuting={isExecuting}
+            className={isManualSaveEnabled ? 'rounded-l-none' : undefined}
+            onClick={executeQuery}
+          />
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { useParams } from 'common'
 import { toast } from 'sonner'
-import { Tabs_Shadcn_, TabsContent_Shadcn_, TabsList_Shadcn_, TabsTrigger_Shadcn_ } from 'ui'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from 'ui'
 
 import { SqlWarehouseResultStatus } from '../SqlEditorWarehouseDemo'
 import { ChartConfig } from './ChartConfig'
@@ -130,25 +130,21 @@ export const UtilityPanel = ({
   }
 
   return (
-    <Tabs_Shadcn_
-      value={activeTab}
-      onValueChange={handleTabChange}
-      className="w-full h-full flex flex-col"
-    >
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full h-full flex flex-col">
       <div className="flex min-h-[42px] shrink-0 items-center justify-between gap-2 overflow-x-auto border-b pl-3 pr-2">
-        <TabsList_Shadcn_ className="h-auto gap-4 border-b-0 p-0">
-          <TabsTrigger_Shadcn_ className="py-3 text-xs" value="results">
+        <TabsList className="h-auto gap-4 border-b-0 p-0">
+          <TabsTrigger className="py-3 text-xs" value="results">
             <span className="translate-y-px">Results</span>
-          </TabsTrigger_Shadcn_>
+          </TabsTrigger>
           {showExplainTab && (
-            <TabsTrigger_Shadcn_ className="py-3 text-xs" value="explain">
+            <TabsTrigger className="py-3 text-xs" value="explain">
               <span className="translate-y-px">Explain</span>
-            </TabsTrigger_Shadcn_>
+            </TabsTrigger>
           )}
-          <TabsTrigger_Shadcn_ className="py-3 text-xs" value="chart">
+          <TabsTrigger className="py-3 text-xs" value="chart">
             <span className="translate-y-px">Chart</span>
-          </TabsTrigger_Shadcn_>
-        </TabsList_Shadcn_>
+          </TabsTrigger>
+        </TabsList>
 
         <div className="flex min-w-0 items-center gap-x-3">
           {showResultsSummary && (
@@ -174,7 +170,7 @@ export const UtilityPanel = ({
         </div>
       </div>
 
-      <TabsContent_Shadcn_ asChild value="results" className="mt-0 grow">
+      <TabsContent asChild value="results" className="mt-0 grow">
         <UtilityTabResults
           id={id}
           isExecuting={isExecuting}
@@ -183,17 +179,17 @@ export const UtilityPanel = ({
           buildDebugPrompt={buildDebugPrompt}
           isDebugging={isDebugging}
         />
-      </TabsContent_Shadcn_>
+      </TabsContent>
 
       {showExplainTab && (
-        <TabsContent_Shadcn_ asChild value="explain" className="mt-0 grow">
+        <TabsContent asChild value="explain" className="mt-0 grow">
           <UtilityTabExplain id={id} isExecuting={isExplainExecuting} />
-        </TabsContent_Shadcn_>
+        </TabsContent>
       )}
 
-      <TabsContent_Shadcn_ asChild value="chart" className="mt-0 grow">
+      <TabsContent asChild value="chart" className="mt-0 grow">
         <ChartConfig results={result} config={chartConfig} onConfigChange={onConfigChange} />
-      </TabsContent_Shadcn_>
-    </Tabs_Shadcn_>
+      </TabsContent>
+    </Tabs>
   )
 }
