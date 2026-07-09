@@ -6,9 +6,12 @@ import { logsAllEndpointUrl } from '@/data/logs/logs-endpoint'
 import { analyticsLiteral, safeSql } from '@/data/logs/safe-analytics-sql'
 import { executeSql } from '@/data/sql/execute-sql-mutation'
 
-// This feature only targets the OTEL (ClickHouse) logs path — see phase 1 findings,
-// the legacy BigQuery path has no auth_event.* / user-correlation fields ported to it.
-const otelEndpoint = logsAllEndpointUrl(true)
+// The SQL below is OTEL/ClickHouse-only — the legacy BigQuery path has no
+// auth_event.* / user-correlation fields (phase 1 finding). The endpoint is no
+// longer hardcoded: callers pass `useOtel` (from `useFlag('otelUnifiedLogs')`,
+// the same flag the Unified Logs hooks read) so the two backends never get
+// crossed. When the flag is off there is no BigQuery equivalent to run, which is
+// acceptable while this timeline is parked pending the auth_logs pipeline fix.
 
 export interface LogRow {
   id: string
@@ -72,6 +75,7 @@ export async function fetchAuthLogsByActorId(
   userId: string,
   isoStart: string,
   isoEnd: string,
+  useOtel: boolean,
   signal?: AbortSignal
 ): Promise<LogRow[]> {
   const idLit = analyticsLiteral(userId)
@@ -86,7 +90,7 @@ export async function fetchAuthLogsByActorId(
   `
   const data = await executeAnalyticsSql({
     projectRef,
-    endpoint: otelEndpoint,
+    endpoint: logsAllEndpointUrl(useOtel),
     sql,
     iso_timestamp_start: isoStart,
     iso_timestamp_end: isoEnd,
@@ -105,6 +109,7 @@ export async function fetchAuthLogsByEmail(
   email: string,
   isoStart: string,
   isoEnd: string,
+  useOtel: boolean,
   signal?: AbortSignal
 ): Promise<LogRow[]> {
   const emailLit = analyticsLiteral(email)
@@ -121,7 +126,7 @@ export async function fetchAuthLogsByEmail(
   `
   const data = await executeAnalyticsSql({
     projectRef,
-    endpoint: otelEndpoint,
+    endpoint: logsAllEndpointUrl(useOtel),
     sql,
     iso_timestamp_start: isoStart,
     iso_timestamp_end: isoEnd,
@@ -143,6 +148,7 @@ export async function fetchPostgresErrorsForUser(
   userId: string,
   isoStart: string,
   isoEnd: string,
+  useOtel: boolean,
   signal?: AbortSignal
 ): Promise<LogRow[]> {
   const idPattern = analyticsLiteral(`%${userId}%`)
@@ -158,7 +164,7 @@ export async function fetchPostgresErrorsForUser(
   `
   const data = await executeAnalyticsSql({
     projectRef,
-    endpoint: otelEndpoint,
+    endpoint: logsAllEndpointUrl(useOtel),
     sql,
     iso_timestamp_start: isoStart,
     iso_timestamp_end: isoEnd,

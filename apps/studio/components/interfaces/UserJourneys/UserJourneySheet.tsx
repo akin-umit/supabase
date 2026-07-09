@@ -1,4 +1,4 @@
-import { useParams } from 'common'
+import { useFlag, useParams } from 'common'
 import { AlertTriangle, Info, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import {
@@ -41,6 +41,7 @@ export const UserJourneySheet = ({ identifier, onOpenChange }: UserJourneySheetP
   const { data: project } = useSelectedProjectQuery()
   const { getEntitlementNumericValue } = useCheckEntitlements('log.retention_days')
   const retentionDays = getEntitlementNumericValue() || 1
+  const useOtel = useFlag('otelUnifiedLogs')
 
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -71,8 +72,20 @@ export const UserJourneySheet = ({ identifier, onOpenChange }: UserJourneySheetP
 
     const authRows = await (
       isId
-        ? fetchAuthLogsByActorId(projectRef, identifier, start.toISOString(), end.toISOString())
-        : fetchAuthLogsByEmail(projectRef, identifier, start.toISOString(), end.toISOString())
+        ? fetchAuthLogsByActorId(
+            projectRef,
+            identifier,
+            start.toISOString(),
+            end.toISOString(),
+            useOtel
+          )
+        : fetchAuthLogsByEmail(
+            projectRef,
+            identifier,
+            start.toISOString(),
+            end.toISOString(),
+            useOtel
+          )
     ).catch(() => {
       errors.push('Auth')
       return []
@@ -95,7 +108,8 @@ export const UserJourneySheet = ({ identifier, onOpenChange }: UserJourneySheetP
           projectRef,
           userId,
           start.toISOString(),
-          end.toISOString()
+          end.toISOString(),
+          useOtel
         ).catch(() => {
           errors.push('Postgres')
           return []
@@ -110,7 +124,7 @@ export const UserJourneySheet = ({ identifier, onOpenChange }: UserJourneySheetP
     setTruncated(didTruncate)
     setSourcesUsed(Array.from(new Set(allEvents.map((e) => e.source))))
     setSourceErrors(errors)
-  }, [projectRef, identifier, isId, project?.connectionString, retentionDays])
+  }, [projectRef, identifier, isId, project?.connectionString, retentionDays, useOtel])
 
   useEffect(() => {
     if (!identifier) return
