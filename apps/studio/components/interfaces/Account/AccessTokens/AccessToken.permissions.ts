@@ -605,7 +605,7 @@ export const computeOverallRisk = (
       ? 'account-wide'
       : resourceAccess === 'organization'
         ? 'organization-wide'
-        : 'single-project'
+        : 'project-scoped'
   const accessWord = anyWrite ? 'read-write' : 'read-only'
 
   let level: string
