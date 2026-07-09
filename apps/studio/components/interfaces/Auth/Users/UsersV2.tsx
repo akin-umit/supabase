@@ -56,6 +56,7 @@ import {
 import { formatUserColumns, formatUsersData } from './Users.utils'
 import { UsersFooter } from './UsersFooter'
 import { UsersSearch } from './UsersSearch'
+import { buildUnifiedLogsUrl } from '@/components/interfaces/UnifiedLogs/UnifiedLogs.utils'
 import { UserJourneySheet } from '@/components/interfaces/UserJourneys/UserJourneySheet'
 import { AlertError } from '@/components/ui/AlertError'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
@@ -378,10 +379,12 @@ export const UsersV2 = () => {
     }
   }
 
-  const onSelectViewJourney = (user: User) => {
-    const identifier = user.email || user.id
-    if (!identifier) return
-    setJourneyIdentifier(identifier)
+  const onSelectViewLogs = (user: User) => {
+    // Prefer the id — a uuid matches auth_event.actor_id and postgres error text
+    // exactly; email is the fallback for the rare listed user without one.
+    const identifier = user.id || user.email
+    if (!projectRef || !identifier) return
+    router.push(buildUnifiedLogsUrl({ projectRef, user: identifier }))
   }
 
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
@@ -493,7 +496,7 @@ export const UsersV2 = () => {
         setSortByValue: updateSortByValue,
         onSelectDeleteUser: setSelectedUserToDelete,
         onSelectImpersonateUser,
-        onSelectViewJourney,
+        onSelectViewLogs,
       })
       setColumns(columns)
       if (columns.length < userTableColumns.length) {
@@ -728,7 +731,7 @@ export const UsersV2 = () => {
                       setSortByValue: updateSortByValue,
                       onSelectDeleteUser: setSelectedUserToDelete,
                       onSelectImpersonateUser,
-                      onSelectViewJourney,
+                      onSelectViewLogs,
                     })
 
                     setSelectedColumns(value)
