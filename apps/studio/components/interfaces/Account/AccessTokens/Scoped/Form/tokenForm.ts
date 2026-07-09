@@ -55,8 +55,8 @@ export const TokenFormSchema = z
     expiresAt: z.enum(EXPIRY_PRESETS),
     customExpiryDate: z.string().optional(),
     resourceAccess: z.enum(RESOURCE_ACCESS_MODES),
-    organizationSlug: z.string().optional(),
-    projectRef: z.string().optional(),
+    organizationSlugs: z.array(z.string()),
+    projectRefs: z.array(z.string()),
     accountConfirmed: z.boolean().optional(),
     permissions: z.record(z.string(), z.enum(['none', 'read', 'readwrite'])),
   })

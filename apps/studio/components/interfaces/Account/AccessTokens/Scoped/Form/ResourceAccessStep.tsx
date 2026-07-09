@@ -1,19 +1,14 @@
 import { useMemo } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
-import {
-  Badge,
-  Checkbox,
-  cn,
-  Label,
-  RadioGroupCard,
-  RadioGroupCardItem,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from 'ui'
+import { Badge, Checkbox, cn, Label, RadioGroupCard, RadioGroupCardItem } from 'ui'
 import { Admonition } from 'ui-patterns/admonition'
+import {
+  MultiSelector,
+  MultiSelectorContent,
+  MultiSelectorItem,
+  MultiSelectorList,
+  MultiSelectorTrigger,
+} from 'ui-patterns/multi-select'
 
 import type { ResourceAccessMode } from '../../AccessToken.permissions'
 import { useOrgAndProjectData } from '../../hooks/useOrgAndProjectData'
@@ -33,51 +28,66 @@ const CARD_OPTIONS: {
 }[] = [
   {
     value: 'single-project',
-    name: 'Single project',
-    description: 'Access one project only.',
+    name: 'Projects',
+    description: 'Access one or more specific projects.',
     recommended: true,
   },
   {
     value: 'organization',
-    name: 'Organization',
-    description: 'Access projects in one organization.',
+    name: 'Organizations',
+    description: 'Access one or more organizations.',
   },
 ]
 
 export const ResourceAccessStep = ({ form, error }: ResourceAccessStepProps) => {
-  const { organizations, projects } = useOrgAndProjectData()
+  const { organizations, projects, isLoadingOrgs, isLoadingProjects } = useOrgAndProjectData()
 
   const resourceAccess = form.watch('resourceAccess')
-  const organizationSlug = form.watch('organizationSlug')
-  const projectRef = form.watch('projectRef')
+  const organizationSlugs = form.watch('organizationSlugs')
+  const projectRefs = form.watch('projectRefs')
   const accountConfirmed = form.watch('accountConfirmed')
 
   const isAccount = resourceAccess === 'account'
 
-  const projectsForOrg = useMemo(
-    () => projects.filter((project) => project.organization_slug === organizationSlug),
-    [projects, organizationSlug]
+  // MultiSelector works on display names; map names <-> ids for each list.
+  const orgNameBySlug = useMemo(
+    () => new Map(organizations.map((org) => [org.slug, org.name])),
+    [organizations]
   )
+  const projectNameByRef = useMemo(
+    () => new Map(projects.map((project) => [project.ref, project.name])),
+    [projects]
+  )
+
+  const selectedOrgNames = (organizationSlugs ?? []).map((slug) => orgNameBySlug.get(slug) ?? slug)
+  const selectedProjectNames = (projectRefs ?? []).map((ref) => projectNameByRef.get(ref) ?? ref)
+
+  const handleOrgNamesChange = (names: string[]) => {
+    const slugs = names
+      .map((name) => organizations.find((org) => org.name === name)?.slug ?? name)
+      .filter(Boolean)
+    form.setValue('organizationSlugs', slugs, { shouldValidate: true })
+  }
+
+  const handleProjectNamesChange = (names: string[]) => {
+    const refs = names
+      .map((name) => projects.find((project) => project.name === name)?.ref ?? name)
+      .filter(Boolean)
+    form.setValue('projectRefs', refs, { shouldValidate: true })
+  }
 
   const handleModeChange = (value: string) => {
     form.setValue('resourceAccess', value as ResourceAccessMode, { shouldValidate: true })
-    // Reset dependent selections when switching modes.
-    form.setValue('projectRef', undefined)
     if (value !== 'account') form.setValue('accountConfirmed', false)
-  }
-
-  const handleOrgChange = (slug: string) => {
-    form.setValue('organizationSlug', slug, { shouldValidate: true })
-    form.setValue('projectRef', undefined)
   }
 
   const enableAccountLevel = () => {
     form.setValue('resourceAccess', 'account', { shouldValidate: true })
-    form.setValue('organizationSlug', undefined)
-    form.setValue('projectRef', undefined)
+    form.setValue('organizationSlugs', [])
+    form.setValue('projectRefs', [])
   }
 
-  const switchBackToSingleProject = () => {
+  const switchBackToProjects = () => {
     form.setValue('resourceAccess', 'single-project', { shouldValidate: true })
     form.setValue('accountConfirmed', false)
   }
@@ -116,51 +126,70 @@ export const ResourceAccessStep = ({ form, error }: ResourceAccessStepProps) => 
       </RadioGroupCard>
 
       {!isAccount && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="resource-access-org" className="text-xs text-foreground-light">
-              Organization
-            </Label>
-            <Select value={organizationSlug ?? ''} onValueChange={handleOrgChange}>
-              <SelectTrigger id="resource-access-org">
-                <SelectValue placeholder="Select an organization" />
-              </SelectTrigger>
-              <SelectContent>
-                {organizations.map((org) => (
-                  <SelectItem key={org.slug} value={org.slug}>
-                    {org.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {resourceAccess === 'single-project' && (
-            <div className="space-y-1">
-              <Label htmlFor="resource-access-project" className="text-xs text-foreground-light">
-                Project
-              </Label>
-              <Select
-                value={projectRef ?? ''}
-                onValueChange={(ref) => form.setValue('projectRef', ref, { shouldValidate: true })}
-                disabled={!organizationSlug}
+        <div className="space-y-1">
+          {resourceAccess === 'single-project' ? (
+            <>
+              <p className="text-xs text-foreground-light">Projects</p>
+              <MultiSelector
+                values={selectedProjectNames}
+                onValuesChange={handleProjectNamesChange}
               >
-                <SelectTrigger id="resource-access-project">
-                  <SelectValue
-                    placeholder={
-                      organizationSlug ? 'Select a project' : 'Select an organization first'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {projectsForOrg.map((project) => (
-                    <SelectItem key={project.ref} value={project.ref}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <MultiSelectorTrigger
+                  deletableBadge
+                  showIcon={false}
+                  mode="inline-combobox"
+                  label="Select projects"
+                  badgeLimit="wrap"
+                />
+                <MultiSelectorContent className="z-50">
+                  {isLoadingProjects ? (
+                    <div className="px-3 py-2 text-sm text-foreground-light">Loading projects…</div>
+                  ) : projects.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-foreground-light">No projects found</div>
+                  ) : (
+                    <MultiSelectorList>
+                      {projects.map((project) => (
+                        <MultiSelectorItem key={project.ref} value={project.name}>
+                          {project.name}
+                        </MultiSelectorItem>
+                      ))}
+                    </MultiSelectorList>
+                  )}
+                </MultiSelectorContent>
+              </MultiSelector>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-foreground-light">Organizations</p>
+              <MultiSelector values={selectedOrgNames} onValuesChange={handleOrgNamesChange}>
+                <MultiSelectorTrigger
+                  deletableBadge
+                  showIcon={false}
+                  mode="inline-combobox"
+                  label="Select organizations"
+                  badgeLimit="wrap"
+                />
+                <MultiSelectorContent className="z-50">
+                  {isLoadingOrgs ? (
+                    <div className="px-3 py-2 text-sm text-foreground-light">
+                      Loading organizations…
+                    </div>
+                  ) : organizations.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-foreground-light">
+                      No organizations found
+                    </div>
+                  ) : (
+                    <MultiSelectorList>
+                      {organizations.map((org) => (
+                        <MultiSelectorItem key={org.slug} value={org.name}>
+                          {org.name}
+                        </MultiSelectorItem>
+                      ))}
+                    </MultiSelectorList>
+                  )}
+                </MultiSelectorContent>
+              </MultiSelector>
+            </>
           )}
         </div>
       )}
@@ -185,8 +214,8 @@ export const ResourceAccessStep = ({ form, error }: ResourceAccessStepProps) => 
           description={
             <div className="space-y-3">
               <p>
-                This token can reach every organization and project you have access to. Prefer a
-                single project or organization unless you specifically need account-wide access.
+                This token can reach every organization and project you have access to. Prefer
+                specific projects or organizations unless you specifically need account-wide access.
               </p>
               <div className="flex items-start gap-2">
                 <Checkbox
@@ -203,7 +232,7 @@ export const ResourceAccessStep = ({ form, error }: ResourceAccessStepProps) => 
               <button
                 type="button"
                 className="text-xs text-foreground-light underline hover:text-foreground transition-colors"
-                onClick={switchBackToSingleProject}
+                onClick={switchBackToProjects}
               >
                 Switch back
               </button>
