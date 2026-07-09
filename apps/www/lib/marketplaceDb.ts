@@ -369,10 +369,6 @@ async function getPartnerSlugsFromMarketplace(): Promise<string[]> {
  */
 async function searchPartnersFromMarketplace(search: string): Promise<Partner[] | null> {
   const searchTerm = search.trim()
-  let query = marketplaceClient
-    .from('catalog_listings')
-    .select('*')
-    .not('published_in_catalog_at', 'is', null)
 
   if (!searchTerm) return getPartnersFromMarketplace()
 
@@ -400,9 +396,8 @@ async function searchPartnersFromMarketplace(search: string): Promise<Partner[] 
   }
 
   const { data, error } = await marketplaceClient
-    .from('listings')
+    .from('catalog_listings')
     .select('*')
-    .not('published_in_catalog_at', 'is', null)
     .or(orConditions.join(','))
 
   if (error) {
