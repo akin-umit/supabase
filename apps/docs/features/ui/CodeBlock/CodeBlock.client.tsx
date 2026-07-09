@@ -93,26 +93,36 @@ export function CodeCopyButton({ className, content }: { className?: string; con
   const handleCopy = async () => {
     copyToClipboard(content, () => {
       setCopied(true)
-      setTimeout(() => setCopied(false), 1000)
     })
   }
 
+  const resetStatus = () => {
+    setCopied(false)
+  }
+
   return (
-    <button
-      onClick={handleCopy}
-      className={cn(
-        'border rounded-md p-1',
-        copied && 'bg-selection',
-        'hover:bg-selection transition',
-        className
-      )}
-    >
-      {copied ? (
-        <Check size={14} className="text-lighter" />
-      ) : (
-        <Copy size={14} className="text-lighter" />
-      )}
-    </button>
+    <>
+      <span className="sr-only" aria-live="polite">
+        {copied ? 'Code copied' : ''}
+      </span>
+      <button
+        onClick={handleCopy}
+        onBlur={resetStatus}
+        className={cn(
+          'border rounded-md p-1',
+          copied && 'bg-selection',
+          'hover:bg-selection transition',
+          className
+        )}
+        aria-label="Copy code"
+      >
+        {copied ? (
+          <Check size={14} className="text-lighter" />
+        ) : (
+          <Copy size={14} className="text-lighter" />
+        )}
+      </button>
+    </>
   )
 }
 
