@@ -143,9 +143,8 @@ export function SqlEditorQueryBar({
       className="flex h-10 shrink-0 items-center justify-between border-b bg-dash-sidebar px-2 dark:bg-surface-100 @container"
     >
       <div className="flex min-w-0 items-center gap-x-2">
-        {IS_PLATFORM && <AutosaveStatus id={id} />}
-        {/* SavingIndicator reports auto-save progress (spinner/checkmark). In manual
-            mode AutosaveStatus + the Save button own the status, so hide it there. */}
+        {IS_PLATFORM && <AutosaveStatus />}
+        {/* SavingIndicator reports auto-save progress. In manual mode the Save button owns status. */}
         {IS_PLATFORM && !isManualSaveEnabled && <SavingIndicator id={id} />}
       </div>
 
@@ -218,16 +217,13 @@ export function SqlEditorQueryBar({
           />
         )}
         <SqlEditorLimitSelector />
-        <div className="flex items-center">
-          {isManualSaveEnabled && <SqlSaveButton id={id} className="rounded-r-none" />}
-          <SqlRunButton
-            hasSelection={hasSelection}
-            isDisabled={isDisabled || isExecuting}
-            isExecuting={isExecuting}
-            className={isManualSaveEnabled ? 'rounded-l-none' : undefined}
-            onClick={executeQuery}
-          />
-        </div>
+        {isManualSaveEnabled && <SqlSaveButton id={id} />}
+        <SqlRunButton
+          hasSelection={hasSelection}
+          isDisabled={isDisabled || isExecuting}
+          isExecuting={isExecuting}
+          onClick={executeQuery}
+        />
       </div>
     </div>
   )
