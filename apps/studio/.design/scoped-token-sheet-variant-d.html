@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generate new token — variant D (accordion)</title>
+<style>
+  :root {
+    --bg-page: #0d0d0d;
+    --bg-sheet: #171717;
+    --bg-raised: #1f1f1f;
+    --bg-raised-2: #262626;
+    --border: #2b2b2b;
+    --border-strong: #3a3a3a;
+    --text: #ededed;
+    --text-2: #a0a0a0;
+    --text-3: #6e6e6e;
+    --green: #3ecf8e;
+    --green-btn: #1f6e47;
+    --green-btn-hover: #258a59;
+    --green-border: rgba(62,207,142,0.35);
+    --green-bg-soft: rgba(62,207,142,0.08);
+    --amber: #e0a93a;
+    --radius: 8px;
+    --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-page);
+    font-family: var(--font);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  /* Dimmed page behind the sheet */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 10;
+    animation: overlay-in .25s ease;
+  }
+  @keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .sheet {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 720px;
+    max-width: 100%;
+    background: var(--bg-sheet);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 20;
+    box-shadow: -24px 0 60px rgba(0,0,0,0.5);
+    animation: sheet-in .28s cubic-bezier(.32,.72,0,1);
+  }
+  @keyframes sheet-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+  /* Header */
+  .sheet-header {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sheet-header h1 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Body fills the sheet height; footer carries the step counter */
+  .sheet-main { display: flex; align-items: stretch; flex: 1; min-height: 0; }
+
+  /* Body */
+  .sheet-body {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 28px 8px;
+    overflow-y: auto;
+  }
+
+  .section {
+    padding: 24px 28px;
+    margin: 0 -28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 2px;
+  }
+  .section-sub {
+    font-size: 13px;
+    color: var(--text-2);
+    margin: 0 0 16px;
+    line-height: 1.5;
+  }
+
+  label.field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 7px;
+    color: var(--text);
+  }
+
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+
+  input.text-input {
+    width: 100%;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font);
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input.text-input::placeholder { color: var(--text-3); }
+  input.text-input:focus {
+    border-color: var(--green-border);
+    box-shadow: 0 0 0 2px var(--green-bg-soft);
+  }
+
+  /* Custom dropdown (expiry) */
+  .dropdown { position: relative; }
+  .dropdown-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font);
+    padding: 10px 12px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .dropdown-trigger:hover { border-color: #484848; }
+  .dropdown-trigger .chev { color: var(--text-3); transition: transform .15s; }
+  .dropdown.open .dropdown-trigger .chev { transform: rotate(180deg); }
+  .dropdown-trigger .label-wrap { display: flex; align-items: center; gap: 9px; }
+
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--bg-raised-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 5px;
+    z-index: 30;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    display: none;
+  }
+  .dropdown.open .dropdown-menu { display: block; }
+  .dropdown.up .dropdown-menu { top: auto; bottom: calc(100% + 6px); }
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .dropdown-item:hover { background: rgba(255,255,255,0.05); }
+  .dropdown-item .check { margin-left: auto; color: var(--green); opacity: 0; }
+  .dropdown-item.selected .check { opacity: 1; }
+
+  /* Recommended badge */
+  .rec-badge {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--green);
+    border: 1px solid var(--green-border);
+    background: var(--green-bg-soft);
+    border-radius: 999px;
+    padding: 2px 8px;
+    letter-spacing: .01em;
+    line-height: 1.4;
+  }
+
+  /* Resource access cards */
+  .res-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .res-card {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 16px 16px 18px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .res-card:hover { border-color: #4c4c4c; }
+  .res-card.selected { border-color: #7d7d7d; background: rgba(255,255,255,0.018); }
+  .res-radio {
+    flex-shrink: 0;
+    width: 18px; height: 18px;
+    margin-top: 2px;
+    border-radius: 50%;
+    border: 1.5px solid #5c5c5c;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s;
+  }
+  .res-card.selected .res-radio { border-color: #fff; }
+  .res-radio::after {
+    content: '';
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #fff;
+    transform: scale(0);
+    transition: transform .12s;
+  }
+  .res-card.selected .res-radio::after { transform: scale(1); }
+
+  .res-content { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+  .res-name { font-size: 15px; font-weight: 600; margin-bottom: 7px; line-height: 1.1; }
+  .res-desc { font-size: 13px; color: var(--text-2); line-height: 1.45; }
+
+  .res-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .01em;
+    border-radius: 999px;
+    padding: 3px 9px;
+    margin-top: 12px;
+  }
+  .res-badge.rec { color: var(--green); border: 1px solid var(--green-border); background: var(--green-bg-soft); }
+  .res-badge.adv { color: var(--amber); border: 1px solid rgba(224,169,58,0.4); background: rgba(224,169,58,0.08); }
+
+  /* Conditional detail area */
+  .res-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .res-detail-grid.single-col { grid-template-columns: 1fr; }
+
+  .res-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #e0664f;
+  }
+  .res-hint svg { flex-shrink: 0; }
+
+  /* Account-level: quiet footnote + compact confirm panel */
+  .res-adv-line {
+    margin-top: 16px;
+    font-size: 12.5px;
+    color: var(--text-3);
+  }
+  .res-adv-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font);
+    font-size: 12.5px;
+    color: var(--text-2);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .res-adv-link:hover { color: var(--text); }
+
+  /* Cards are locked while account-level is active */
+  .res-card.disabled { opacity: .4; pointer-events: none; }
+
+  /* Account-level: amber warning admonition */
+  .account-admonition {
+    margin-top: 16px;
+    border: 1px solid rgba(224,169,58,0.4);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    background: rgba(224,169,58,0.04);
+  }
+  .account-admonition-head { display: flex; gap: 10px; align-items: flex-start; }
+  .account-admonition-head > svg { color: var(--amber); flex-shrink: 0; margin-top: 1px; }
+  .account-admonition-body { flex: 1; min-width: 0; }
+  .account-admonition-title { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 500; }
+  .account-admonition-title .res-adv-link { margin-left: auto; }
+  .account-admonition-sub { font-size: 13px; color: var(--text-2); line-height: 1.5; margin-top: 3px; }
+  .account-admonition .res-hint { margin-top: 14px; }
+  .account-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--text);
+  }
+  .account-check .cbox {
+    width: 18px; height: 18px;
+    border: 1.5px solid #5c5c5c;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    color: #0d0d0d;
+    flex-shrink: 0;
+    transition: background .12s, border-color .12s;
+  }
+  .account-check.checked .cbox { background: var(--green); border-color: var(--green); }
+  .account-check .cbox svg { opacity: 0; }
+  .account-check.checked .cbox svg { opacity: 1; }
+
+  /* Configure permissions */
+  .perm-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .perm-head .perm-head-title { font-size: 14px; font-weight: 500; }
+  .perm-head-actions { display: flex; gap: 8px; align-items: center; }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font);
+    font-weight: 500;
+    padding: 7px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .btn-ghost:hover { background: var(--bg-raised-2); border-color: #484848; }
+  .btn-icon {
+    width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    color: var(--text-2);
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .btn-icon:hover { background: var(--bg-raised-2); color: var(--text); }
+
+  .perm-empty {
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 34px 20px;
+    text-align: center;
+    color: var(--text-2);
+    font-size: 14px;
+  }
+
+  /* Accordion categories (variant D) */
+  .acc { border: 1px solid var(--border); border-radius: var(--radius); }
+  .acc-cat:first-child .acc-head { border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0; }
+  .acc-cat:last-child:not(.open) .acc-head { border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px); }
+  .acc-cat:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .acc-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 15px 14px;
+    background: var(--bg-raised);
+    border: none;
+    color: var(--text);
+    font-family: var(--font);
+    text-align: left;
+    cursor: pointer;
+    transition: background .12s;
+  }
+  .acc-head:hover { background: var(--bg-raised-2); }
+  .acc-cat.open .acc-head { background: var(--bg-raised-2); }
+  .acc-head-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px; }
+  .acc-name { font-size: 14px; font-weight: 600; }
+  .acc-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-3);
+    cursor: help;
+    line-height: 0;
+  }
+  .acc-help:hover, .acc-help:focus { color: var(--text-2); outline: none; }
+  .acc-count {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--green);
+    border: 1px solid var(--green-border);
+    background: var(--green-bg-soft);
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+  .acc-chev { color: var(--text-3); flex-shrink: 0; transition: transform .18s; }
+  .acc-cat.open .acc-chev { transform: rotate(180deg); }
+  .acc-body { display: none; border-top: 1px solid var(--border); }
+  .acc-cat.open .acc-body { display: block; }
+  .acc-body .perm-row { padding-left: 14px; padding-right: 14px; }
+  .acc-body .perm-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+
+  .perm-list {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .perm-cat-header {
+    font-size: 10.5px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 12px 14px 8px;
+    background: rgba(255,255,255,0.015);
+    border-bottom: 1px solid var(--border);
+  }
+  .perm-cat-header:not(:first-child) { border-top: 1px solid var(--border); }
+  .perm-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .perm-row:last-child { border-bottom: none; }
+  .perm-row-info { flex: 1; min-width: 0; }
+  .perm-row-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .perm-row-desc { font-size: 12.5px; color: var(--text-2); line-height: 1.45; }
+
+  /* Segmented None / Read / Read-write */
+  .segmented {
+    display: inline-flex;
+    background: var(--bg-page);
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    padding: 2px;
+    flex-shrink: 0;
+  }
+  .segmented button {
+    border: none;
+    background: transparent;
+    color: var(--text-2);
+    font-family: var(--font);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 5px 11px;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .12s, color .12s;
+  }
+  .segmented button:hover { color: var(--text); }
+  .segmented button.active { background: var(--bg-raised-2); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+
+  /* Per-row permission mode dropdown */
+  .perm-mode-dd { width: 158px; flex-shrink: 0; }
+  .perm-mode-dd .dropdown-trigger { padding: 8px 11px; font-size: 13px; }
+  .perm-mode-dd .dropdown-menu { left: auto; right: 0; min-width: 210px; }
+  .perm-mode-dd .dropdown-item { gap: 8px; }
+  .perm-mode-dd .dropdown-item .check { margin-left: auto; }
+
+  /* Risk marker (dot + level) — always shown on each permission row */
+  .risk-marker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 10px;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--text-2);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .risk-marker[data-risk-key] { cursor: help; }
+  .risk-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .risk-dot.low    { background: var(--green); }
+  .risk-dot.medium { background: var(--amber); }
+  .risk-dot.high   { background: #f3795f; }
+  /* In the review capability list, sit the marker a touch lighter */
+  .cap-line .risk-marker { margin-left: 8px; font-size: 12px; }
+
+  /* Shared risk tooltip (appended to body so it is never clipped) */
+  .risk-tooltip {
+    position: fixed;
+    z-index: 9999;
+    max-width: 300px;
+    background: var(--bg-raised-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text);
+    text-align: left;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(2px);
+    transition: opacity .12s ease, transform .12s ease;
+    pointer-events: none;
+  }
+  .risk-tooltip.show { opacity: 1; visibility: visible; transform: translateY(0); }
+  .risk-tooltip .tip-head {
+    display: flex; align-items: center; gap: 7px;
+    font-weight: 600; font-size: 12.5px; margin-bottom: 6px;
+  }
+  .risk-tooltip .tip-reason { color: var(--text-2); }
+  .risk-tooltip .tip-section { margin-top: 10px; }
+  .risk-tooltip .tip-label {
+    font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--text-3); margin-bottom: 4px;
+  }
+  .risk-tooltip .tip-row { color: var(--text-2); font-size: 12px; line-height: 1.5; }
+  .risk-tooltip .tip-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px; color: var(--text-2); line-height: 1.6; word-break: break-word;
+  }
+
+  .perm-remove {
+    background: none;
+    border: none;
+    color: var(--text-3);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    line-height: 0;
+  }
+  .perm-remove:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+  /* Add-permission menu */
+  .addmenu { position: relative; }
+  .addmenu-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 300px;
+    background: var(--bg-raised-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 5px;
+    z-index: 30;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    display: none;
+    max-height: 340px;
+    overflow-y: auto;
+  }
+  .addmenu.open .addmenu-list { display: block; }
+  .addmenu-cat {
+    font-size: 10.5px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 10px 10px 5px;
+    position: sticky;
+    top: -5px;
+    background: var(--bg-raised-2);
+    z-index: 1;
+  }
+  .addmenu-cat:first-child { padding-top: 6px; }
+  .addmenu-item {
+    padding: 9px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .addmenu-item:hover { background: rgba(255,255,255,0.05); }
+  .addmenu-item.disabled { opacity: .4; cursor: not-allowed; }
+  .addmenu-item.disabled:hover { background: transparent; }
+  .addmenu-item .ai-name { font-size: 13.5px; font-weight: 500; }
+  .addmenu-item .ai-desc { font-size: 12px; color: var(--text-2); margin-top: 2px; line-height: 1.4; }
+
+  /* Review step */
+  .review-table {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .review-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .review-row:last-child { border-bottom: none; }
+  .review-key {
+    padding: 16px 18px;
+    font-size: 11.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    border-right: 1px solid var(--border);
+  }
+  .review-val {
+    padding: 16px 18px;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .review-val .cap-line { margin-bottom: 4px; }
+  .review-val .cap-line:last-child { margin-bottom: 0; }
+  .review-val .cap-mode { color: var(--text-2); }
+  .review-val .cap-group { margin-bottom: 12px; }
+  .review-val .cap-group:last-child { margin-bottom: 0; }
+  .review-val .cap-cat {
+    font-size: 10px; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--text-3); margin-bottom: 5px;
+  }
+  .review-intro { margin-bottom: 20px; }
+
+  /* Review: endpoints + MCP tools */
+  .ep-section { margin-top: 26px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .ep-eyebrow {
+    font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--text-3); margin: 0 0 18px;
+  }
+  .ep-group { margin-bottom: 20px; }
+  .ep-group:last-child { margin-bottom: 0; }
+  .ep-group-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .ep-group-name { font-size: 14px; font-weight: 500; }
+  .ep-mode {
+    font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+    font-weight: 600; color: var(--green);
+  }
+  .ep-line {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text-2); line-height: 1.75;
+    word-break: break-all;
+  }
+  .ep-line .ep-method { color: var(--text-3); margin-right: 7px; }
+  .mcp-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mcp-tool {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text-2);
+    background: var(--bg-raised); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 9px;
+  }
+
+  .pill {
+    display: inline-block;
+    font-size: 10.5px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 5px;
+    padding: 2px 7px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  /* Footer */
+  .sheet-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-top: 1px solid var(--border);
+  }
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .step-dots { display: flex; gap: 6px; }
+  .step-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--border-strong);
+    transition: background .15s;
+  }
+  .step-dot.active { background: var(--green); }
+  .step-label strong { color: var(--text); font-weight: 600; }
+
+  .footer-actions { display: flex; gap: 10px; }
+
+  .btn {
+    font-family: var(--font);
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 9px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: background .15s, border-color .15s;
+  }
+  .btn-secondary {
+    background: var(--bg-raised);
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+  .btn-secondary:hover { background: var(--bg-raised-2); }
+  .btn-primary {
+    background: var(--green-btn);
+    color: #eafff4;
+    border-color: rgba(62,207,142,0.25);
+  }
+  .btn-primary:hover { background: var(--green-btn-hover); }
+  .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+
+  .hidden { display: none !important; }
+
+  /* Custom expiry date */
+  .expiry-custom { margin-top: 12px; }
+  .text-input[type="date"] { color-scheme: dark; }
+
+  /* Empty-capabilities nudges */
+  .perm-empty-hint {
+    display: flex; gap: 8px; align-items: center;
+    margin-top: 12px; font-size: 13px; color: var(--amber);
+  }
+  .perm-empty-hint svg { flex-shrink: 0; }
+
+  /* Review permanence warning */
+  .review-warning {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin-top: 22px; padding: 13px 15px;
+    border: 1px solid rgba(224,169,58,0.35);
+    background: rgba(224,169,58,0.05);
+    border-radius: 8px;
+    font-size: 13px; color: var(--text-2); line-height: 1.5;
+  }
+  .review-warning .warn-ico {
+    width: 18px; height: 18px; border-radius: 5px;
+    background: var(--amber); color: #1a1306;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-weight: 700; font-size: 12px;
+  }
+  .review-warning.empty {
+    border-color: rgba(243,121,95,0.35);
+    background: rgba(243,121,95,0.05);
+  }
+  .review-warning.empty .warn-ico { background: #f3795f; }
+
+  /* Risk level colors */
+  .risk-min  { color: var(--text-2); }
+  .risk-low  { color: var(--green); }
+  .risk-med  { color: var(--amber); }
+  .risk-high { color: #f3795f; }
+
+  /* Success state */
+  .success-wrap { padding: 26px 0 8px; text-align: center; }
+  .success-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--green-bg-soft); border: 1px solid var(--green-border);
+    color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .success-title { font-size: 18px; font-weight: 600; margin: 0 0 6px; }
+  .success-sub { font-size: 13.5px; color: var(--text-2); margin: 0 auto 22px; max-width: 440px; line-height: 1.5; }
+  .token-box {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-raised); border: 1px solid var(--border-strong);
+    border-radius: 8px; padding: 12px 14px; text-align: left;
+  }
+  .token-value {
+    flex: 1; min-width: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px; color: var(--text); word-break: break-all;
+  }
+  .token-warning {
+    display: flex; gap: 9px; align-items: flex-start;
+    margin-top: 16px; font-size: 13px; color: var(--text-2);
+    text-align: left; line-height: 1.5;
+  }
+  .token-warning .warn-ico {
+    width: 18px; height: 18px; border-radius: 5px;
+    background: var(--amber); color: #1a1306;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-weight: 700; font-size: 12px;
+  }
+
+  @media (max-width: 640px) {
+    .res-grid { grid-template-columns: 1fr; }
+    .review-row { grid-template-columns: 1fr; }
+    .review-key { border-right: none; border-bottom: 1px solid var(--border); }
+    .perm-row { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="overlay"></div>
+<div class="sheet" role="dialog" aria-label="Generate new token">
+  <div class="sheet-header">
+    <h1>Generate new token</h1>
+  </div>
+
+  <div class="sheet-main">
+  <div class="sheet-body">
+    <!-- STEP 1: CONFIGURE -->
+    <div id="step-configure">
+
+      <!-- Section 1: Token details -->
+      <div class="section">
+        <h2 class="section-title">Token details</h2>
+        <p class="section-sub">Name the token and choose how long it should stay valid.</p>
+
+        <div class="field">
+          <label class="field-label" for="token-name">Name</label>
+          <input id="token-name" class="text-input" type="text" placeholder="Provide a name for your token" />
+        </div>
+
+        <div class="field">
+          <label class="field-label">Expires in</label>
+          <div class="dropdown" id="expiry-dropdown">
+            <button class="dropdown-trigger" id="expiry-trigger" aria-haspopup="listbox">
+              <span class="label-wrap">
+                <span id="expiry-label">7 days</span>
+                <span class="rec-badge" id="expiry-rec-badge">Recommended</span>
+              </span>
+              <span class="chev" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </button>
+            <div class="dropdown-menu" id="expiry-menu" role="listbox"></div>
+          </div>
+          <div class="expiry-custom hidden" id="expiry-custom">
+            <input type="date" class="text-input" id="expiry-date" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Resource access -->
+      <div class="section">
+        <h2 class="section-title">Resource access</h2>
+        <p class="section-sub">Set where this token can work before choosing what it can do.</p>
+        <div class="res-grid" id="res-grid"></div>
+        <div id="res-detail"></div>
+        <div id="res-advanced"></div>
+      </div>
+
+      <!-- Section 3: Configure permissions (accordion) -->
+      <div class="section">
+        <h2 class="section-title">Permissions</h2>
+        <p class="section-sub">Write includes read. Everything defaults to none — set only the capabilities this token needs.</p>
+        <div class="acc" id="perm-accordion"></div>
+        <div id="perm-empty-hint"></div>
+      </div>
+    </div>
+
+    <!-- STEP 2: REVIEW -->
+    <div id="step-review" class="hidden">
+      <div class="section" style="border-bottom:none;">
+        <div class="review-intro">
+          <h2 class="section-title">Review access</h2>
+          <p class="section-sub" style="margin-bottom:0;">Confirm this token before creating it. The token value will be shown once after it is created.</p>
+        </div>
+        <div class="review-table" id="review-table"></div>
+        <div id="review-endpoints"></div>
+        <div id="review-warning"></div>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div id="step-success" class="hidden">
+      <div class="section" style="border-bottom:none;">
+        <div class="success-wrap">
+          <div class="success-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 class="success-title">Token created</h2>
+          <p class="success-sub">Copy your token now and store it somewhere safe. For security, you won't be able to view it again.</p>
+        </div>
+        <label class="field-label">Token</label>
+        <div class="token-box">
+          <span class="token-value" id="token-value"></span>
+          <button class="btn-ghost" id="copy-token-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span id="copy-token-label">Copy</span>
+          </button>
+        </div>
+        <div class="token-warning">
+          <span class="warn-ico">!</span>
+          <span>This is the only time the token value is shown. If you lose it, revoke the token and create a new one.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="sheet-footer">
+    <div class="step-indicator">
+      <div class="step-dots">
+        <span class="step-dot active" id="dot-1"></span>
+        <span class="step-dot" id="dot-2"></span>
+      </div>
+      <span class="step-label" id="step-label"><strong>Step 1</strong> of 2 · Configure</span>
+    </div>
+    <div class="footer-actions" id="footer-actions"></div>
+  </div>
+</div>
+
+<div id="risk-tooltip" class="risk-tooltip" role="tooltip"></div>
+
+<script>
+// ---------- State ----------
+const EXPIRY_OPTIONS = [
+  { value: '24h', label: '24 hours' },
+  { value: '7d',  label: '7 days', recommended: true },
+  { value: '30d', label: '30 days' },
+  { value: '90d', label: '90 days' },
+  { value: 'custom', label: 'Custom' },
+];
+
+const RESOURCE_OPTIONS = [
+  { value: 'single',  name: 'Single project', badge: { text: 'Recommended', kind: 'rec' }, desc: 'Access one project only.' },
+  { value: 'org',     name: 'Organization',   desc: 'Access projects in one organization.' },
+  { value: 'account', name: 'Account-level',  badge: { text: 'Advanced', kind: 'adv' }, advanced: true, desc: 'Access every organization and project you can access.' },
+];
+
+const ORG_OPTIONS = ['Pro GmbH', 'Personal', 'Acme Inc'];
+const PROJECT_OPTIONS = ['analytics-prod', 'web-app', 'staging-db'];
+
+// Permission catalog. writable:false => read-only (None / Read only).
+// endpoints/mcp are split by access level; read-write surfaces read + write.
+// risk kept in data for later; not surfaced in UI yet.
+// Category definitions, in display order
+const PERM_CATEGORIES = [
+  { key: 'project',  name: 'Project',                 desc: 'Core project visibility, settings, and diagnostics.' },
+  { key: 'database', name: 'Database',                desc: 'SQL access, migrations, backups, and data operations.' },
+  { key: 'appsvc',   name: 'Application Services',    desc: 'Auth, realtime, and service configuration.' },
+  { key: 'infra',    name: 'Infrastructure & Delivery', desc: 'Branch automation, domains, and organization management.' },
+];
+
+const PERM_CATALOG = [
+  // --- Project ---
+  { key: 'project', cat: 'project', name: 'Project', desc: 'Project metadata and settings.', writable: true, risk: 'medium',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}', 'GET /v1/projects/{ref}/api-keys'],
+      write: ['PATCH /v1/projects/{ref}', 'PUT /v1/projects/{ref}/config/postgrest'],
+    },
+    mcp: { read: ['get_project', 'get_project_url'], write: ['update_project'] } },
+
+  { key: 'action_runs', cat: 'project', name: 'Action Runs', desc: 'Project action run status and logs.', writable: true, risk: 'medium',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/actions/runs', 'GET /v1/projects/{ref}/actions/runs/{id}/logs'],
+      write: ['POST /v1/projects/{ref}/actions/runs'],
+    },
+    mcp: { read: ['list_action_runs', 'get_run_logs'], write: ['trigger_action_run'] } },
+
+  { key: 'advisors', cat: 'project', name: 'Advisors', desc: 'Security and performance advisor results.', writable: false, risk: 'low',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/advisors/security', 'GET /v1/projects/{ref}/advisors/performance'],
+      write: [],
+    },
+    mcp: { read: ['get_advisors'], write: [] } },
+
+  { key: 'logs', cat: 'project', name: 'Logs & Analytics', desc: 'Operational logs, usage, and analytics.', writable: false, risk: 'low',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/analytics/endpoints/logs.all',
+              'GET /v1/projects/{ref}/analytics/endpoints/usage.api-counts',
+              'GET /v1/projects/{ref}/analytics/endpoints/functions.stats'],
+      write: [],
+    },
+    mcp: { read: ['get_logs', 'get_usage'], write: [] } },
+
+  // --- Database ---
+  { key: 'database', cat: 'database', name: 'Database', desc: 'Database access and data operations.', writable: true, risk: 'high',
+    riskReason: 'Read-write lets this token run arbitrary SQL, so it can modify or delete any data in your database.',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/database/tables', 'GET /v1/projects/{ref}/database/query'],
+      write: ['POST /v1/projects/{ref}/database/query'],
+    },
+    mcp: { read: ['list_tables', 'list_extensions'], write: ['execute_sql'] } },
+
+  { key: 'migrations', cat: 'database', name: 'Migrations', desc: 'Database migration history and application.', writable: true, risk: 'high',
+    riskReason: 'Read-write can apply schema changes that alter or drop tables across your database.',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/database/migrations'],
+      write: ['POST /v1/projects/{ref}/database/migrations'],
+    },
+    mcp: { read: ['list_migrations'], write: ['apply_migration'] } },
+
+  { key: 'backups', cat: 'database', name: 'Backups', desc: 'Database backups, restore points, and restore.', writable: true, risk: 'high',
+    riskReason: 'Read-write can trigger restores that overwrite current data with an earlier snapshot.',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/database/backups'],
+      write: ['POST /v1/projects/{ref}/database/backups/restore'],
+    },
+    mcp: { read: ['list_backups'], write: ['restore_backup'] } },
+
+  // --- Application Services ---
+  { key: 'auth_config', cat: 'appsvc', name: 'Auth Config', desc: 'Authentication provider and signing settings.', writable: true, risk: 'high',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/config/auth'],
+      write: ['PATCH /v1/projects/{ref}/config/auth'],
+    },
+    mcp: { read: ['get_auth_config'], write: ['update_auth_config'] } },
+
+  { key: 'realtime_config', cat: 'appsvc', name: 'Realtime Config', desc: 'Realtime configuration and connection shutdown.', writable: true, risk: 'medium',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/config/realtime'],
+      write: ['PATCH /v1/projects/{ref}/config/realtime'],
+    },
+    mcp: { read: ['get_realtime_config'], write: ['update_realtime_config'] } },
+
+  { key: 'api_keys', cat: 'appsvc', name: 'API Keys & Secrets', desc: 'Project API keys and function secrets.', writable: true, risk: 'high',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/api-keys', 'GET /v1/projects/{ref}/functions/secrets'],
+      write: ['POST /v1/projects/{ref}/api-keys', 'POST /v1/projects/{ref}/functions/secrets'],
+    },
+    mcp: { read: ['list_api_keys', 'list_edge_function_secrets'], write: ['create_api_key', 'set_function_secrets'] } },
+
+  // --- Infrastructure & Delivery ---
+  { key: 'branches', cat: 'infra', name: 'Branches', desc: 'Development and production branch automation.', writable: true, risk: 'low',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/branches'],
+      write: ['POST /v1/projects/{ref}/branches', 'DELETE /v1/projects/{ref}/branches/{id}'],
+    },
+    mcp: { read: ['list_branches'], write: ['create_branch', 'delete_branch'] } },
+
+  { key: 'domains', cat: 'infra', name: 'Domains', desc: 'Custom hostnames and vanity subdomains.', writable: true, risk: 'medium',
+    endpoints: {
+      read:  ['GET /v1/projects/{ref}/custom-hostname'],
+      write: ['POST /v1/projects/{ref}/custom-hostname'],
+    },
+    mcp: { read: ['get_custom_hostname'], write: ['set_custom_hostname'] } },
+
+  { key: 'org_members', cat: 'infra', name: 'Organization Members', desc: 'Members and roles within the organization.', writable: true, risk: 'high',
+    riskReason: 'Read-write can add or remove members and change roles across your organization.',
+    endpoints: {
+      read:  ['GET /v1/organizations/{slug}/members'],
+      write: ['POST /v1/organizations/{slug}/members', 'DELETE /v1/organizations/{slug}/members/{id}'],
+    },
+    mcp: { read: ['list_org_members'], write: ['manage_org_members'] } },
+];
+
+const state = {
+  step: 1,                 // 1 configure, 2 review, 3 success
+  name: '',
+  expiry: '7d',
+  customDate: '',
+  resource: 'single',
+  org: null,
+  project: null,
+  accountConfirmed: false,
+  resourceTouched: false,  // gate inline resource errors until interaction
+  attemptedReview: false,  // or until the user tries to advance
+  token: '',
+  // Variant D: every permission exists, defaulting to none
+  perms: PERM_CATALOG.map(p => ({ key: p.key, mode: 'none' })),
+  openCats: ['project'],   // first category open by default
+};
+
+// ---------- Helpers ----------
+const $ = (id) => document.getElementById(id);
+const expiryLabel = (v) => (EXPIRY_OPTIONS.find(o => o.value === v) || {}).label || v;
+const catalogFor = (key) => PERM_CATALOG.find(p => p.key === key);
+const modeLabel = (m) => m === 'readwrite' ? 'Read-write' : m === 'read' ? 'Read' : 'None';
+
+// Risk detail per permission: why it's that level, what it allows, surfaced in the tooltip.
+const RISK_DETAIL = {
+  project:     { reason: 'Write can change project settings and configuration.',
+                 allowsRead: ['Read project metadata', 'Read API key list'],
+                 allowsWrite: ['Update project settings', 'Edit PostgREST config'] },
+  action_runs: { reason: 'Write can trigger action runs that execute project workflows.',
+                 allowsRead: ['Read action run status', 'Read run logs'],
+                 allowsWrite: ['Trigger action runs'] },
+  advisors:    { reason: 'Read-only access to advisor findings — no changes possible.',
+                 allowsRead: ['Read security advisors', 'Read performance advisors'] },
+  logs:        { reason: 'Read-only access to logs and usage — no changes possible.',
+                 allowsRead: ['Read project logs', 'Read usage analytics'] },
+  database:    { reason: 'Read-write lets this token run arbitrary SQL, so it can modify or delete any data in your database.',
+                 allowsRead: ['Read tables and schema', 'Run read-only queries'],
+                 allowsWrite: ['Run arbitrary SQL'] },
+  migrations:  { reason: 'Read-write can apply schema changes that alter or drop tables across your database.',
+                 allowsRead: ['Read migration history'],
+                 allowsWrite: ['Apply migrations'] },
+  backups:     { reason: 'Read-write can trigger restores that overwrite current data with an earlier snapshot.',
+                 allowsRead: ['Read backups and restore points'],
+                 allowsWrite: ['Trigger restores'] },
+  org_members: { reason: 'Read-write can add or remove members and change roles across your organization.',
+                 allowsRead: ['Read organization members'],
+                 allowsWrite: ['Add or remove members', 'Change member roles'] },
+  auth_config: { reason: 'Read-write can change authentication providers and signing settings, affecting how users sign in.',
+                 allowsRead: ['Read auth configuration'],
+                 allowsWrite: ['Update auth providers', 'Change signing settings'] },
+  realtime_config: { reason: 'Write can change realtime settings and shut down active connections.',
+                 allowsRead: ['Read realtime configuration'],
+                 allowsWrite: ['Update realtime settings', 'Shut down connections'] },
+  api_keys:    { reason: 'Read exposes API keys and function secrets; write can create new keys.',
+                 allowsRead: ['Read project API keys', 'Read function secrets'],
+                 allowsWrite: ['Create API keys', 'Set function secrets'] },
+  branches:    { reason: 'Branch automation for development workflows — limited blast radius.',
+                 allowsRead: ['Read branches'],
+                 allowsWrite: ['Create branches', 'Delete branches'] },
+  domains:     { reason: 'Write can change custom hostnames, affecting how your project is reached.',
+                 allowsRead: ['Read domain configuration'],
+                 allowsWrite: ['Set custom hostnames'] },
+};
+
+const riskLevelLabel = (r) => r === 'high' ? 'High risk' : r === 'medium' ? 'Medium risk' : 'Low risk';
+
+// Always-on risk marker (dot + level). withTip wires the explanatory tooltip.
+function riskMarker(cat, withTip) {
+  const tip = withTip ? ` tabindex="0" data-risk-key="${cat.key}"` : '';
+  return `<span class="risk-marker"${tip}><span class="risk-dot ${cat.risk}"></span>${riskLevelLabel(cat.risk)}</span>`;
+}
+
+// Rich tooltip body: reason + what it allows + MCP tools.
+function buildRiskTooltipHTML(cat) {
+  const d = RISK_DETAIL[cat.key] || {};
+  let html = `<div class="tip-head"><span class="risk-dot ${cat.risk}"></span>${riskLevelLabel(cat.risk)}</div>`;
+  if (d.reason) html += `<div class="tip-reason">${escapeHtml(d.reason)}</div>`;
+  const aRead = d.allowsRead || [], aWrite = d.allowsWrite || [];
+  if (aRead.length || aWrite.length) {
+    html += `<div class="tip-section"><div class="tip-label">Allows</div>`;
+    if (aRead.length)  html += `<div class="tip-row">Read · ${aRead.map(escapeHtml).join(', ')}</div>`;
+    if (aWrite.length) html += `<div class="tip-row">Write · ${aWrite.map(escapeHtml).join(', ')}</div>`;
+    html += `</div>`;
+  }
+  const tools = [...(cat.mcp.read || []), ...(cat.mcp.write || [])];
+  if (tools.length) {
+    html += `<div class="tip-section"><div class="tip-label">MCP tools</div><div class="tip-mono">${tools.join(', ')}</div></div>`;
+  }
+  return html;
+}
+
+// ---------- Expiry dropdown ----------
+function renderExpiryMenu() {
+  const menu = $('expiry-menu');
+  menu.innerHTML = '';
+  EXPIRY_OPTIONS.forEach(opt => {
+    const item = document.createElement('div');
+    item.className = 'dropdown-item' + (opt.value === state.expiry ? ' selected' : '');
+    item.setAttribute('role', 'option');
+    item.innerHTML = `
+      <span>${opt.label}</span>
+      ${opt.recommended ? '<span class="rec-badge">Recommended</span>' : ''}
+      <span class="check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+    `;
+    item.addEventListener('click', () => {
+      state.expiry = opt.value;
+      $('expiry-label').textContent = opt.label;
+      $('expiry-rec-badge').style.display = opt.recommended ? '' : 'none';
+      $('expiry-dropdown').classList.remove('open');
+      $('expiry-custom').classList.toggle('hidden', opt.value !== 'custom');
+      renderExpiryMenu();
+    });
+    menu.appendChild(item);
+  });
+}
+$('expiry-trigger').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.querySelectorAll('.dropdown.open').forEach(d => { if (d !== $('expiry-dropdown')) d.classList.remove('open'); });
+  $('expiry-dropdown').classList.toggle('open');
+});
+// Default the custom date to ~7 days out, and track changes
+(function initCustomDate() {
+  const d = new Date(); d.setDate(d.getDate() + 7);
+  const iso = d.toISOString().slice(0, 10);
+  const input = $('expiry-date');
+  input.value = iso;
+  input.min = new Date().toISOString().slice(0, 10);
+  state.customDate = iso;
+  input.addEventListener('change', () => { state.customDate = input.value; });
+})();
+
+// ---------- Resource cards ----------
+function renderResources() {
+  const grid = $('res-grid');
+  grid.innerHTML = '';
+  const locked = state.resource === 'account';
+  RESOURCE_OPTIONS.filter(opt => !opt.advanced).forEach(opt => {
+    const card = document.createElement('div');
+    card.className = 'res-card'
+      + (opt.value === state.resource ? ' selected' : '')
+      + (locked ? ' disabled' : '');
+    const badge = opt.badge
+      ? `<span class="res-badge ${opt.badge.kind}">${opt.badge.text}</span>`
+      : '';
+    card.innerHTML = `
+      <span class="res-radio"></span>
+      <span class="res-content">
+        <span class="res-name">${opt.name}</span>
+        <span class="res-desc">${opt.desc}</span>
+        ${badge}
+      </span>
+    `;
+    if (!locked) {
+      card.addEventListener('click', () => {
+        state.resource = opt.value;
+        state.resourceTouched = true;
+        renderResources();
+        refreshNextEnabled();
+      });
+    }
+    grid.appendChild(card);
+  });
+  renderResourceDetail();
+  renderAdvancedOption();
+}
+
+// Account-level access, offered quietly below the main options
+function renderAdvancedOption() {
+  const wrap = $('res-advanced');
+  const showHints = state.attemptedReview;
+
+  if (state.resource !== 'account') {
+    wrap.innerHTML = `
+      <div class="res-adv-line">
+        Need access to every organization and project?
+        <button type="button" class="res-adv-link" id="adv-link">Advanced options</button>
+      </div>`;
+    $('adv-link').addEventListener('click', () => {
+      state.resource = 'account';
+      state.resourceTouched = true;
+      renderResources();
+      refreshNextEnabled();
+    });
+  } else {
+    wrap.innerHTML = `
+      <div class="account-admonition">
+        <div class="account-admonition-head">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div class="account-admonition-body">
+            <div class="account-admonition-title">
+              <span>Account-level access is broad.</span>
+              <button type="button" class="res-adv-link" id="adv-remove">Switch back</button>
+            </div>
+            <div class="account-admonition-sub">This token can access every organization and project available to your account.</div>
+          </div>
+        </div>
+        <div class="account-check ${state.accountConfirmed ? 'checked' : ''}" id="account-check">
+          <span class="cbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span>I understand this token is not limited to one project or organization.</span>
+        </div>
+        <div id="res-hint-slot"></div>
+      </div>`;
+    $('account-check').addEventListener('click', () => {
+      state.accountConfirmed = !state.accountConfirmed;
+      state.resourceTouched = true;
+      renderResources();
+      refreshNextEnabled();
+    });
+    $('adv-remove').addEventListener('click', () => {
+      state.resource = 'single';
+      state.accountConfirmed = false;
+      renderResources();
+      refreshNextEnabled();
+    });
+    if (!state.accountConfirmed && showHints) $('res-hint-slot').innerHTML = alertHint('Confirm account-level access to continue.');
+  }
+}
+
+function alertHint(text) {
+  return `<div class="res-hint">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span>${text}</span>
+  </div>`;
+}
+
+function renderResourceDetail() {
+  const wrap = $('res-detail');
+  wrap.innerHTML = '';
+  // Only surface validation errors after the user tries to advance
+  const showHints = state.attemptedReview;
+
+  if (state.resource === 'single') {
+    wrap.innerHTML = `
+      <div class="res-detail-grid">
+        <div>
+          <label class="field-label">Organization</label>
+          <div id="dd-org"></div>
+        </div>
+        <div>
+          <label class="field-label">Project</label>
+          <div id="dd-project"></div>
+        </div>
+      </div>
+      <div id="res-hint-slot"></div>`;
+    buildDropdown('dd-org', ORG_OPTIONS, state.org, 'Select organization', (v) => {
+      state.org = v; state.project = null; state.resourceTouched = true; renderResourceDetail(); refreshNextEnabled();
+    });
+    buildDropdown('dd-project', PROJECT_OPTIONS, state.project,
+      state.org ? 'Select project' : 'Select organization first',
+      (v) => { state.project = v; state.resourceTouched = true; renderResourceDetail(); refreshNextEnabled(); },
+      !state.org);
+    if (!state.project && showHints) $('res-hint-slot').innerHTML = alertHint('Please select a project to continue.');
+
+  } else if (state.resource === 'org') {
+    wrap.innerHTML = `
+      <div class="res-detail-grid single-col">
+        <div>
+          <label class="field-label">Organization</label>
+          <div id="dd-org"></div>
+        </div>
+      </div>
+      <div id="res-hint-slot"></div>`;
+    buildDropdown('dd-org', ORG_OPTIONS, state.org, 'Select organization', (v) => {
+      state.org = v; state.resourceTouched = true; renderResourceDetail(); refreshNextEnabled();
+    });
+    if (!state.org && showHints) $('res-hint-slot').innerHTML = alertHint('Please select an organization to continue.');
+  }
+  // Account-level renders in the advanced footnote panel, not here.
+}
+
+// Generic custom dropdown builder (matches expiry dropdown styling)
+function buildDropdown(slotId, options, selected, placeholder, onSelect, disabled) {
+  const slot = $(slotId);
+  const dd = document.createElement('div');
+  dd.className = 'dropdown' + (disabled ? ' is-disabled' : '');
+  dd.innerHTML = `
+    <button class="dropdown-trigger" ${disabled ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''}>
+      <span class="label-wrap">${selected ? selected : `<span style="color:var(--text-3)">${placeholder}</span>`}</span>
+      <span class="chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+    </button>
+    <div class="dropdown-menu" role="listbox"></div>`;
+  const menu = dd.querySelector('.dropdown-menu');
+  options.forEach(o => {
+    const item = document.createElement('div');
+    item.className = 'dropdown-item' + (o === selected ? ' selected' : '');
+    item.innerHTML = `<span>${o}</span><span class="check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>`;
+    item.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.remove('open'); onSelect(o); });
+    menu.appendChild(item);
+  });
+  if (!disabled) {
+    dd.querySelector('.dropdown-trigger').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasOpen = dd.classList.contains('open');
+      document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+      if (!wasOpen) dd.classList.add('open');
+    });
+  }
+  slot.appendChild(dd);
+}
+
+// Whether the chosen resource scope is complete
+function resourceValid() {
+  if (state.resource === 'single')  return !!state.project;
+  if (state.resource === 'org')     return !!state.org;
+  if (state.resource === 'account') return state.accountConfirmed;
+  return false;
+}
+
+function refreshNextEnabled() {
+  // Keep the button clickable so a click can surface the validation errors;
+  // goToReview gates actual advancement.
+  const btn = $('btn-next');
+  if (btn) btn.disabled = false;
+}
+
+// ---------- Add-permission menu ----------
+// Variant D: no add-permission menu — all permissions live in the accordion.
+
+// ---------- Permission rows ----------
+// Flip a dropdown menu upward when there isn't room below it inside the
+// scrolling body. Measures the live menu, so call it after adding .open.
+function openDirectionAware(dd) {
+  const trigger = dd.querySelector('.dropdown-trigger');
+  const menu = dd.querySelector('.dropdown-menu');
+  if (!trigger || !menu) return;
+  const container = document.querySelector('.sheet-body');
+  const tRect = trigger.getBoundingClientRect();
+  const cRect = container.getBoundingClientRect();
+  const menuH = menu.offsetHeight;
+  const spaceBelow = cRect.bottom - tRect.bottom;
+  const spaceAbove = tRect.top - cRect.top;
+  if (spaceBelow < menuH + 12 && spaceAbove > spaceBelow) dd.classList.add('up');
+  else dd.classList.remove('up');
+}
+
+function hasCapabilities() {
+  return state.perms.some(p => p.mode !== 'none');
+}
+
+function renderPerms() {
+  // Nudge if the user has tried to advance without any active capability
+  const hint = $('perm-empty-hint');
+  if (state.attemptedReview && !hasCapabilities()) {
+    hint.innerHTML = `<div class="perm-empty-hint">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Set at least one capability so this token can do something.</span>
+    </div>`;
+  } else {
+    hint.innerHTML = '';
+  }
+
+  const acc = $('perm-accordion');
+  acc.innerHTML = '';
+
+  PERM_CATEGORIES.forEach(catDef => {
+    const perms = PERM_CATALOG.filter(p => p.cat === catDef.key);
+    if (!perms.length) return;
+    const isOpen = state.openCats.includes(catDef.key);
+
+    // Configured count for the collapsed header (shown on the right)
+    const activeInCat = state.perms.filter(sp =>
+      sp.mode !== 'none' && catalogFor(sp.key).cat === catDef.key);
+    const countHtml = activeInCat.length
+      ? `<span class="acc-count">${activeInCat.length} configured</span>` : '';
+
+    const catEl = document.createElement('div');
+    catEl.className = 'acc-cat' + (isOpen ? ' open' : '');
+    catEl.innerHTML = `
+      <button class="acc-head" type="button">
+        <span class="acc-head-info">
+          <span class="acc-name">${catDef.name}</span>
+          <span class="acc-help" tabindex="0" data-risk-tip="${escapeHtml(catDef.desc)}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </span>
+        </span>
+        ${countHtml}
+        <span class="acc-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="acc-body"></div>
+    `;
+
+    catEl.querySelector('.acc-head').addEventListener('click', () => {
+      const i = state.openCats.indexOf(catDef.key);
+      if (i >= 0) state.openCats.splice(i, 1);
+      else state.openCats.push(catDef.key);
+      renderPerms();
+    });
+    // Help icon shows the tooltip only — don't let it toggle the section
+    catEl.querySelector('.acc-help').addEventListener('click', (e) => e.stopPropagation());
+
+    const body = catEl.querySelector('.acc-body');
+    perms.forEach(p => {
+      const stateIdx = state.perms.findIndex(sp => sp.key === p.key);
+      const perm = state.perms[stateIdx];
+      const modes = p.writable ? ['none','read','readwrite'] : ['none','read'];
+      const row = document.createElement('div');
+      row.className = 'perm-row';
+
+      const menuItems = modes.map(m => {
+        return `<div class="dropdown-item ${perm.mode === m ? 'selected' : ''}" data-mode="${m}">
+          <span>${modeLabel(m)}</span>
+          <span class="check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+        </div>`;
+      }).join('');
+
+      row.innerHTML = `
+        <div class="perm-row-info">
+          <div class="perm-row-name">${p.name}${riskMarker(p, true)}</div>
+          <div class="perm-row-desc">${p.desc}</div>
+        </div>
+        <div class="dropdown perm-mode-dd">
+          <button class="dropdown-trigger perm-mode-trigger">
+            <span class="label-wrap">${modeLabel(perm.mode)}</span>
+            <span class="chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </button>
+          <div class="dropdown-menu" role="listbox">${menuItems}</div>
+        </div>
+      `;
+
+      const dd = row.querySelector('.perm-mode-dd');
+      dd.querySelector('.perm-mode-trigger').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wasOpen = dd.classList.contains('open');
+        document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+        if (!wasOpen) {
+          dd.classList.add('open');
+          openDirectionAware(dd);
+        }
+      });
+      dd.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          state.perms[stateIdx].mode = item.dataset.mode;
+          renderPerms();
+        });
+      });
+      body.appendChild(row);
+    });
+
+    acc.appendChild(catEl);
+  });
+}
+
+// ---------- Review step ----------
+// Returns { level, text, cls } factoring in both capability mode and scope.
+function computeRisk() {
+  const active = state.perms.filter(p => p.mode !== 'none');
+  if (active.length === 0) return { level: 'Minimal', text: 'Minimal — no capabilities', cls: 'risk-min' };
+
+  const anyWrite = active.some(p => p.mode === 'readwrite');
+  const anyHighWrite = active.some(p => catalogFor(p.key).risk === 'high' && p.mode === 'readwrite');
+
+  const scopeWord = state.resource === 'account' ? 'account-wide'
+    : state.resource === 'org' ? 'organization-wide' : 'single-project';
+  const accessWord = anyWrite ? 'read-write' : 'read-only';
+
+  let level, cls;
+  if (state.resource === 'account') {
+    level = anyWrite ? 'High' : 'Elevated';
+    cls = anyWrite ? 'risk-high' : 'risk-med';
+  } else if (anyHighWrite) {
+    level = 'High'; cls = 'risk-high';
+  } else if (anyWrite) {
+    level = 'Medium'; cls = 'risk-med';
+  } else {
+    level = 'Low'; cls = 'risk-low';
+  }
+  return { level, text: `${level} — ${scopeWord} ${accessWord} access`, cls };
+}
+
+function resourceSummary() {
+  if (state.resource === 'single')  return `Project: ${state.project || '—'}`;
+  if (state.resource === 'org')     return `Organization: ${state.org || '—'}`;
+  if (state.resource === 'account') return 'Account: Account-level access';
+  return '—';
+}
+
+function expiresSummary() {
+  if (state.expiry === 'custom') {
+    if (!state.customDate) return 'Custom — no date set';
+    const d = new Date(state.customDate + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  return expiryLabel(state.expiry);
+}
+
+function renderReview() {
+  const table = $('review-table');
+  const active = state.perms.filter(p => p.mode !== 'none');
+
+  let capHtml;
+  if (active.length === 0) {
+    capHtml = '<span class="cap-mode">No capabilities selected</span>';
+  } else {
+    capHtml = PERM_CATEGORIES.map(catDef => {
+      const inCat = active.filter(p => catalogFor(p.key).cat === catDef.key);
+      if (!inCat.length) return '';
+      const lines = inCat.map(p => {
+        const cat = catalogFor(p.key);
+        return `<div class="cap-line">${cat.name} <span class="cap-mode">· ${modeLabel(p.mode)}</span> ${riskMarker(cat, false)}</div>`;
+      }).join('');
+      return `<div class="cap-group"><div class="cap-cat">${catDef.name}</div>${lines}</div>`;
+    }).join('');
+  }
+
+  const risk = computeRisk();
+  const rows = [
+    ['Name', state.name ? escapeHtml(state.name) : '<span class="cap-mode">Untitled token</span>'],
+    ['Resource access', escapeHtml(resourceSummary())],
+    ['Capabilities', capHtml],
+    ['Expires', escapeHtml(expiresSummary())],
+    ['Risk level', `<span class="${risk.cls}">${risk.text}</span>`],
+  ];
+
+  table.innerHTML = rows.map(([k, v]) =>
+    `<div class="review-row"><div class="review-key">${k}</div><div class="review-val">${v}</div></div>`
+  ).join('');
+
+  renderEndpoints();
+
+  // Permanence warning, or a stronger empty-capabilities warning
+  const warn = $('review-warning');
+  if (!hasCapabilities()) {
+    warn.innerHTML = `<div class="review-warning empty">
+      <span class="warn-ico">!</span>
+      <span>This token has no capabilities, so it won't be able to do anything. Go back and add at least one before creating it.</span>
+    </div>`;
+  } else {
+    warn.innerHTML = `<div class="review-warning">
+      <span class="warn-ico">!</span>
+      <span>Once created, a token's access can't be edited. To change it, revoke this token and create a new one.</span>
+    </div>`;
+  }
+}
+
+// Build the "Management API endpoints enabled" + "MCP tools" detail
+function renderEndpoints() {
+  const wrap = $('review-endpoints');
+  const active = state.perms.filter(p => p.mode !== 'none');
+  if (active.length === 0) { wrap.innerHTML = ''; return; }
+
+  // Endpoint groups, one per active permission
+  const groups = active.map(p => {
+    const cat = catalogFor(p.key);
+    const eps = p.mode === 'readwrite'
+      ? [...cat.endpoints.read, ...cat.endpoints.write]
+      : [...cat.endpoints.read];
+    const lines = eps.map(e => {
+      const sp = e.indexOf(' ');
+      const method = e.slice(0, sp);
+      const path = e.slice(sp + 1);
+      return `<div class="ep-line"><span class="ep-method">${method}</span>${escapeHtml(path)}</div>`;
+    }).join('');
+    return `<div class="ep-group">
+      <div class="ep-group-head">
+        <span class="ep-group-name">${cat.name}</span>
+        <span class="ep-mode">${p.mode === 'readwrite' ? 'Read-write' : 'Read'}</span>
+      </div>
+      ${lines}
+    </div>`;
+  }).join('');
+
+  // MCP tools, de-duplicated across active permissions
+  const tools = [];
+  active.forEach(p => {
+    const cat = catalogFor(p.key);
+    cat.mcp.read.forEach(t => { if (!tools.includes(t)) tools.push(t); });
+    if (p.mode === 'readwrite') cat.mcp.write.forEach(t => { if (!tools.includes(t)) tools.push(t); });
+  });
+  const toolsHtml = tools.map(t => `<span class="mcp-tool">${t}</span>`).join('');
+
+  wrap.innerHTML = `
+    <div class="ep-section">
+      <p class="ep-eyebrow">Management API endpoints enabled</p>
+      ${groups}
+    </div>
+    <div class="ep-section">
+      <p class="ep-eyebrow">MCP tools</p>
+      <div class="mcp-list">${toolsHtml}</div>
+    </div>`;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------- Step navigation ----------
+function renderFooter() {
+  const actions = $('footer-actions');
+  if (state.step === 1) {
+    actions.innerHTML = `
+      <button class="btn btn-secondary" id="btn-cancel">Cancel</button>
+      <button class="btn btn-primary" id="btn-next">Review access
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>`;
+    $('btn-next').addEventListener('click', goToReview);
+    refreshNextEnabled();
+  } else if (state.step === 2) {
+    actions.innerHTML = `
+      <button class="btn btn-secondary" id="btn-back">Back</button>
+      <button class="btn btn-secondary" id="btn-cancel">Cancel</button>
+      <button class="btn btn-primary" id="btn-create">Create token</button>`;
+    $('btn-back').addEventListener('click', goToConfigure);
+    $('btn-create').addEventListener('click', createToken);
+    // Don't allow creating a token that can't do anything
+    $('btn-create').disabled = !hasCapabilities();
+  } else {
+    actions.innerHTML = `<button class="btn btn-primary" id="btn-done">Done</button>`;
+    $('btn-done').addEventListener('click', resetFlow);
+  }
+}
+
+// Footer step counter
+function setStepIndicator() {
+  $('dot-1').classList.toggle('active', state.step >= 1);
+  $('dot-2').classList.toggle('active', state.step >= 2);
+  const label = $('step-label');
+  if (state.step === 1)      label.innerHTML = '<strong>Step 1</strong> of 2 · Configure';
+  else if (state.step === 2) label.innerHTML = '<strong>Step 2</strong> of 2 · Review';
+  else                       label.innerHTML = '<strong>Done</strong> · Token created';
+}
+
+function goToReview() {
+  state.attemptedReview = true;
+  if (!resourceValid()) {
+    renderResources();
+    refreshNextEnabled();
+    // Bring the incomplete section (and its error) into view
+    const slot = $('res-hint-slot');
+    if (slot) slot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  state.name = $('token-name').value;
+  state.step = 2;
+  $('step-configure').classList.add('hidden');
+  $('step-success').classList.add('hidden');
+  $('step-review').classList.remove('hidden');
+  renderReview();
+  setStepIndicator();
+  renderFooter();
+  document.querySelector('.sheet-body').scrollTop = 0;
+}
+
+function goToConfigure() {
+  state.step = 1;
+  $('step-review').classList.add('hidden');
+  $('step-success').classList.add('hidden');
+  $('step-configure').classList.remove('hidden');
+  renderPerms();        // refresh empty-capabilities nudge
+  setStepIndicator();
+  renderFooter();
+}
+
+function createToken() {
+  if (!hasCapabilities()) return;
+  state.token = 'sbp_' + Array.from({ length: 40 }, () =>
+    'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 36)]).join('');
+  state.step = 3;
+  $('token-value').textContent = state.token;
+  $('copy-token-label').textContent = 'Copy';
+  $('step-review').classList.add('hidden');
+  $('step-configure').classList.add('hidden');
+  $('step-success').classList.remove('hidden');
+  setStepIndicator();
+  renderFooter();
+  document.querySelector('.sheet-body').scrollTop = 0;
+}
+
+$('copy-token-btn').addEventListener('click', () => {
+  const done = () => { $('copy-token-label').textContent = 'Copied'; setTimeout(() => { $('copy-token-label').textContent = 'Copy'; }, 1600); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(state.token).then(done).catch(done);
+  } else { done(); }
+});
+
+function resetFlow() {
+  Object.assign(state, {
+    step: 1, name: '', expiry: '7d', customDate: state.customDate,
+    resource: 'single', org: null, project: null, accountConfirmed: false,
+    resourceTouched: false, attemptedReview: false, token: '',
+    perms: PERM_CATALOG.map(p => ({ key: p.key, mode: 'none' })),
+    openCats: ['project'],
+  });
+  $('token-name').value = '';
+  $('expiry-label').textContent = '7 days';
+  $('expiry-rec-badge').style.display = '';
+  $('expiry-custom').classList.add('hidden');
+  renderExpiryMenu();
+  goToConfigure();
+  renderResources();
+}
+
+// Close popovers on outside click
+document.addEventListener('click', () => {
+  document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open', 'up'));
+  document.querySelectorAll('.addmenu.open').forEach(d => d.classList.remove('open'));
+});
+
+// ---------- Risk tooltip ----------
+const tipEl = $('risk-tooltip');
+function positionTip(target) {
+  const r = target.getBoundingClientRect();
+  tipEl.style.left = '0px';
+  tipEl.style.top = '0px';
+  const tr = tipEl.getBoundingClientRect();
+  const margin = 8;
+  // Centre horizontally over the badge, then clamp to viewport
+  let left = r.left + r.width / 2 - tr.width / 2;
+  left = Math.max(margin, Math.min(left, window.innerWidth - tr.width - margin));
+  // Prefer above; flip below if there isn't room
+  let top = r.top - tr.height - 8;
+  if (top < margin) top = r.bottom + 8;
+  tipEl.style.left = left + 'px';
+  tipEl.style.top = top + 'px';
+}
+function showTip(target) {
+  const key = target.getAttribute('data-risk-key');
+  if (key) tipEl.innerHTML = buildRiskTooltipHTML(catalogFor(key));
+  else tipEl.textContent = target.getAttribute('data-risk-tip') || '';
+  tipEl.classList.add('show');
+  positionTip(target);
+}
+function hideTip() { tipEl.classList.remove('show'); }
+
+document.addEventListener('mouseover', (e) => {
+  const t = e.target.closest('[data-risk-tip],[data-risk-key]');
+  if (t) showTip(t);
+});
+document.addEventListener('mouseout', (e) => {
+  const t = e.target.closest('[data-risk-tip],[data-risk-key]');
+  if (t && !e.relatedTarget?.closest?.('[data-risk-tip],[data-risk-key]')) hideTip();
+});
+document.addEventListener('focusin', (e) => {
+  const t = e.target.closest && e.target.closest('[data-risk-tip],[data-risk-key]');
+  if (t) showTip(t);
+});
+document.addEventListener('focusout', hideTip);
+// Hide on scroll within the sheet so it doesn't float detached
+document.querySelector('.sheet-body').addEventListener('scroll', hideTip);
+
+// ---------- Init ----------
+renderExpiryMenu();
+renderResources();
+renderPerms();
+setStepIndicator();
+renderFooter();
+</script>
+</body>
+</html>
