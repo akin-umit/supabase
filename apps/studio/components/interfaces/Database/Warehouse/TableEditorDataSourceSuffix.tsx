@@ -14,7 +14,7 @@ import {
 import { WarehouseStatusText } from './WarehouseSyncChip'
 
 export const WAREHOUSE_TABLE_EDITOR_TOOLTIP =
-  'This is a linked Warehouse table. Rows replicate from Postgres. Recent writes may not appear here yet.'
+  'This is a Warehouse replica. Rows replicate from Postgres. Recent writes may not appear here yet.'
 
 const footerTextSizeClassName = 'text-xs'
 const footerLabelClassName = 'text-xs text-foreground-light'
@@ -65,7 +65,7 @@ export function TableEditorDataSourceSuffix({ schema, table }: TableEditorDataSo
           className={`inline-flex min-w-0 items-center gap-1 truncate ${footerTextSizeClassName}`}
         >
           <WarehouseStatusText
-            text="Linked Warehouse table"
+            text="Warehouse replica"
             tooltip={WAREHOUSE_TABLE_EDITOR_TOOLTIP}
             className={footerLabelClassName}
           />

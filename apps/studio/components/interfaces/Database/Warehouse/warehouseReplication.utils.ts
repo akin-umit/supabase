@@ -52,7 +52,7 @@ export function getReplicationLagDisplay(
       health: 'error',
       headline: 'Sync error',
       compactSuffix: 'Error',
-      tooltip: 'This linked Warehouse table could not stay in sync with Postgres.',
+      tooltip: 'This Warehouse replica could not stay in sync with Postgres.',
       tone: 'destructive',
     }
   }
@@ -83,8 +83,8 @@ export function getReplicationLagDisplay(
   if (copyStatus === 'backfilling') {
     return {
       health: 'healthy',
-      headline: 'Backfilling',
-      tooltip: 'This linked Warehouse table is still catching up.',
+      headline: 'Replicating',
+      tooltip: 'This Warehouse replica is still catching up.',
       tone: 'default',
     }
   }
@@ -105,7 +105,7 @@ export function getReplicationLagDisplay(
       lagAmount: lagFormatted,
       compactSuffix: 'Catching up',
       tooltip:
-        'Warehouse replication is catching up. Recent writes may not appear in linked tables yet.',
+        'Warehouse replication is catching up. Recent writes may not appear in Warehouse replicas yet.',
       tone: 'warning',
     }
   }
@@ -165,7 +165,7 @@ const REPLICATION_HEALTH_SORT_RANK: Record<ReplicationHealth, number> = {
   healthy: 3,
 }
 
-/** Higher rank = healthier. Unlinked tables return -1. */
+/** Higher rank = healthier. Tables without a Warehouse replica return -1. */
 export function getWarehouseTableStatusSortRank(
   tableKey: string,
   storedState: WarehouseTableState | undefined,

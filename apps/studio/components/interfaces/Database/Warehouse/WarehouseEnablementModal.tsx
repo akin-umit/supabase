@@ -28,8 +28,8 @@ interface WarehouseEnablementModalProps {
 const SETUP_ERROR_MESSAGE =
   'Warehouse replication could not be enabled for this project. Your Postgres table was not changed.'
 
-/** Simulates POST linked-table on staging platform API until Studio queries metadata. */
-const LINK_REQUEST_MS = 900
+/** Simulates POST /platform/warehouse/{ref}/tables until Studio queries the platform API. */
+const REPLICATE_REQUEST_MS = 900
 
 export function WarehouseEnablementModal({
   open,
@@ -52,7 +52,7 @@ export function WarehouseEnablementModal({
     }
   }, [open])
 
-  const startLink = async () => {
+  const startReplication = async () => {
     setIsSubmitting(true)
     setSubmitError(null)
 
@@ -61,19 +61,19 @@ export function WarehouseEnablementModal({
         setTimeout(() => {
           if (warehouseDemoStore.simulateNextLinkFailure) {
             warehouseDemoStore.simulateNextLinkFailure = false
-            reject(new Error('link_failed'))
+            reject(new Error('replicate_failed'))
             return
           }
           resolve()
-        }, LINK_REQUEST_MS)
+        }, REPLICATE_REQUEST_MS)
       })
 
       setTableMode(tableKey, 'has_warehouse_copy', { sourceTableId })
-      toast.success('Warehouse link started')
+      toast.success('Warehouse replication started')
       onOpenChange(false)
     } catch {
       setSubmitError(SETUP_ERROR_MESSAGE)
-      toast.error('Failed to link table to Warehouse')
+      toast.error('Failed to replicate table to Warehouse')
     } finally {
       setIsSubmitting(false)
     }
@@ -88,14 +88,13 @@ export function WarehouseEnablementModal({
     >
       <DialogContent size="small">
         <DialogHeader>
-          <DialogTitle>Link table to Warehouse</DialogTitle>
+          <DialogTitle>Replicate table to Warehouse</DialogTitle>
         </DialogHeader>
 
         <DialogSectionSeparator />
         <DialogSection className="flex flex-col gap-4">
           <p className="text-sm text-foreground-light">
-            The Postgres heap will remain the source of truth. A linked Warehouse table will be
-            created.
+            The Postgres heap will remain the source of truth. A Warehouse replica will be created.
           </p>
 
           <div className="rounded-lg border bg-surface-75 text-sm">
@@ -124,8 +123,8 @@ export function WarehouseEnablementModal({
           <Button variant="default" disabled={isSubmitting} onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button variant="primary" loading={isSubmitting} onClick={() => void startLink()}>
-            Link to Warehouse
+          <Button variant="primary" loading={isSubmitting} onClick={() => void startReplication()}>
+            Replicate to Warehouse
           </Button>
         </DialogFooter>
       </DialogContent>

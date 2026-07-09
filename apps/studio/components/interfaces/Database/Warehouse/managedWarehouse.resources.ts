@@ -5,4 +5,4 @@ export function isSupabaseManagedWarehousePublicationName(name: string): boolean
 }
 
 export const MANAGED_WAREHOUSE_PUBLICATION_TOOLTIP =
-  'Managed by Supabase for Warehouse copies. Add or remove tables from Database Tables.'
+  'Managed by Supabase for Warehouse replicas. Add or remove tables from Database Tables.'

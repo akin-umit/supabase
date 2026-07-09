@@ -52,13 +52,13 @@ function PhaseMetric({ phase }: { phase: ReplicationPhase }) {
   )
 }
 
-function LinkedTablesMetric({ count }: { count: number }) {
+function WarehouseReplicasMetric({ count }: { count: number }) {
   return (
     <div className="flex min-w-0 flex-col gap-2 px-4 py-3">
       <ChartMetric
-        label="Linked tables"
+        label="Warehouse replicas"
         value={count.toLocaleString()}
-        tooltip="Postgres tables linked to Warehouse in this project."
+        tooltip="Postgres tables replicated to Warehouse in this project."
         className="[&_span]:text-sm"
       />
     </div>
@@ -144,7 +144,7 @@ export function WarehouseObservabilityPanel() {
   const { ref: projectRef } = useParams()
   const warehouseSnap = useSnapshot(warehouseDemoStore)
   const projectReplication = useProjectReplication()
-  const linkedTableCount = useMemo(
+  const warehouseReplicaCount = useMemo(
     () =>
       Object.values(warehouseSnap.tables).filter((table) => table.mode === 'has_warehouse_copy')
         .length,
@@ -154,14 +154,14 @@ export function WarehouseObservabilityPanel() {
     projectRef !== undefined ? buildReplicationLogsUrl(projectRef) : undefined
   const tablesUrl = projectRef !== undefined ? `/project/${projectRef}/database/tables` : undefined
 
-  if (linkedTableCount === 0 || !projectReplication) {
+  if (warehouseReplicaCount === 0 || !projectReplication) {
     return (
       <div className="flex flex-col items-start gap-4 rounded-md border bg-surface-75 px-6 py-8">
         <div className="flex flex-col gap-1">
-          <h3 className="text-sm font-medium">No linked Warehouse tables yet</h3>
+          <h3 className="text-sm font-medium">No Warehouse replicas yet</h3>
           <p className="max-w-md text-sm text-foreground-light">
-            Link a table to Warehouse to see project-wide replication metrics here. Lag and pipeline
-            phase are shared across all linked Warehouse tables.
+            Replicate a table to Warehouse to see project-wide replication metrics here. Lag and
+            pipeline phase are shared across all Warehouse replicas.
           </p>
         </div>
         {tablesUrl && (
@@ -184,7 +184,7 @@ export function WarehouseObservabilityPanel() {
           <div className="grid grid-cols-1 divide-y sm:grid-cols-2 lg:grid-cols-4 sm:divide-x sm:divide-y-0">
             <LagMetric replication={projectReplication} />
             <PhaseMetric phase={projectReplication.replicationPhase} />
-            <LinkedTablesMetric count={linkedTableCount} />
+            <WarehouseReplicasMetric count={warehouseReplicaCount} />
             <PipelineStatusMetric status={projectReplication.pipelineStatus} />
           </div>
         </CardContent>
@@ -198,7 +198,7 @@ export function WarehouseObservabilityPanel() {
         )}
         {tablesUrl && (
           <Button variant="text" asChild>
-            <Link href={tablesUrl}>Manage table copies</Link>
+            <Link href={tablesUrl}>Manage Warehouse replicas</Link>
           </Button>
         )}
       </div>

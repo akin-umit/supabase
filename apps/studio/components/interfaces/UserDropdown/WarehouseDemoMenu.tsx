@@ -21,7 +21,7 @@ const REPLICATION_PRESETS: { preset: WarehouseDemoReplicationPreset; label: stri
   { preset: 'behind', label: 'Catching up (behind)' },
   { preset: 'critical', label: 'Degraded (critical)' },
   { preset: 'pipeline_error', label: 'Pipeline error' },
-  { preset: 'copy_error', label: 'Table link sync error' },
+  { preset: 'copy_error', label: 'Replica replication error' },
 ]
 
 export function WarehouseDemoMenu() {
@@ -45,7 +45,9 @@ export function WarehouseDemoMenu() {
                 onClick={() => {
                   const applied = applyWarehouseDemoReplicationPreset(preset)
                   if (!applied) {
-                    toast.message('Link a table to Warehouse first to preview replication health.')
+                    toast.message(
+                      'Replicate a table to Warehouse first to preview replication health.'
+                    )
                     return
                   }
                   toast.message(`Warehouse demo: ${label}`)
@@ -62,10 +64,10 @@ export function WarehouseDemoMenu() {
               className="cursor-pointer"
               onClick={() => {
                 setSimulateNextLinkFailure(true)
-                toast.message('Next “Link to Warehouse” will fail (demo)')
+                toast.message('Next “Replicate to Warehouse” will fail (demo)')
               }}
             >
-              Fail next link to Warehouse
+              Fail next replicate to Warehouse
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>

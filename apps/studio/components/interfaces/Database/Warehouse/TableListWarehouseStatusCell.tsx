@@ -6,7 +6,7 @@ interface TableListWarehouseStatusCellProps {
   isWarehouseSchemaView: boolean
 }
 
-/** Matches the Storage panel Status row — full amalgamated link status. */
+/** Matches the Storage panel Status row — full amalgamated replication status. */
 export function TableListWarehouseStatusCell({
   tableKey,
   isWarehouseSchemaView,

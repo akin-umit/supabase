@@ -1,6 +1,6 @@
 # Warehouse table metadata API contract
 
-Prototype Studio code uses `?view=warehouse` on table detail URLs and `warehouseDemoStore` until table metadata queries return warehouse fields. Platform warehouse endpoints landed in [platform#34689](https://github.com/supabase/platform/pull/34689) (staging only); Studio is not wired to them yet.
+Prototype Studio code uses `?view=warehouse` on table detail URLs and `warehouseDemoStore` until table metadata queries return warehouse fields. Platform warehouse endpoints landed in [platform#34689](https://github.com/supabase/platform/pull/34689) (staging only); Studio is not wired to them yet. User-facing copy follows `WAREHOUSE_NAMING.md`.
 
 ## Goals
 
@@ -36,7 +36,7 @@ type WarehouseLinkedTable = WarehouseTable & {
 
 | Platform API       | Studio prototype / UI                                                             |
 | ------------------ | --------------------------------------------------------------------------------- |
-| `state: 'syncing'` | `copyStatus: 'backfilling'` → label **Backfilling**                               |
+| `state: 'syncing'` | `copyStatus: 'backfilling'` → label **Replicating** (see `WAREHOUSE_NAMING.md`)   |
 | `state: 'live'`    | `copyStatus: 'live'` → label **Live**                                             |
 | `state: 'error'`   | `copyStatus: 'error'` → label **Error**                                           |
 | `copy_name`        | `warehouse_qualified_name` / `getWarehouseQualifiedTableName()`                   |
@@ -156,11 +156,11 @@ type CatalogPostResponse = CatalogResponse
 ### Recommended Studio wiring flow
 
 1. Load `GET /tables` and `GET /setup-status` on Warehouse surfaces mount
-2. User confirms link → `POST /tables` with `{ schema, name }`
-3. Show returned table immediately as `syncing` (UI: **Backfilling**)
+2. User confirms replicate → `POST /tables` with `{ schema, name }`
+3. Show returned table immediately as `syncing` (UI: **Replicating**)
 4. Poll `GET /setup-status` until `complete` or `error`
 5. Detach via `DELETE /tables/{schema}/{name}`
-6. Snapshots: linked tables only, preferably after setup is `complete`
+6. Snapshots: replicated tables only, preferably after setup is `complete`
 
 Target react-query layer: `apps/studio/data/warehouse/` (not created yet).
 
@@ -215,13 +215,13 @@ Derived from WAL backlog (`replication_lag_bytes`) and pipeline state. Threshold
 
 | Copy status   | User-facing label | Leading indicator                       |
 | ------------- | ----------------- | --------------------------------------- |
-| `backfilling` | **Backfilling**   | Spinner                                 |
+| `backfilling` | **Replicating**   | Spinner                                 |
 | `live`        | **Live**          | Pulsing dot                             |
 | `error`       | **Error**         | Red dot (hidden in Table Editor footer) |
 
 ### Amalgamation rules (one status shown)
 
-1. **Table copy wins** for `backfilling` or `error` on the table.
+1. **Table replica state wins** for `backfilling` (UI: Replicating) or `error` on the table.
 2. Otherwise, if project replication is not caught up, **project health supersedes Live** (`Catching up`, `Degraded`, `Error`).
 3. Otherwise **Live** when copy is `live` and project is healthy.
 
@@ -289,44 +289,44 @@ After API lands, `view=warehouse` becomes optional when the requested table OID 
 1. **Before Move**: `storage_mode = postgres_with_warehouse_copy`, postgres OID is primary, warehouse detail is a read-only lens.
 2. **After Move**: `storage_mode = warehouse_only`, postgres table removed, warehouse OID is primary. Postgres detail URL should 404 or redirect to warehouse detail.
 
-Detach (link removed, postgres remains): `storage_mode` returns to `postgres`; warehouse schema row disappears from list.
+Detach (replication stopped, postgres remains): `storage_mode` returns to `postgres`; warehouse schema row disappears from list.
 
-## Link enable flow (Studio UX)
+## Replicate flow (Studio UX)
 
-Linking a table and backfilling it are **two phases**:
+Replicating a table and catching up are **two phases**:
 
-| Phase           | User action       | API                                                                | Studio                                      |
-| --------------- | ----------------- | ------------------------------------------------------------------ | ------------------------------------------- |
-| **1. Link**     | Confirm in dialog | `POST /platform/warehouse/{ref}/tables` → `202`, returns `syncing` | Button loading only; dialog closes on `2xx` |
-| **2. Backfill** | (background)      | Poll `GET /setup-status`; table `state: 'syncing'` → `'live'`      | Sync status chip + Storage panel            |
+| Phase            | User action       | API                                                                | Studio                                      |
+| ---------------- | ----------------- | ------------------------------------------------------------------ | ------------------------------------------- |
+| **1. Replicate** | Confirm in dialog | `POST /platform/warehouse/{ref}/tables` → `202`, returns `syncing` | Button loading only; dialog closes on `2xx` |
+| **2. Catch up**  | (background)      | Poll `GET /setup-status`; table `state: 'syncing'` → `'live'`      | Replication status chip + Storage panel     |
 
-The dialog must **not** block until backfill completes. Failures during link return an error in the dialog; failures during backfill set `warehouse_copy_status: 'error'`.
+The dialog must **not** block until replication catches up. Failures during replicate return an error in the dialog; failures during catch-up set `warehouse_copy_status: 'error'`.
 
 Optional future fields for richer progress (not required for MVP): `warehouse_backfill_rows_done`, `warehouse_backfill_rows_total`, or bytes copied.
 
 ### Session notifications (MVP)
 
-| Event                                      | Toast                                                      | Suppressed when                                                                                |
-| ------------------------------------------ | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Link accepted                              | `"Warehouse link started"`                                 | -                                                                                              |
-| Backfill complete (`backfilling` → `live`) | `"Warehouse link is live"` + qualified name in description | User is on that table's **Settings** tab or **warehouse detail** view (status already visible) |
+| Event                                 | Toast                                                         | Suppressed when                                                                                |
+| ------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Replicate accepted                    | `"Warehouse replication started"`                             | -                                                                                              |
+| Replica live (`backfilling` → `live`) | `"Warehouse replica is live"` + qualified name in description | User is on that table's **Settings** tab or **warehouse detail** view (status already visible) |
 
 Long-running work does not use a notifications inbox in MVP; in-session sonner toasts cover start and completion when the user is elsewhere in Studio.
 
 ## Demo store mapping (interim)
 
-| Demo store                                       | Platform API equivalent                                            |
-| ------------------------------------------------ | ------------------------------------------------------------------ |
-| `mode: 'postgres'`                               | Table absent from `GET /tables`                                    |
-| `mode: 'has_warehouse_copy'`                     | Row in `GET /tables` with `state` + `copy_name`                    |
-| `copyStatus: 'backfilling' \| 'live' \| 'error'` | `WarehouseLinkedTable.state` (`syncing` → `backfilling` in UI)     |
-| `copyName` (implicit via naming utils)           | `copy_name`                                                        |
-| `sourceTableId`                                  | Postgres table OID (for completion toast CTA; not on platform API) |
-| `projectReplication.replicationLagBytes`         | `replication_lag_bytes` (project; future monitor/setup-status)     |
-| `projectReplication.replicationPhase`            | Derived from `setup_status` / pipeline state                       |
-| (not implemented)                                | `storage_mode: 'warehouse_only'`                                   |
-| `catalogEnabled`                                 | `GET /catalog` → `enabled`                                         |
-| `WAREHOUSE_CATALOG_CREDENTIALS` (constants)      | `GET /catalog` → `credentials`                                     |
+| Demo store                                       | Platform API equivalent                                                                     |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `mode: 'postgres'`                               | Table absent from `GET /tables`                                                             |
+| `mode: 'has_warehouse_copy'`                     | Row in `GET /tables` with `state` + `copy_name`                                             |
+| `copyStatus: 'backfilling' \| 'live' \| 'error'` | `WarehouseLinkedTable.state` (`syncing` → `backfilling` internally → **Replicating** in UI) |
+| `copyName` (implicit via naming utils)           | `copy_name`                                                                                 |
+| `sourceTableId`                                  | Postgres table OID (for completion toast CTA; not on platform API)                          |
+| `projectReplication.replicationLagBytes`         | `replication_lag_bytes` (project; future monitor/setup-status)                              |
+| `projectReplication.replicationPhase`            | Derived from `setup_status` / pipeline state                                                |
+| (not implemented)                                | `storage_mode: 'warehouse_only'`                                                            |
+| `catalogEnabled`                                 | `GET /catalog` → `enabled`                                                                  |
+| `WAREHOUSE_CATALOG_CREDENTIALS` (constants)      | `GET /catalog` → `credentials`                                                              |
 
 Remove `warehouseDemoStore` when `GET /tables` + `GET /setup-status` replace local state and list/detail queries return `WarehouseTableMetadata`.
 
@@ -339,10 +339,10 @@ Warehouse catalog credentials in the Connect sheet are isolated from Data API ga
 | `ConnectStepsSection`   | `framework`, `mcp` (database tools only) | Inline warning when Data API off; steps remain visible (auth/env still work) | Data API settings          |
 | `WarehouseCatalogPanel` | `catalog`                                | Catalog integration off                                                      | Warehouse catalog overview |
 
-**Mode visibility:** `catalog` appears in the Connect mode selector only when at least one warehouse-linked table exists (`hasWarehouseTables()`). If the last linked table is removed while `catalog` is selected, Studio falls back to the first available connect mode.
+**Mode visibility:** `catalog` appears in the Connect mode selector only when at least one Warehouse replica exists (`hasWarehouseTables()`). If the last replica is removed while `catalog` is selected, Studio falls back to the first available connect mode.
 
 **Status query behavior (target API):** When `catalogEnabled` is backed by an API query, follow the same fail-open pattern as Data API connect gating — do not show the disabled notice while loading or when the query errors. For Data API, show an inline warning (not a full panel block) so auth and env setup steps remain available.
 
 ## Observability
 
-**Observability → Warehouse** reads `WarehouseProjectReplicationStatus` plus a linked-table count derived from tables with `storage_mode = postgres_with_warehouse_copy`. Prototype uses mock sparklines until the monitor API is available.
+**Observability → Warehouse** reads `WarehouseProjectReplicationStatus` plus a Warehouse replica count derived from tables with `storage_mode = postgres_with_warehouse_copy`. Prototype uses mock sparklines until the monitor API is available.

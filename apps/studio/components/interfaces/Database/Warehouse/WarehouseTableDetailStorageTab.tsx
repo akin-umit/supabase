@@ -49,7 +49,7 @@ export function WarehouseTableDetailStorageTab({ table }: WarehouseTableDetailSt
           type="default"
           layout="responsive"
           title="Manage settings from the main table"
-          description="This is a linked Warehouse table for a Postgres table. Manage general settings from that table’s Settings page."
+          description="This is a Warehouse replica of a Postgres table. Manage general settings from that table’s Settings page."
           actions={
             <Button variant="default" asChild>
               <Link href={postgresSettingsUrl}>Table settings</Link>

@@ -16,7 +16,7 @@ interface WarehouseLinkedTableStatusProps {
   showLeadingIndicator?: boolean
 }
 
-/** Single amalgamated Warehouse link status (table copy + project replication). */
+/** Single amalgamated Warehouse replication status (per-replica state + project replication). */
 export function WarehouseLinkedTableStatus({
   tableKey,
   isWarehouseView = false,

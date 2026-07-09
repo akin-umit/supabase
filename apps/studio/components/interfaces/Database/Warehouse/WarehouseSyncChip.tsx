@@ -6,16 +6,16 @@ import type { CopyStatus } from './warehouseDemoStore'
 import { DotPing } from '@/components/ui/DotPing'
 
 const COPY_STATUS_LABELS: Record<CopyStatus, string> = {
-  backfilling: 'Backfilling',
+  backfilling: 'Replicating',
   live: 'Live',
   error: 'Error',
 }
 
 const COPY_STATUS_TOOLTIPS: Record<CopyStatus, string> = {
   backfilling:
-    'Initial Warehouse link in progress. Postgres remains the source of truth for writes.',
-  live: 'Linked Warehouse table is caught up with the project replication stream.',
-  error: 'Warehouse link failed to sync. Check replication logs for details.',
+    'Initial Warehouse replication in progress. Postgres remains the source of truth for writes.',
+  live: 'Warehouse replica is caught up with the project replication stream.',
+  error: 'Warehouse replication failed. Check replication logs for details.',
 }
 
 type CopyStatusBadgeVariant = 'success' | 'default' | 'destructive'
@@ -128,7 +128,7 @@ export function WarehouseCopyStatus({
               className
             )}
             data-copy-status={copyStatus}
-            aria-label={`Warehouse link sync status: ${label}`}
+            aria-label={`Warehouse replication status: ${label}`}
           >
             <CopyStatusLeadingIndicator
               copyStatus={copyStatus}
@@ -159,7 +159,7 @@ export function WarehouseCopyStatus({
             className
           )}
           data-copy-status={copyStatus}
-          aria-label={`Warehouse link sync status: ${label}`}
+          aria-label={`Warehouse replication status: ${label}`}
         >
           <CopyStatusLeadingIndicator copyStatus={copyStatus} mode="badge" />
           {label}

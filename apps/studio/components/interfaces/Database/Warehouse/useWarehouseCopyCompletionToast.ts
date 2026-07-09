@@ -37,7 +37,7 @@ export function shouldSuppressWarehouseCopyCompletionToast({
 }
 
 /**
- * When a table's Warehouse link finishes backfilling, toast unless the user is already on a
+ * When a table's Warehouse replica finishes replicating, toast unless the user is already on a
  * surface that shows completion (Settings or warehouse detail).
  */
 export function useWarehouseCopyCompletionToast() {
@@ -70,7 +70,7 @@ export function useWarehouseCopyCompletionToast() {
         ) {
           const qualifiedName = getWarehouseQualifiedTableName(tableKey)
 
-          toast.success('Warehouse link is live', {
+          toast.success('Warehouse replica is live', {
             description: qualifiedName,
           })
         }

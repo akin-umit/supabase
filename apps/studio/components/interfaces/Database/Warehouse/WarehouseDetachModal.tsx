@@ -12,7 +12,7 @@ import {
 import { clearTableMode } from './warehouseDemoStore'
 import { WarehouseProgressSteps } from './WarehouseProgressSteps'
 
-const DETACH_PROGRESS = ['Stopping sync', 'Removing linked table']
+const DETACH_PROGRESS = ['Stopping replication', 'Removing Warehouse replica']
 const STEP_INTERVAL_MS = 1200
 const COMPLETION_HOLD_MS = 650
 
@@ -40,7 +40,7 @@ export function WarehouseDetachModal({
     if (progressIndex >= DETACH_PROGRESS.length) {
       const timeout = setTimeout(() => {
         clearTableMode(tableKey)
-        toast.success('Table unlinked from Warehouse')
+        toast.success('Stopped replicating to Warehouse')
         onOpenChange(false)
       }, COMPLETION_HOLD_MS)
       return () => clearTimeout(timeout)
@@ -54,10 +54,10 @@ export function WarehouseDetachModal({
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent hideClose>
         <DialogHeader>
-          <DialogTitle>Unlinking from Warehouse</DialogTitle>
+          <DialogTitle>Stopping replication</DialogTitle>
           <DialogDescription>
-            Removing the linked Warehouse table <code className="text-code-inline">{copyName}</code>
-            . Your data in Postgres is unaffected.
+            Removing the Warehouse replica <code className="text-code-inline">{copyName}</code>.
+            Your data in Postgres is unaffected.
           </DialogDescription>
         </DialogHeader>
         <DialogSection>

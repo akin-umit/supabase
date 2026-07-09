@@ -38,7 +38,7 @@ export const warehouseDemoStore = proxy<{
   tables: Record<string, WarehouseTableState>
   catalogEnabled: boolean
   projectReplication: WarehouseProjectReplicationStatus | null
-  /** Demo: next Link to Warehouse fails instead of linking the table. */
+  /** Demo: next Replicate to Warehouse action fails instead of creating a replica. */
   simulateNextLinkFailure: boolean
 }>({
   tables: {},
@@ -340,7 +340,7 @@ export function formatWarehouseStorageSummaryLabel(display: WarehouseStorageDisp
 }
 
 export const WAREHOUSE_STORAGE_CELL_TOOLTIP =
-  'This table has a Postgres heap for writes and a linked Warehouse table for analytics.'
+  'This table has a Postgres heap for writes and a Warehouse replica for analytics.'
 
 export function getWarehouseStorageSummaryLabel(
   state: Pick<WarehouseTableState, 'mode' | 'warehouseSizeBytes'> | undefined,

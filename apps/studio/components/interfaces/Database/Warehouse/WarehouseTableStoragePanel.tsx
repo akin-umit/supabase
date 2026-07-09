@@ -235,8 +235,8 @@ export function WarehouseTableStoragePanel({
                 <Admonition
                   type="destructive"
                   layout="responsive"
-                  title="Warehouse link sync failed"
-                  description="This linked Warehouse table could not stay in sync with Postgres. Your Postgres table is unaffected."
+                  title="Warehouse replication failed"
+                  description="This Warehouse replica could not stay in sync with Postgres. Your Postgres table is unaffected."
                   className="mb-0 rounded-none border-x-0 border-t-0 border-b-1 border-border"
                   actions={
                     replicationLogsUrl ? (
@@ -252,7 +252,7 @@ export function WarehouseTableStoragePanel({
                   type="destructive"
                   layout="responsive"
                   title="Warehouse replication failed"
-                  description="The project Warehouse pipeline encountered an error. Linked Warehouse tables may be stale."
+                  description="The project Warehouse pipeline encountered an error. Warehouse replicas may be stale."
                   className="mb-0 rounded-none border-x-0 border-t-0 border-b-1 border-border"
                   actions={
                     replicationLogsUrl ? (
@@ -271,9 +271,9 @@ export function WarehouseTableStoragePanel({
                 isCurrent={viewContext === 'source'}
               />
               <TableCopyRow
-                label="Warehouse table"
+                label="Warehouse replica"
                 name={warehouseQualifiedName}
-                tooltip="Read-only linked Warehouse table. Query this explicitly for Warehouse-stored data."
+                tooltip="Read-only Warehouse replica. Query this explicitly for Warehouse-stored data."
                 detailUrl={warehouseDetailUrl}
                 isCurrent={viewContext === 'warehouse'}
               />
@@ -294,7 +294,7 @@ export function WarehouseTableStoragePanel({
             className="w-fit"
             onClick={() => setEnablementModalOpen(true)}
           >
-            Link to Warehouse
+            Replicate to Warehouse
           </Button>
         )}
 
@@ -335,7 +335,7 @@ export function WarehouseTableStoragePanel({
                     className="text-destructive focus:text-destructive"
                     onClick={() => setDetachConfirm(true)}
                   >
-                    Unlink from Warehouse
+                    Stop replicating
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -362,15 +362,15 @@ export function WarehouseTableStoragePanel({
           setDetachProgress(true)
           setDetachConfirm(false)
         }}
-        title="Unlink from Warehouse"
+        title="Stop replicating to Warehouse?"
         description={
           <>
-            Unlinking removes the linked Warehouse table{' '}
+            This removes the Warehouse replica{' '}
             <code className="text-code-inline break-keep">{warehouseQualifiedName}</code>. Your
             Postgres table and its data are unaffected.
           </>
         }
-        confirmLabel="Unlink"
+        confirmLabel="Stop replicating"
         cancelLabel="Cancel"
       />
 

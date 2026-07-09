@@ -39,19 +39,24 @@ export function getWarehouseQualifiedTableName(tableKey: string): string {
   return `${getWarehouseSchemaName(schema)}.${table}`
 }
 
-export function getWarehouseLinkTooltip(sourceTableKey: string): string {
-  return `Linked Warehouse table for ${sourceTableKey}`
+export function getWarehouseReplicaTooltip(sourceTableKey: string): string {
+  return `Warehouse replica of ${sourceTableKey}`
 }
 
-/** @deprecated Use getWarehouseLinkTooltip */
+/** @deprecated Use getWarehouseReplicaTooltip */
+export function getWarehouseLinkTooltip(sourceTableKey: string): string {
+  return getWarehouseReplicaTooltip(sourceTableKey)
+}
+
+/** @deprecated Use getWarehouseReplicaTooltip */
 export function getWarehouseCopyTooltip(sourceTableKey: string): string {
-  return getWarehouseLinkTooltip(sourceTableKey)
+  return getWarehouseReplicaTooltip(sourceTableKey)
 }
 
 export function buildWarehouseSampleQuery(tableKey: string): string {
   const qualified = getWarehouseQualifiedTableName(tableKey)
 
-  return `-- Analytical query against the linked Warehouse table
+  return `-- Analytical query against the Warehouse replica
 SELECT count(*) AS row_count
 FROM ${qualified};`
 }
