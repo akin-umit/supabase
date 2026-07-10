@@ -46,7 +46,7 @@ export const useFeaturePreviews = (): FeaturePreview[] => {
           discussionsUrl: 'https://github.com/orgs/supabase/discussions/37234',
           enabled: true,
           isNew: true,
-          isPlatformOnly: true,
+          isPlatformOnly: false,
           isDefaultOptIn: unifiedLogsDefaultOptIn,
           getRoute: (ref?: string) => `/project/${ref}/logs`,
         },
