@@ -246,12 +246,12 @@ function renderManifest(sources: MarkdownSource[], extraSlugs: string[]): string
 }
 
 async function generate() {
-  const sources = await collectMarkdownSources()
+  const { all: sources, troubleshooting } = await collectMarkdownSources()
 
-  const troubleshootingEntries: { slug: string; title: string }[] = []
+  const titlesBySourceFile = new Map<string, string>()
 
   await Promise.all(
-    sources.map(async ({ sourceFile, slug, outPath, frontmatter }) => {
+    sources.map(async ({ sourceFile, outPath, frontmatter }) => {
       let output: string
       let data: Record<string, unknown>
       try {
@@ -263,14 +263,16 @@ async function generate() {
         )
       }
 
-      if (frontmatter === 'toml' && data.title) {
-        troubleshootingEntries.push({ slug, title: String(data.title) })
-      }
+      if (data.title) titlesBySourceFile.set(sourceFile, String(data.title))
 
       await fs.mkdir(path.dirname(outPath), { recursive: true })
       await fs.writeFile(outPath, output)
     })
   )
+
+  const troubleshootingEntries = troubleshooting
+    .map(({ slug, sourceFile }) => ({ slug, title: titlesBySourceFile.get(sourceFile) }))
+    .filter((entry): entry is { slug: string; title: string } => Boolean(entry.title))
 
   await fs.mkdir(path.dirname(TROUBLESHOOTING_INDEX_PATH), { recursive: true })
   await fs.writeFile(TROUBLESHOOTING_INDEX_PATH, buildTroubleshootingIndex(troubleshootingEntries))
