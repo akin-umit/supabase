@@ -65,10 +65,10 @@ export const ProjectPausedState = ({ product }: ProjectPausedStateProps) => {
 
               {isPauseStatusSuccess && !isRestoreDisabled ? (
                 isFreePlan ? (
-                  <>
-                    <p className="text-sm">
-                      All data, including backups and storage objects, remains safe. You can resume
-                      this project from the dashboard within{' '}
+                  <ul className="text-sm list-disc pl-4 space-y-2">
+                    <li>All data, including backups and storage objects, remains safe.</li>
+                    <li>
+                      You can resume this project from the dashboard within{' '}
                       <Tooltip>
                         <TooltipTrigger>
                           <span className={cn(InlineLinkClassName, 'text-foreground')}>
@@ -91,15 +91,18 @@ export const ProjectPausedState = ({ product }: ProjectPausedStateProps) => {
                         className="text-sm text-foreground"
                         labelFormat="DD MMM YYYY"
                       />
-                      ). After that, this project will not be resumable, but data will still be
+                      ).
+                    </li>
+                    <li>
+                      After that, this project will not be resumable, but data will still be
                       available for download.
-                    </p>
-                    <p className="text-sm mt-4">
+                    </li>
+                    <li>
                       {enableProBenefitWording === 'variant-a'
                         ? 'Upgrade to Pro to prevent pauses and unlock features like branching, compute upgrades, and daily backups.'
                         : 'To prevent future pauses, consider upgrading to Pro.'}
-                    </p>
-                  </>
+                    </li>
+                  </ul>
                 ) : (
                   <p className="text-sm">
                     Your project data is safe but inaccessible while paused. Once resumed, usage
