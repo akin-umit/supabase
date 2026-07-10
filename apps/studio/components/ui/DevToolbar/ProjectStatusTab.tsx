@@ -2,14 +2,39 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'common'
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'ui'
 
 import { projectKeys } from '@/data/projects/keys'
 import { useSetProjectStatus, type Project } from '@/data/projects/project-detail-query'
+import {
+  clearProjectStatusOverride,
+  getProjectStatusOverride,
+  setProjectStatusOverride,
+} from '@/data/projects/project-status-override'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { PROJECT_STATUS } from '@/lib/constants'
+
+type ProjectStatus = Project['status']
+
+const STATUS_LABELS: Record<ProjectStatus, string> = {
+  INACTIVE: 'Paused',
+  ACTIVE_HEALTHY: 'Active (healthy)',
+  ACTIVE_UNHEALTHY: 'Active (unhealthy)',
+  COMING_UP: 'Coming up',
+  UNKNOWN: 'Unknown',
+  GOING_DOWN: 'Going down',
+  INIT_FAILED: 'Init failed',
+  REMOVED: 'Removed',
+  RESTARTING: 'Restarting',
+  RESTORING: 'Restoring',
+  RESTORE_FAILED: 'Restore failed',
+  UPGRADING: 'Upgrading',
+  PAUSING: 'Pausing',
+  PAUSE_FAILED: 'Pause failed',
+  RESIZING: 'Resizing',
+}
 
 const STATUS_OPTIONS = Object.values(PROJECT_STATUS)
 
@@ -21,47 +46,32 @@ export const ProjectStatusTab = () => {
   const { data: selectedOrg } = useSelectedOrganizationQuery()
   const orgSlug = selectedOrg?.slug
 
-  const hasOverrideRef = useRef(false)
-  const latestValues = useRef({ ref, orgSlug })
+  const [override, setOverride] = useState<ProjectStatus | undefined>(undefined)
   useEffect(() => {
-    latestValues.current = { ref, orgSlug }
-  })
+    setOverride(getProjectStatusOverride(ref))
+  }, [ref])
 
-  const revertToRealStatus = (targetRef?: string, targetSlug?: string) => {
-    queryClient.invalidateQueries({ queryKey: projectKeys.detail(targetRef) })
+  const currentValue = override ?? project?.status
+
+  const refetchRealStatus = () => {
+    queryClient.invalidateQueries({ queryKey: projectKeys.detail(ref) })
     queryClient.invalidateQueries({ queryKey: projectKeys.infiniteList() })
-    if (targetSlug) {
-      queryClient.invalidateQueries({ queryKey: projectKeys.infiniteListByOrg(targetSlug) })
+    if (orgSlug) {
+      queryClient.invalidateQueries({ queryKey: projectKeys.infiniteListByOrg(orgSlug) })
     }
   }
 
-  useEffect(() => {
-    return () => {
-      if (!hasOverrideRef.current) return
-      const { ref: latestRef, orgSlug: latestOrgSlug } = latestValues.current
-      revertToRealStatus(latestRef, latestOrgSlug)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (!hasOverrideRef.current) return
-      revertToRealStatus(ref, latestValues.current.orgSlug)
-      hasOverrideRef.current = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref])
-
-  const handleStatusChange = (status: Project['status']) => {
+  const handleStatusChange = (status: ProjectStatus) => {
     if (!ref) return
+    setProjectStatusOverride(ref, status)
+    setOverride(status)
     setProjectStatus({ ref, slug: orgSlug, status })
-    hasOverrideRef.current = true
   }
 
   const handleReset = () => {
-    hasOverrideRef.current = false
-    revertToRealStatus(ref, orgSlug)
+    if (ref) clearProjectStatusOverride(ref)
+    setOverride(undefined)
+    refetchRealStatus()
   }
 
   const isDisabled = !ref
@@ -69,10 +79,13 @@ export const ProjectStatusTab = () => {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-foreground-light">Override the status of the current project.</p>
+        <p className="text-sm text-foreground-light">
+          Override the status of the current project. The override persists across refetches until
+          reset.
+        </p>
         <button
           onClick={handleReset}
-          disabled={isDisabled}
+          disabled={isDisabled || override === undefined}
           className="text-xs text-foreground-lighter hover:text-foreground transition underline disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Reset to real data
@@ -91,16 +104,17 @@ export const ProjectStatusTab = () => {
       >
         <span className="text-sm text-foreground-light">Status</span>
         <Select
-          value={project?.status}
-          onValueChange={(value) => handleStatusChange(value as Project['status'])}
+          value={currentValue}
+          onValueChange={(value) => handleStatusChange(value as ProjectStatus)}
         >
-          <SelectTrigger className="w-56 font-mono text-xs">
+          <SelectTrigger className="w-56 text-xs">
             <SelectValue placeholder="Select a status" />
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((status) => (
-              <SelectItem key={status} value={status} className="font-mono text-xs">
-                {status}
+              <SelectItem key={status} value={status} className="text-xs">
+                {STATUS_LABELS[status]}
+                <span className="ml-1.5 font-mono text-foreground-lighter">{status}</span>
               </SelectItem>
             ))}
           </SelectContent>
