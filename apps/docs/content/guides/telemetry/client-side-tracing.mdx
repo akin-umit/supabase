@@ -8,7 +8,15 @@ The Supabase JS, Swift, and Dart SDKs can attach [W3C Trace Context](https://www
 
 Because the headers follow the W3C standard, any compliant tracing SDK (OpenTelemetry, Sentry, Datadog, Honeycomb, etc.) can pick up the trace on the server side, including in self-hosted collectors.
 
-## JavaScript
+<Tabs
+  scrollable
+  size="small"
+  type="underlined"
+  defaultActiveId="js"
+  queryGroup="language"
+>
+
+<TabPanel id="js" label="JavaScript">
 
 ### Requirements
 
@@ -82,9 +90,9 @@ The SDK silently no-ops when it can't propagate, which keeps it safe to enable b
 
 Many tracing SDKs are built on top of OpenTelemetry. They work with this guide as long as a W3C-compliant propagator is registered — but propagator behavior varies. Some vendor SDKs inject only their proprietary headers by default and need extra configuration to also emit the standard `traceparent` header. Check your vendor's OTel integration docs for the exact setup.
 
----
+</TabPanel>
 
-## Swift
+<TabPanel id="swift" label="Swift">
 
 Requires `supabase-swift` `2.51.0` or later and `swift-tools-version: 6.1` or later (SwiftPM trait support).
 
@@ -133,9 +141,9 @@ let supabase = SupabaseClient(
 
 `FunctionsClient._invokeWithStreamedResponse` uses its own `URLSession` outside the shared fetch pipeline and does not receive the `traceparent` header. Standard function invocations are unaffected.
 
----
+</TabPanel>
 
-## Dart
+<TabPanel id="dart" label="Dart">
 
 Requires `supabase` `2.x` or later (Flutter or Dart-only).
 
@@ -188,7 +196,9 @@ await Supabase.initialize(
 
 Headers are only injected on requests targeting Supabase hosts (`*.supabase.co`, `*.supabase.in`, your project host, and loopback addresses for local development). Third-party hosts never receive trace headers.
 
----
+</TabPanel>
+
+</Tabs>
 
 ## Correlating with Supabase logs
 
