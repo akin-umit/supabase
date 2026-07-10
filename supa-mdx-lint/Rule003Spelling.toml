@@ -389,6 +389,7 @@ allow_list = [
     "Supabase",
     "Supavisor",
     "SvelteKit",
+    "SwiftPM",
     "SwiftUI",
     "Reddit",
     "Remapper",
