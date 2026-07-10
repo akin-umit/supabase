@@ -40,7 +40,6 @@ import {
   type CreateS3AccessKeyCredentialVariables,
   type S3AccessKeyCreateData,
 } from '@/data/storage/s3-access-key-create-mutation'
-import type { TablesData } from '@/data/tables/tables-query'
 import { type ResponseError } from '@/types'
 
 const normalizeOptionalString = (value?: string) => {
@@ -63,7 +62,6 @@ export const generateDefaultValues = ({
   region,
   projectRef,
   editMode,
-  tables = [],
 }: {
   destinationData?: ReplicationDestinationByIdData
   pipelineData?: ReplicationPipelineByIdData
@@ -71,7 +69,6 @@ export const generateDefaultValues = ({
   region?: string
   projectRef?: string
   editMode: boolean
-  tables?: TablesData
 }): DestinationPanelSchemaType => {
   const config = destinationData?.config
   const isBigQueryConfig = config && 'big_query' in config
@@ -92,29 +89,18 @@ export const generateDefaultValues = ({
     snowflakeConfigValue && typeof snowflakeConfigValue === 'object'
       ? (snowflakeConfigValue as SnowflakeApiConfig)
       : undefined
-  const pipelineConfig = pipelineData?.config as
-    | (ReplicationPipelineByIdData['config'] & { table_sync_copy?: TableSyncCopyConfig })
-    | undefined
-  const tableSyncCopy = pipelineConfig?.table_sync_copy ?? {
+  const tableSyncCopy = pipelineData?.config.table_sync_copy ?? {
     type: 'include_all_tables' as const,
   }
-  const tableNamesById = new Map(
-    tables.map((table) => [Number(table.id), `${table.schema}.${table.name}`])
-  )
-  const tableSyncCopyTables =
-    'table_ids' in tableSyncCopy
-      ? tableSyncCopy.table_ids.flatMap((id) => {
-          const tableName = tableNamesById.get(id)
-          return tableName === undefined ? [] : [tableName]
-        })
-      : []
+  const tableSyncCopyTableIds =
+    'tables' in tableSyncCopy ? tableSyncCopy.tables.map(({ id }) => String(id)) : []
 
   return {
     // Common fields
     name: destinationData?.name ?? '',
     publicationName: pipelineData?.config.publication_name ?? '',
     tableSyncCopyMode: tableSyncCopy.type,
-    tableSyncCopyTables,
+    tableSyncCopyTableIds,
     maxFillMs: pipelineData?.config?.batch?.max_fill_ms ?? DEFAULT_MAX_FILL_MS,
     maxTableSyncWorkers:
       pipelineData?.config?.max_table_sync_workers ?? DEFAULT_MAX_TABLE_SYNC_WORKERS,
@@ -171,31 +157,25 @@ export const generateDefaultValues = ({
 
 export const buildTableSyncCopyConfig = ({
   mode,
-  selectedTables,
-  tables,
+  selectedTableIds,
 }: {
   mode: DestinationPanelSchemaType['tableSyncCopyMode']
-  selectedTables: string[]
-  tables: TablesData
+  selectedTableIds: string[]
 }): TableSyncCopyConfig => {
   if (mode === 'include_all_tables' || mode === 'skip_all_tables') return { type: mode }
 
-  const tableIdsByName = new Map(
-    tables.map((table) => [`${table.schema}.${table.name}`, Number(table.id)])
-  )
-  const missingTables = selectedTables.filter((table) => !tableIdsByName.has(table))
-
-  if (missingTables.length > 0) {
-    throw new Error(
-      `Could not resolve table IDs for ${missingTables.join(', ')}. Refresh the publication and try again.`
-    )
+  if (selectedTableIds.length === 0) {
+    throw new Error('Select at least one table for the initial copy')
   }
 
-  if (selectedTables.length === 0) throw new Error('Select at least one table for the initial copy')
+  const tableIds = selectedTableIds.map(Number)
+  if (tableIds.some((id) => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new Error('The selected table IDs are invalid. Refresh and try again.')
+  }
 
   return {
     type: mode,
-    table_ids: selectedTables.map((table) => tableIdsByName.get(table)!),
+    table_ids: tableIds,
   }
 }
 

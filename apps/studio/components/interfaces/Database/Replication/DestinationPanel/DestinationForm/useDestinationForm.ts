@@ -25,7 +25,6 @@ import {
 import { useValidatePipelineMutation } from '@/data/replication/validate-pipeline-mutation'
 import { useIcebergNamespaceCreateMutation } from '@/data/storage/iceberg-namespace-create-mutation'
 import { useS3AccessKeyCreateMutation } from '@/data/storage/s3-access-key-create-mutation'
-import { useTablesQuery } from '@/data/tables/tables-query'
 import {
   PipelineStatusRequestStatus,
   usePipelineRequestStatus,
@@ -46,7 +45,6 @@ export const useDestinationForm = ({ selectedType }: { selectedType: Destination
 
   const { data: sourcesData } = useReplicationSourcesQuery({ projectRef })
   const sourceId = sourcesData?.sources.find((s) => s.name === projectRef)?.id
-  const { data: tables = [] } = useTablesQuery({ projectRef, includeColumns: false })
 
   const { mutateAsync: validateDestination, isPending: isValidatingDestination } =
     useValidateDestinationMutation()
@@ -118,8 +116,7 @@ export const useDestinationForm = ({ selectedType }: { selectedType: Destination
     try {
       tableSyncCopy = buildTableSyncCopyConfig({
         mode: data.tableSyncCopyMode,
-        selectedTables: data.tableSyncCopyTables,
-        tables,
+        selectedTableIds: data.tableSyncCopyTableIds,
       })
     } catch (error) {
       toast.error((error as Error).message)
@@ -226,8 +223,7 @@ export const useDestinationForm = ({ selectedType }: { selectedType: Destination
       const hasBatchFields = batchConfig !== undefined
       const tableSyncCopy = buildTableSyncCopyConfig({
         mode: data.tableSyncCopyMode,
-        selectedTables: data.tableSyncCopyTables,
-        tables,
+        selectedTableIds: data.tableSyncCopyTableIds,
       })
 
       const pipelineConfig = {

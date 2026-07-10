@@ -45,7 +45,18 @@ export const PublicationSelection = ({
         >
           <FormControl>
             <PublicationsComboBox
-              field={field}
+              field={{
+                ...field,
+                onChange: (value) => {
+                  if (value !== field.value) {
+                    form.setValue('tableSyncCopyTableIds', [], {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                  field.onChange(value)
+                },
+              }}
               sourceId={sourceId}
               onNewPublicationClick={() => onSelectNewPublication()}
             />

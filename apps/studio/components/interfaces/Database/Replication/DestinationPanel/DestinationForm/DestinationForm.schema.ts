@@ -12,7 +12,7 @@ export const DestinationPanelFormSchema = z.object({
     'include_tables',
     'skip_tables',
   ]),
-  tableSyncCopyTables: z.array(z.string()),
+  tableSyncCopyTableIds: z.array(z.string()),
   maxFillMs: z.number().min(1, 'Max Fill milliseconds should be greater than 0').int().optional(),
   maxTableSyncWorkers: z
     .number()

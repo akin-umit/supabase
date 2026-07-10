@@ -92,7 +92,10 @@ const addPipelinesMock = () =>
             destination_id: DESTINATION_ID,
             destination_name: 'My BigQuery Destination',
             replicator_id: 9001,
-            config: { publication_name: 'supabase_realtime' },
+            config: {
+              publication_name: 'supabase_realtime',
+              table_sync_copy: { type: 'include_all_tables' },
+            },
           },
         ],
       }),

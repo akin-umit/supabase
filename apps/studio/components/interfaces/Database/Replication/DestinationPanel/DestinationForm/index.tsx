@@ -54,7 +54,6 @@ import { useReplicationDestinationByIdQuery } from '@/data/replication/destinati
 import { useReplicationPipelineByIdQuery } from '@/data/replication/pipeline-by-id-query'
 import { useReplicationPublicationsQuery } from '@/data/replication/publications-query'
 import { useReplicationSourcesQuery } from '@/data/replication/sources-query'
-import { useTablesQuery } from '@/data/tables/tables-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { BASE_PATH, IS_STAGING_OR_LOCAL } from '@/lib/constants'
 
@@ -113,14 +112,10 @@ export const DestinationForm = ({
 
   const {
     data: publications = [],
+    isPending: isLoadingPublications,
     isSuccess: isSuccessPublications,
     refetch: refetchPublications,
   } = useReplicationPublicationsQuery({ projectRef, sourceId })
-
-  const { data: tables, isPending: isLoadingTables } = useTablesQuery({
-    projectRef,
-    includeColumns: false,
-  })
 
   const { data: destinationData } = useReplicationDestinationByIdQuery({
     projectRef,
@@ -163,10 +158,12 @@ export const DestinationForm = ({
         region: projectSettings?.region,
         projectRef,
         editMode,
-        tables,
       }),
-    [destinationData, pipelineData, catalogToken, projectSettings, projectRef, editMode, tables]
+    [destinationData, pipelineData, catalogToken, projectSettings, projectRef, editMode]
   )
+
+  const tableSyncCopy = pipelineData?.config.table_sync_copy
+  const configuredTables = tableSyncCopy && 'tables' in tableSyncCopy ? tableSyncCopy.tables : []
 
   const form = useForm<z.infer<typeof FormSchema>>({
     mode: 'onChange',
@@ -184,9 +181,9 @@ export const DestinationForm = ({
         if (
           (data.tableSyncCopyMode === 'include_tables' ||
             data.tableSyncCopyMode === 'skip_tables') &&
-          data.tableSyncCopyTables.length === 0
+          data.tableSyncCopyTableIds.length === 0
         ) {
-          addRequiredFieldError('tableSyncCopyTables', 'Select at least one table')
+          addRequiredFieldError('tableSyncCopyTableIds', 'Select at least one table')
         }
 
         if (selectedType === 'BigQuery') {
@@ -350,8 +347,8 @@ export const DestinationForm = ({
                   <TableCopySelection
                     form={form}
                     publications={publications}
-                    tables={tables}
-                    isLoadingTables={isLoadingTables}
+                    configuredTables={configuredTables}
+                    isLoadingPublications={isLoadingPublications}
                   />
                   <FormItemLayout
                     isReactForm={false}
