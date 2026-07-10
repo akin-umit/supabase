@@ -59,7 +59,7 @@ export const ProjectPausedState = ({ product }: ProjectPausedStateProps) => {
         <PauseCircle size={48} strokeWidth={1} className="text-foreground-lighter shrink-0 mb-4" />
         <div className="flex-1">
           <div>
-            <h2 className="mb-4">The project "{project?.name}" is currently paused</h2>
+            <h2 className="mb-4">Project "{project?.name}" is paused</h2>
             <div className="text-foreground-light max-w-4xl">
               {isLoading && <GenericSkeletonLoader className="mt-3" />}
 
@@ -104,10 +104,10 @@ export const ProjectPausedState = ({ product }: ProjectPausedStateProps) => {
                     </li>
                   </ul>
                 ) : (
-                  <p className="text-sm">
-                    Your project data is safe but inaccessible while paused. Once resumed, usage
-                    will be billed by compute size and hours active.
-                  </p>
+                  <ul className="text-sm list-disc pl-4 space-y-2">
+                    <li>Your project data is safe but inaccessible while paused.</li>
+                    <li>Once resumed, usage will be billed by compute size and hours active.</li>
+                  </ul>
                 )
               ) : !isLoading ? (
                 <p className="text-sm">
