@@ -27,6 +27,7 @@ import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import { ShimmeringLoader } from 'ui-patterns/ShimmeringLoader'
 import { z } from 'zod'
 
+import { deriveTier, type OrgTier } from './NewOrgForm.utils'
 import {
   ORG_KIND_DEFAULT,
   ORG_SIZE_DEFAULT,
@@ -35,7 +36,6 @@ import {
   type OrgKind,
   type OrgSize,
 } from './OrganizationDetailsFields'
-import { deriveTier, type OrgTier } from './NewOrgForm.utils'
 import { UpgradeExistingOrganizationCallout } from './UpgradeExistingOrganizationCallout'
 import { ChargeBreakdown } from '@/components/interfaces/Billing/ChargeBreakdown'
 import { getStripeElementsAppearanceOptions } from '@/components/interfaces/Billing/Payment/Payment.utils'
