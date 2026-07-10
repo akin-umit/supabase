@@ -159,6 +159,17 @@ export const Index: Record<string, any> = {
       subcategory: "undefined",
       chunks: []
     },
+    "admonition-button-split": {
+      name: "admonition-button-split",
+      type: "components:example",
+      registryDependencies: ["admonition","button","dropdown-menu"],
+      component: React.lazy(() => import("@/registry/default/example/admonition-button-split")),
+      source: "",
+      files: ["registry/default/example/admonition-button-split.tsx"],
+      category: "undefined",
+      subcategory: "undefined",
+      chunks: []
+    },
     "admonition-description-only": {
       name: "admonition-description-only",
       type: "components:example",
@@ -577,6 +588,17 @@ export const Index: Record<string, any> = {
       subcategory: "undefined",
       chunks: []
     },
+    "button-split-dropdown": {
+      name: "button-split-dropdown",
+      type: "components:example",
+      registryDependencies: ["button","dropdown-menu"],
+      component: React.lazy(() => import("@/registry/default/example/button-split-dropdown")),
+      source: "",
+      files: ["registry/default/example/button-split-dropdown.tsx"],
+      category: "undefined",
+      subcategory: "undefined",
+      chunks: []
+    },
     "calendar-demo": {
       name: "calendar-demo",
       type: "components:example",
@@ -595,6 +617,17 @@ export const Index: Record<string, any> = {
       component: React.lazy(() => import("@/registry/default/example/calendar-form")),
       source: "",
       files: ["registry/default/example/calendar-form.tsx"],
+      category: "undefined",
+      subcategory: "undefined",
+      chunks: []
+    },
+    "calendar-disabled-days-demo": {
+      name: "calendar-disabled-days-demo",
+      type: "components:example",
+      registryDependencies: ["calendar","form","popover"],
+      component: React.lazy(() => import("@/registry/default/example/calendar-disabled-days-demo")),
+      source: "",
+      files: ["registry/default/example/calendar-disabled-days-demo.tsx"],
       category: "undefined",
       subcategory: "undefined",
       chunks: []

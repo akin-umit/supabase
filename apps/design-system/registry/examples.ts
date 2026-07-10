@@ -26,6 +26,12 @@ export const examples: Registry = [
     files: ['example/admonition-button.tsx'],
   },
   {
+    name: 'admonition-button-split',
+    type: 'components:example',
+    registryDependencies: ['admonition', 'button', 'dropdown-menu'],
+    files: ['example/admonition-button-split.tsx'],
+  },
+  {
     name: 'admonition-description-only',
     type: 'components:example',
     registryDependencies: ['admonition'],
@@ -254,6 +260,12 @@ export const examples: Registry = [
     files: ['example/button-as-child.tsx'],
   },
   {
+    name: 'button-split-dropdown',
+    type: 'components:example',
+    registryDependencies: ['button', 'dropdown-menu'],
+    files: ['example/button-split-dropdown.tsx'],
+  },
+  {
     name: 'calendar-demo',
     type: 'components:example',
     registryDependencies: ['calendar'],
@@ -264,6 +276,12 @@ export const examples: Registry = [
     type: 'components:example',
     registryDependencies: ['calendar', 'form', 'popover'],
     files: ['example/calendar-form.tsx'],
+  },
+  {
+    name: 'calendar-disabled-days-demo',
+    type: 'components:example',
+    registryDependencies: ['calendar', 'form', 'popover'],
+    files: ['example/calendar-disabled-days-demo.tsx'],
   },
   {
     name: 'single-value-field-array-demo',
