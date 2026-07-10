@@ -1,4 +1,6 @@
-import type { ProjectPauseStatusData } from './project-pause-status-query'
+import type { components } from '@/data/api'
+
+type PauseStatusResponse = components['schemas']['PauseStatusResponse']
 
 export type PauseStateOverride = 'restorable' | 'restore-disabled'
 
@@ -44,7 +46,7 @@ export function clearPauseStatusOverride(ref: string) {
   writeOverrides(overrides)
 }
 
-export function buildPauseStatus(override: PauseStateOverride): ProjectPauseStatusData {
+export function buildPauseStatus(override: PauseStateOverride): PauseStatusResponse {
   const isRestorable = override === 'restorable'
   return {
     can_restore: isRestorable,
