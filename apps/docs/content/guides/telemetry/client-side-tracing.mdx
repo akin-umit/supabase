@@ -137,10 +137,6 @@ let supabase = SupabaseClient(
 )
 ```
 
-### Known limitation
-
-`FunctionsClient._invokeWithStreamedResponse` uses its own `URLSession` outside the shared fetch pipeline and does not receive the `traceparent` header. Standard function invocations are unaffected.
-
 </TabPanel>
 
 <TabPanel id="dart" label="Dart">
