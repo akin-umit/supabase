@@ -52,6 +52,7 @@ const HEADER_IDS = new Set([
   'using-filters',
   'using-modifiers',
   'auth-mfa-api',
+  'oauth-server-api',
   'passkey-api',
   'admin-api',
   'admin-passkey-api',
