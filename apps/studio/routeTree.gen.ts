@@ -243,6 +243,7 @@ import { Route as ApiV1ProjectsRefApiKeysRouteImport } from './routes/api/v1/pro
 import { Route as ApiPlatformPropsOrgSlugRouteImport } from './routes/api/platform/props/org/$slug'
 import { Route as ApiPlatformProjectsRefSettingsRouteImport } from './routes/api/platform/projects/$ref/settings'
 import { Route as ApiPlatformProjectsRefRunLintsRouteImport } from './routes/api/platform/projects/$ref/run-lints'
+import { Route as ApiPlatformProjectsRefOperationsRouteImport } from './routes/api/platform/projects/$ref/operations'
 import { Route as ApiPlatformProjectsRefInfraMonitoringRouteImport } from './routes/api/platform/projects/$ref/infra-monitoring'
 import { Route as ApiPlatformProjectsRefDatabasesRouteImport } from './routes/api/platform/projects/$ref/databases'
 import { Route as ApiPlatformPgMetaRefViewsRouteImport } from './routes/api/platform/pg-meta/$ref/views'
@@ -1596,6 +1597,12 @@ const ApiPlatformProjectsRefRunLintsRoute =
     path: '/api/platform/projects/$ref/run-lints',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPlatformProjectsRefOperationsRoute =
+  ApiPlatformProjectsRefOperationsRouteImport.update({
+    id: '/api/platform/projects/$ref/operations',
+    path: '/api/platform/projects/$ref/operations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPlatformProjectsRefInfraMonitoringRoute =
   ApiPlatformProjectsRefInfraMonitoringRouteImport.update({
     id: '/api/platform/projects/$ref/infra-monitoring',
@@ -2236,6 +2243,7 @@ export interface FileRoutesByFullPath {
   '/api/platform/pg-meta/$ref/views': typeof ApiPlatformPgMetaRefViewsRoute
   '/api/platform/projects/$ref/databases': typeof ApiPlatformProjectsRefDatabasesRoute
   '/api/platform/projects/$ref/infra-monitoring': typeof ApiPlatformProjectsRefInfraMonitoringRoute
+  '/api/platform/projects/$ref/operations': typeof ApiPlatformProjectsRefOperationsRoute
   '/api/platform/projects/$ref/run-lints': typeof ApiPlatformProjectsRefRunLintsRoute
   '/api/platform/projects/$ref/settings': typeof ApiPlatformProjectsRefSettingsRoute
   '/api/platform/props/org/$slug': typeof ApiPlatformPropsOrgSlugRoute
@@ -2530,6 +2538,7 @@ export interface FileRoutesByTo {
   '/api/platform/pg-meta/$ref/views': typeof ApiPlatformPgMetaRefViewsRoute
   '/api/platform/projects/$ref/databases': typeof ApiPlatformProjectsRefDatabasesRoute
   '/api/platform/projects/$ref/infra-monitoring': typeof ApiPlatformProjectsRefInfraMonitoringRoute
+  '/api/platform/projects/$ref/operations': typeof ApiPlatformProjectsRefOperationsRoute
   '/api/platform/projects/$ref/run-lints': typeof ApiPlatformProjectsRefRunLintsRoute
   '/api/platform/projects/$ref/settings': typeof ApiPlatformProjectsRefSettingsRoute
   '/api/platform/props/org/$slug': typeof ApiPlatformPropsOrgSlugRoute
@@ -2839,6 +2848,7 @@ export interface FileRoutesById {
   '/api/platform/pg-meta/$ref/views': typeof ApiPlatformPgMetaRefViewsRoute
   '/api/platform/projects/$ref/databases': typeof ApiPlatformProjectsRefDatabasesRoute
   '/api/platform/projects/$ref/infra-monitoring': typeof ApiPlatformProjectsRefInfraMonitoringRoute
+  '/api/platform/projects/$ref/operations': typeof ApiPlatformProjectsRefOperationsRoute
   '/api/platform/projects/$ref/run-lints': typeof ApiPlatformProjectsRefRunLintsRoute
   '/api/platform/projects/$ref/settings': typeof ApiPlatformProjectsRefSettingsRoute
   '/api/platform/props/org/$slug': typeof ApiPlatformPropsOrgSlugRoute
@@ -3147,6 +3157,7 @@ export interface FileRouteTypes {
     | '/api/platform/pg-meta/$ref/views'
     | '/api/platform/projects/$ref/databases'
     | '/api/platform/projects/$ref/infra-monitoring'
+    | '/api/platform/projects/$ref/operations'
     | '/api/platform/projects/$ref/run-lints'
     | '/api/platform/projects/$ref/settings'
     | '/api/platform/props/org/$slug'
@@ -3441,6 +3452,7 @@ export interface FileRouteTypes {
     | '/api/platform/pg-meta/$ref/views'
     | '/api/platform/projects/$ref/databases'
     | '/api/platform/projects/$ref/infra-monitoring'
+    | '/api/platform/projects/$ref/operations'
     | '/api/platform/projects/$ref/run-lints'
     | '/api/platform/projects/$ref/settings'
     | '/api/platform/props/org/$slug'
@@ -3749,6 +3761,7 @@ export interface FileRouteTypes {
     | '/api/platform/pg-meta/$ref/views'
     | '/api/platform/projects/$ref/databases'
     | '/api/platform/projects/$ref/infra-monitoring'
+    | '/api/platform/projects/$ref/operations'
     | '/api/platform/projects/$ref/run-lints'
     | '/api/platform/projects/$ref/settings'
     | '/api/platform/props/org/$slug'
@@ -3921,6 +3934,7 @@ export interface RootRouteChildren {
   ApiPlatformPgMetaRefViewsRoute: typeof ApiPlatformPgMetaRefViewsRoute
   ApiPlatformProjectsRefDatabasesRoute: typeof ApiPlatformProjectsRefDatabasesRoute
   ApiPlatformProjectsRefInfraMonitoringRoute: typeof ApiPlatformProjectsRefInfraMonitoringRoute
+  ApiPlatformProjectsRefOperationsRoute: typeof ApiPlatformProjectsRefOperationsRoute
   ApiPlatformProjectsRefRunLintsRoute: typeof ApiPlatformProjectsRefRunLintsRoute
   ApiPlatformProjectsRefSettingsRoute: typeof ApiPlatformProjectsRefSettingsRoute
   ApiPlatformPropsOrgSlugRoute: typeof ApiPlatformPropsOrgSlugRoute
@@ -5610,6 +5624,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPlatformProjectsRefRunLintsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/platform/projects/$ref/operations': {
+      id: '/api/platform/projects/$ref/operations'
+      path: '/api/platform/projects/$ref/operations'
+      fullPath: '/api/platform/projects/$ref/operations'
+      preLoaderRoute: typeof ApiPlatformProjectsRefOperationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/platform/projects/$ref/infra-monitoring': {
       id: '/api/platform/projects/$ref/infra-monitoring'
       path: '/api/platform/projects/$ref/infra-monitoring'
@@ -6871,6 +6892,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPlatformProjectsRefDatabasesRoute: ApiPlatformProjectsRefDatabasesRoute,
   ApiPlatformProjectsRefInfraMonitoringRoute:
     ApiPlatformProjectsRefInfraMonitoringRoute,
+  ApiPlatformProjectsRefOperationsRoute: ApiPlatformProjectsRefOperationsRoute,
   ApiPlatformProjectsRefRunLintsRoute: ApiPlatformProjectsRefRunLintsRoute,
   ApiPlatformProjectsRefSettingsRoute: ApiPlatformProjectsRefSettingsRoute,
   ApiPlatformPropsOrgSlugRoute: ApiPlatformPropsOrgSlugRoute,
