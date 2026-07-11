@@ -11,10 +11,12 @@ import { CustomReportSection } from './CustomReportSection'
 import { DEFAULT_SECTION_ORDER, mergeSectionOrder } from './Home.utils'
 import { ProjectUsageSection } from './ProjectUsageSection'
 import { ProjectUsageSectionDeltas } from './ProjectUsageSectionDeltas'
+import { SelfHostedOperationsSection } from './SelfHostedOperationsSection'
 import { SortableSection } from '@/components/interfaces/ProjectHome/SortableSection'
 import { TopSection } from '@/components/interfaces/ProjectHome/TopSection'
 import { ProjectNeedsSecuring } from '@/components/layouts/ProjectNeedsSecuring/ProjectNeedsSecuring'
 import { ScaffoldContainer, ScaffoldSection } from '@/components/layouts/Scaffold'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useLocalStorage } from '@/hooks/misc/useLocalStorage'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { IS_PLATFORM, PROJECT_STATUS } from '@/lib/constants'
@@ -26,6 +28,7 @@ export const ProjectHome = () => {
   const snap = useAppStateSnapshot()
   const { data: project } = useSelectedProjectQuery()
   const track = useTrack()
+  const { isSelfHosted } = useDeploymentMode()
 
   const showHomepageUsageDeltas = useFlag('newHomepageUsageDeltas')
 
@@ -81,6 +84,7 @@ export const ProjectHome = () => {
 
   const renderOrder = mergeSectionOrder(sectionOrder).filter((id) => {
     if (id === 'connect') return showConnectSection
+    if (id === 'operations') return isSelfHosted
     if (id === 'usage' || id === 'custom-report') return IS_PLATFORM
     return true
   })
@@ -118,6 +122,13 @@ export const ProjectHome = () => {
                       return (
                         <SortableSection key={id} id={id}>
                           <ConnectSection />
+                        </SortableSection>
+                      )
+                    }
+                    if (id === 'operations' && isSelfHosted) {
+                      return (
+                        <SortableSection key={id} id={id}>
+                          <SelfHostedOperationsSection />
                         </SortableSection>
                       )
                     }
