@@ -12,6 +12,7 @@ import { DEFAULT_SECTION_ORDER, mergeSectionOrder } from './Home.utils'
 import { ProjectUsageSection } from './ProjectUsageSection'
 import { ProjectUsageSectionDeltas } from './ProjectUsageSectionDeltas'
 import { SelfHostedOperationsSection } from './SelfHostedOperationsSection'
+import { SelfHostedUsageSection } from './SelfHostedUsageSection'
 import { SortableSection } from '@/components/interfaces/ProjectHome/SortableSection'
 import { TopSection } from '@/components/interfaces/ProjectHome/TopSection'
 import { ProjectNeedsSecuring } from '@/components/layouts/ProjectNeedsSecuring/ProjectNeedsSecuring'
@@ -127,9 +128,12 @@ export const ProjectHome = () => {
                     }
                     if (id === 'operations' && isSelfHosted) {
                       return (
-                        <SortableSection key={id} id={id}>
-                          <SelfHostedOperationsSection />
-                        </SortableSection>
+                        <div key={id} className="contents">
+                          <SortableSection id={id}>
+                            <SelfHostedOperationsSection />
+                          </SortableSection>
+                          <SelfHostedUsageSection />
+                        </div>
                       )
                     }
                     if (id === 'advisor') {
