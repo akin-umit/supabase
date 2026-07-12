@@ -61,10 +61,11 @@ services:
 
       SNIPPETS_MANAGEMENT_FOLDER: /app/snippets
       EDGE_FUNCTIONS_MANAGEMENT_FOLDER: /app/edge-functions
+      FUNCTION_SECRETS_MANAGEMENT_FOLDER: /app/function-secrets
     volumes:
       - ./volumes/snippets:/app/snippets:z
       - ./volumes/functions:/app/edge-functions:ro,z
-      - function-secrets:/app/edge-functions/.supabase
+      - function-secrets:/app/function-secrets
 
   kong:
     container_name: supabase-kong
@@ -445,7 +446,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./volumes/functions:/home/deno/functions:z
-      - function-secrets:/home/deno/functions/.supabase
+      - function-secrets:/run/function-secrets
       - deno-cache:/root/.cache/deno
     depends_on:
       kong:
