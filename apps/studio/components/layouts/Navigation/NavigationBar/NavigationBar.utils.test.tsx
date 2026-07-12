@@ -124,12 +124,13 @@ describe('generateOtherRoutes', () => {
     expect(keys(routes)).not.toContain('observability')
   })
 
-  it('excludes observability in self-hosted mode even when reports are enabled', () => {
+  it('links self-hosted observability to query performance when reports are enabled', () => {
     const routes = generateOtherRoutes(REF, activeProject, {
       isPlatform: false,
       showReports: true,
     })
-    expect(keys(routes)).not.toContain('observability')
+    const observabilityRoute = routes.find((route) => route.key === 'observability')
+    expect(observabilityRoute?.link).toBe(`/project/${REF}/observability/query-performance`)
   })
 
   it('excludes observability in self-hosted mode when reports are disabled', () => {

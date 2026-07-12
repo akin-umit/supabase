@@ -168,15 +168,20 @@ export const generateOtherRoutes = (
       link: ref && (isProjectBuilding ? buildingUrl : `/project/${ref}/advisors/security`),
       shortcutId: SHORTCUT_IDS.NAV_ADVISORS,
     },
-    // Observability is only available on the platform, not for self-hosted/CLI
-    ...(isPlatform && reportsEnabled
+    ...(reportsEnabled
       ? [
           {
             key: 'observability',
             label: 'Observability',
             disabled: !isProjectActive,
             icon: <Telescope size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />,
-            link: ref && (isProjectBuilding ? buildingUrl : `/project/${ref}/observability`),
+            link:
+              ref &&
+              (isProjectBuilding
+                ? buildingUrl
+                : isPlatform
+                  ? `/project/${ref}/observability`
+                  : `/project/${ref}/observability/query-performance`),
             shortcutId: SHORTCUT_IDS.NAV_OBSERVABILITY,
           },
         ]
