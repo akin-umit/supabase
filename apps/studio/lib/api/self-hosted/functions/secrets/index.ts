@@ -5,10 +5,13 @@ import { FileSystemSecretStore } from './fileSystemStore'
 
 export function getFunctionSecretStore() {
   assertSelfHosted()
+  const folder =
+    process.env.FUNCTION_SECRETS_MANAGEMENT_FOLDER ??
+    process.env.EDGE_FUNCTIONS_MANAGEMENT_FOLDER
   assert(
-    process.env.EDGE_FUNCTIONS_MANAGEMENT_FOLDER,
-    'EDGE_FUNCTIONS_MANAGEMENT_FOLDER is required'
+    folder,
+    'FUNCTION_SECRETS_MANAGEMENT_FOLDER or EDGE_FUNCTIONS_MANAGEMENT_FOLDER is required'
   )
 
-  return new FileSystemSecretStore(process.env.EDGE_FUNCTIONS_MANAGEMENT_FOLDER)
+  return new FileSystemSecretStore(folder)
 }

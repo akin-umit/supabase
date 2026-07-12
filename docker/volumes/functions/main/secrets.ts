@@ -1,5 +1,5 @@
 export const DEFAULT_FUNCTION_SECRETS_PATH =
-  '/home/deno/functions/.supabase/function-secrets.json'
+  '/run/function-secrets/.supabase/function-secrets.json'
 
 export const RESERVED_RUNTIME_ENV_NAMES = new Set([
   'DENO_DEPLOYMENT_ID',
