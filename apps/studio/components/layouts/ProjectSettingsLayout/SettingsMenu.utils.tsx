@@ -46,6 +46,12 @@ export const useGenerateSettingsMenu = () => {
             items: [],
           },
           {
+            name: 'Dashboard Preferences',
+            key: 'dashboard',
+            url: '/account/me#dashboard',
+            items: [],
+          },
+          {
             name: 'API Keys',
             key: 'api-keys',
             url: `/project/${ref}/settings/api-keys`,
