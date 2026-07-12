@@ -1,10 +1,17 @@
 import * as jose from 'jsr:@panva/jose@6'
+import {
+  DEFAULT_FUNCTION_SECRETS_PATH,
+  JsonSecretLoader,
+  mergeFunctionSecrets,
+} from './secrets.ts'
 
 console.log('main function started')
 
 const JWT_SECRET = Deno.env.get('JWT_SECRET')
 const SUPABASE_JWKS = parseJwks(Deno.env.get('SUPABASE_JWKS'))
 const VERIFY_JWT = Deno.env.get('VERIFY_JWT') === 'true'
+const FUNCTION_SECRETS_PATH = Deno.env.get('FUNCTION_SECRETS_FILE') ?? DEFAULT_FUNCTION_SECRETS_PATH
+const secretLoader = new JsonSecretLoader()
 
 // NOTE:(kallebysantos) We don't check for valid keys but just the bare array parsing,
 // let this for 'jose' lib verification
@@ -150,7 +157,10 @@ Deno.serve(async (req: Request) => {
   const noModuleCache = false
   const importMapPath = null
   const envVarsObj = Deno.env.toObject()
-  const envVars = Object.keys(envVarsObj).map((k) => [k, envVarsObj[k]])
+  const envVars = mergeFunctionSecrets(
+    envVarsObj,
+    await secretLoader.load(FUNCTION_SECRETS_PATH),
+  )
 
   try {
     const worker = await EdgeRuntime.userWorkers.create({
