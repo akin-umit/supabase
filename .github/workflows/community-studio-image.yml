@@ -14,6 +14,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -36,3 +37,38 @@ jobs:
           cache-to: type=gha,mode=max,scope=community-studio
           provenance: true
           sbom: true
+
+      - name: Smoke test Studio runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          image="ghcr.io/akin-umit/supabase-studio:${GITHUB_SHA}"
+          docker run --detach --name studio-smoke --publish 3000:3000 \
+            --env HOSTNAME=0.0.0.0 \
+            --env STUDIO_PG_META_URL=http://127.0.0.1:8080 \
+            --env SUPABASE_URL=http://127.0.0.1:8000 \
+            --env SUPABASE_PUBLIC_URL=http://127.0.0.1:8000 \
+            --env SUPABASE_ANON_KEY=smoke-anon \
+            --env SUPABASE_SERVICE_KEY=smoke-service-role \
+            --env POSTGRES_PASSWORD=smoke-password \
+            "$image"
+
+          for attempt in $(seq 1 36); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:3000/api/platform/profile >/dev/null; then
+              exit 0
+            fi
+
+            if ! docker inspect --format='{{.State.Running}}' studio-smoke | grep -qx true; then
+              break
+            fi
+            sleep 5
+          done
+
+          docker logs studio-smoke
+          exit 1
+
+      - name: Remove smoke container
+        if: always()
+        run: docker rm --force studio-smoke 2>/dev/null || true
