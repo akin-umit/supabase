@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getSelfHostedUsageServices, SelfHostedUsageSection } from './SelfHostedUsageSection'
 
-const mockUseProjectLogStatsQuery = vi.fn()
+const mockUseSelfHostedUsageQuery = vi.fn()
 
 vi.mock('common', async (importOriginal) => ({
   ...(await importOriginal<typeof import('common')>()),
   useParams: () => ({ ref: 'default' }),
 }))
-vi.mock('@/data/analytics/project-log-stats-query', () => ({
-  useProjectLogStatsQuery: (...args: unknown[]) => mockUseProjectLogStatsQuery(...args),
+vi.mock('@/data/analytics/self-hosted-usage-query', () => ({
+  useSelfHostedUsageQuery: (...args: unknown[]) => mockUseSelfHostedUsageQuery(...args),
 }))
 vi.mock('ui-patterns/LogsBarChart', () => ({
   LogsBarChart: ({ data, EmptyState }: { data: unknown[]; EmptyState: React.ReactNode }) =>
@@ -43,11 +43,11 @@ describe('getSelfHostedUsageServices', () => {
 
 describe('SelfHostedUsageSection', () => {
   beforeEach(() => {
-    mockUseProjectLogStatsQuery.mockReset()
+    mockUseSelfHostedUsageQuery.mockReset()
   })
 
   it('requests only the last 24 hours and renders service charts and the total', () => {
-    mockUseProjectLogStatsQuery.mockReturnValue({
+    mockUseSelfHostedUsageQuery.mockReturnValue({
       isPending: false,
       error: null,
       data: {
@@ -65,22 +65,21 @@ describe('SelfHostedUsageSection', () => {
 
     render(<SelfHostedUsageSection />)
 
-    expect(mockUseProjectLogStatsQuery).toHaveBeenCalledWith(
-      { projectRef: 'default', interval: '1day' },
-      { refetchOnWindowFocus: false }
-    )
+    expect(mockUseSelfHostedUsageQuery).toHaveBeenCalledWith('default', {
+      refetchOnWindowFocus: false,
+    })
     expect(screen.getByText('19')).toBeInTheDocument()
     expect(screen.getAllByTestId('usage-chart')).toHaveLength(4)
   })
 
   it('renders loading and empty states', () => {
-    mockUseProjectLogStatsQuery.mockReturnValue({ isPending: true, error: null })
+    mockUseSelfHostedUsageQuery.mockReturnValue({ isPending: true, error: null })
     const { rerender } = render(<SelfHostedUsageSection />)
 
     expect(screen.getByRole('generic', { busy: true })).toBeInTheDocument()
     expect(screen.queryByText('Total requests')).not.toBeInTheDocument()
 
-    mockUseProjectLogStatsQuery.mockReturnValue({
+    mockUseSelfHostedUsageQuery.mockReturnValue({
       isPending: false,
       error: null,
       data: { result: [] },
@@ -91,7 +90,7 @@ describe('SelfHostedUsageSection', () => {
 
   it('renders a restrained error and retries', () => {
     const refetch = vi.fn()
-    mockUseProjectLogStatsQuery.mockReturnValue({
+    mockUseSelfHostedUsageQuery.mockReturnValue({
       isPending: false,
       isFetching: false,
       error: new Error('internal Logflare detail'),

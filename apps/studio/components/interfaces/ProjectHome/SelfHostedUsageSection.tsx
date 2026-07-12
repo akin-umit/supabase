@@ -7,10 +7,8 @@ import { LogsBarChart } from 'ui-patterns/LogsBarChart'
 import { Row } from 'ui-patterns/Row'
 
 import NoDataPlaceholder from '@/components/ui/Charts/NoDataPlaceholder'
-import {
-  useProjectLogStatsQuery,
-  type UsageApiCounts,
-} from '@/data/analytics/project-log-stats-query'
+import type { UsageApiCounts } from '@/data/analytics/project-log-stats-query'
+import { useSelfHostedUsageQuery } from '@/data/analytics/self-hosted-usage-query'
 import { fillTimeseriesSorted } from '@/hooks/analytics/useFillTimeseriesSorted'
 
 type LogsBarChartDatum = {
@@ -65,10 +63,9 @@ export function getSelfHostedUsageServices(data: UsageApiCounts[], now = dayjs()
 
 export function SelfHostedUsageSection() {
   const { ref: projectRef } = useParams()
-  const { data, isPending, error, refetch, isFetching } = useProjectLogStatsQuery(
-    { projectRef, interval: '1day' },
-    { refetchOnWindowFocus: false }
-  )
+  const { data, isPending, error, refetch, isFetching } = useSelfHostedUsageQuery(projectRef, {
+    refetchOnWindowFocus: false,
+  })
   const usage = useMemo(() => getSelfHostedUsageServices(data?.result ?? []), [data?.result])
   const requestError = error ?? usage.error
   const totalRequests = usage.services.reduce((sum, service) => sum + service.total, 0)
