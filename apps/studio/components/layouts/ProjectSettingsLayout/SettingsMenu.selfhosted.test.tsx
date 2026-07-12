@@ -95,11 +95,13 @@ describe('useGenerateSettingsMenu (self-hosted)', () => {
     expect(integrationsGroup?.items.some((item) => item.key === 'vault')).toBe(true)
   })
 
-  it('does not include dashboard settings in self-hosted mode', () => {
+  it('links dashboard preferences to the self-hosted account settings surface', () => {
     const { result } = renderHook(() => useGenerateSettingsMenu())
     const configGroup = result.current.find((group) => group.title === 'Configuration')
+    const dashboardItem = configGroup?.items.find((item) => item.key === 'dashboard')
 
-    expect(configGroup?.items.some((item) => item.key === 'dashboard')).toBe(false)
+    expect(dashboardItem?.name).toBe('Dashboard Preferences')
+    expect(dashboardItem?.url).toBe('/account/me#dashboard')
   })
 
   it('does not include platform-only settings in self-hosted mode', () => {
