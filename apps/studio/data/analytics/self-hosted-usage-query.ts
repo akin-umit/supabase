@@ -7,34 +7,63 @@ import { executeAnalyticsSql } from '@/data/logs/execute-analytics-sql'
 import { safeSql } from '@/data/logs/safe-analytics-sql'
 import type { UseCustomQueryOptions } from '@/types'
 
-const SELF_HOSTED_USAGE_SQL = safeSql`
-select
-  cast(timestamp_trunc(t.timestamp, hour) as datetime) as timestamp,
-  countif(starts_with(request.path, '/rest/v1')) as total_rest_requests,
-  countif(starts_with(request.path, '/auth/v1')) as total_auth_requests,
-  countif(starts_with(request.path, '/storage/v1')) as total_storage_requests,
-  countif(starts_with(request.path, '/realtime/v1')) as total_realtime_requests
-from edge_logs t
-  cross join unnest(metadata) as m
-  cross join unnest(m.request) as request
-group by timestamp
-order by timestamp asc
-`
+const RAW_LOG_LIMIT = 10_000
+const SERVICE_QUERIES = {
+  total_rest_requests: safeSql`select timestamp, id from edge_logs order by timestamp desc limit 10000`,
+  total_auth_requests: safeSql`select timestamp, id from auth_logs order by timestamp desc limit 10000`,
+  total_storage_requests: safeSql`select timestamp, id from storage_logs order by timestamp desc limit 10000`,
+  total_realtime_requests: safeSql`select timestamp, id from realtime_logs order by timestamp desc limit 10000`,
+} as const
+
+type ServiceMetric = keyof typeof SERVICE_QUERIES
+type RawLogRow = { timestamp: string; id: string }
+type RawLogResponse = { result?: RawLogRow[] }
 
 export type SelfHostedUsageResponse = { result: UsageApiCounts[] }
 
-export async function getSelfHostedUsage(projectRef: string, signal?: AbortSignal) {
-  const end = dayjs()
-  const data = await executeAnalyticsSql({
-    projectRef,
-    endpoint: '/platform/projects/{ref}/analytics/endpoints/logs.all',
-    sql: SELF_HOSTED_USAGE_SQL,
-    iso_timestamp_start: end.subtract(24, 'hour').toISOString(),
-    iso_timestamp_end: end.toISOString(),
-    signal,
+export function mergeSelfHostedUsageRows(
+  responses: ReadonlyArray<readonly [ServiceMetric, RawLogResponse]>
+): UsageApiCounts[] {
+  const buckets = new Map<string, UsageApiCounts>()
+
+  responses.forEach(([metric, response]) => {
+    response.result?.slice(0, RAW_LOG_LIMIT).forEach((row) => {
+      const timestamp = dayjs(row.timestamp).startOf('hour').toISOString()
+      const bucket = buckets.get(timestamp) ?? {
+        timestamp,
+        total_rest_requests: 0,
+        total_auth_requests: 0,
+        total_storage_requests: 0,
+        total_realtime_requests: 0,
+      }
+      bucket[metric] = Number(bucket[metric]) + 1
+      buckets.set(timestamp, bucket)
+    })
   })
 
-  return data as unknown as SelfHostedUsageResponse
+  return [...buckets.values()].sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+}
+
+export async function getSelfHostedUsage(projectRef: string, signal?: AbortSignal) {
+  const end = dayjs()
+  const range = {
+    iso_timestamp_start: end.subtract(24, 'hour').toISOString(),
+    iso_timestamp_end: end.toISOString(),
+  }
+  const responses = await Promise.all(
+    Object.entries(SERVICE_QUERIES).map(async ([metric, sql]) => {
+      const data = await executeAnalyticsSql({
+        projectRef,
+        endpoint: '/platform/projects/{ref}/analytics/endpoints/logs.all',
+        sql,
+        ...range,
+        signal,
+      })
+      return [metric as ServiceMetric, data as unknown as RawLogResponse] as const
+    })
+  )
+
+  return { result: mergeSelfHostedUsageRows(responses) }
 }
 
 export const useSelfHostedUsageQuery = <TData = SelfHostedUsageResponse>(
