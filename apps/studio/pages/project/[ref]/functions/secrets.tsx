@@ -23,38 +23,24 @@ import type { NextPageWithLayout } from '@/types'
 const SecretsPage: NextPageWithLayout = () => {
   const { isCli, isSelfHosted } = useDeploymentMode()
 
-  if (!IS_PLATFORM) {
+  if (!IS_PLATFORM && isCli) {
     return (
       <PageContainer size="large">
         <PageSection>
           <PageSectionContent className="space-y-4 md:space-y-8">
-            {isCli && (
-              <Admonition
-                type="default"
-                title="Local development with the Supabase CLI"
-                description={
-                  <p>
-                    Add custom secrets to{' '}
-                    <code className="text-code-inline">supabase/functions/.env</code>, or pass{' '}
-                    <code className="text-code-inline">--env-file</code> to{' '}
-                    <code className="text-code-inline">supabase functions serve</code>.
-                  </p>
-                }
-                actions={<DocsButton href={`${DOCS_URL}/guides/functions/secrets#using-the-cli`} />}
-              />
-            )}
-            {isSelfHosted && (
-              <Admonition
-                type="default"
-                title="Self-hosted Supabase"
-                description={<p>Set custom secrets via environment variables.</p>}
-                actions={
-                  <DocsButton
-                    href={`${DOCS_URL}/guides/self-hosting/self-hosted-functions#custom-environment-variables`}
-                  />
-                }
-              />
-            )}
+            <Admonition
+              type="default"
+              title="Local development with the Supabase CLI"
+              description={
+                <p>
+                  Add custom secrets to{' '}
+                  <code className="text-code-inline">supabase/functions/.env</code>, or pass{' '}
+                  <code className="text-code-inline">--env-file</code> to{' '}
+                  <code className="text-code-inline">supabase functions serve</code>.
+                </p>
+              }
+              actions={<DocsButton href={`${DOCS_URL}/guides/functions/secrets#using-the-cli`} />}
+            />
             <section className="space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                 <div className="space-y-1">
@@ -85,6 +71,18 @@ const SecretsPage: NextPageWithLayout = () => {
     <PageContainer size="large">
       <PageSection>
         <PageSectionContent className="space-y-4 md:space-y-8">
+          {isSelfHosted && (
+            <Admonition
+              type="default"
+              title="Self-hosted function secrets"
+              description={
+                <p>
+                  Secret values are stored on the functions volume and are never returned after
+                  saving. Updates are loaded by the Edge Runtime for subsequent requests.
+                </p>
+              }
+            />
+          )}
           <EdgeFunctionSecrets />
         </PageSectionContent>
       </PageSection>
