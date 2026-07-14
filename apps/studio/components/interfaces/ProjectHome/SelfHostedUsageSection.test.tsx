@@ -74,7 +74,7 @@ describe('SelfHostedUsageSection', () => {
     expect(mockUseSelfHostedUsageQuery).toHaveBeenCalledWith('default', {
       refetchOnWindowFocus: false,
     })
-    expect(screen.getByText('20')).toBeInTheDocument()
+    expect(screen.getByText('Total requests').previousElementSibling).toHaveTextContent('20')
     expect(screen.getAllByTestId('usage-chart')).toHaveLength(6)
   })
 

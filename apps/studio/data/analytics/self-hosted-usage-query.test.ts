@@ -25,6 +25,8 @@ describe('mergeSelfHostedUsageRows', () => {
     expect(result).toEqual([
       {
         timestamp: '2026-07-12T09:00:00.000Z',
+        total_api_requests: 0,
+        total_functions_requests: 0,
         total_rest_requests: 1,
         total_auth_requests: 0,
         total_storage_requests: 0,
@@ -32,6 +34,8 @@ describe('mergeSelfHostedUsageRows', () => {
       },
       {
         timestamp: '2026-07-12T10:00:00.000Z',
+        total_api_requests: 0,
+        total_functions_requests: 0,
         total_rest_requests: 1,
         total_auth_requests: 1,
         total_storage_requests: 0,
