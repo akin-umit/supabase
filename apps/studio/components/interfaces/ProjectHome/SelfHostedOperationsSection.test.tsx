@@ -38,6 +38,10 @@ describe('SelfHostedOperationsSection', () => {
         deployment: { commit: 'a1b2c3d', version: '1.2.3' },
         backup: { status: 'unavailable' },
         migration: { status: 'unavailable' },
+        infrastructure: {
+          database: { host: 'db', port: 5432, maxClientConnections: 200 },
+          services: { total: 2, healthy: 1, unavailable: 1 },
+        },
       },
     })
 
@@ -46,8 +50,11 @@ describe('SelfHostedOperationsSection', () => {
     expect(screen.getByText('a1b2c3d')).toBeInTheDocument()
     expect(screen.getByText('Failed services: storage')).toBeInTheDocument()
     expect(screen.getByText('Version 1.2.3')).toBeInTheDocument()
+    expect(screen.getByText('db:5432')).toBeInTheDocument()
+    expect(screen.getByText('1/2 services healthy · 200 max pooler conns')).toBeInTheDocument()
     expect(screen.getAllByText('Healthy')).toHaveLength(3)
-    expect(screen.getAllByText('Unavailable')).toHaveLength(4)
+    expect(screen.getAllByText('Unavailable')).toHaveLength(2)
+    expect(screen.getAllByText('Awaiting evidence')).toHaveLength(2)
   })
 
   it('renders canonical backup and migration timestamps', () => {
@@ -65,6 +72,10 @@ describe('SelfHostedOperationsSection', () => {
           lastApplied: '202607120900_add_index',
           appliedAt: '2026-07-12T09:00:00Z',
         },
+        infrastructure: {
+          database: { host: 'db', port: 5432 },
+          services: { total: 2, healthy: 1, unavailable: 1 },
+        },
       },
     })
 
@@ -74,7 +85,7 @@ describe('SelfHostedOperationsSection', () => {
     expect(screen.getByText('202607120900_add_index')).toBeInTheDocument()
     expect(screen.getByText(/^Applied \d/)).toBeInTheDocument()
     expect(screen.getAllByText('Healthy')).toHaveLength(2)
-    expect(screen.getAllByText('Degraded')).toHaveLength(2)
+    expect(screen.getAllByText('Degraded')).toHaveLength(3)
   })
 
   it('shows a restrained request error and retries without exposing raw errors', () => {
