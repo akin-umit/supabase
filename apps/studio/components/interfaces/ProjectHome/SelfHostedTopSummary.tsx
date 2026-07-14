@@ -125,7 +125,7 @@ function formatConnections(data?: ProjectOperations) {
   const max = runtime?.connectionsMax ?? data?.infrastructure?.database.maxClientConnections
 
   if (typeof current === 'number' && typeof max === 'number') return `${current}/${max}`
-  if (typeof max === 'number') return `0/${max}`
+  if (typeof max === 'number') return `Max ${max}`
   return 'Awaiting telemetry'
 }
 

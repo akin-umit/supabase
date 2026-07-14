@@ -83,7 +83,7 @@ describe('SelfHostedInfrastructureDiagram', () => {
     render(<SelfHostedInfrastructureDiagram />)
 
     expect(screen.getAllByText('Awaiting telemetry')).toHaveLength(3)
-    expect(screen.getByText('0/60')).toBeInTheDocument()
+    expect(screen.getByText('Max 60')).toBeInTheDocument()
     expect(screen.getByText('1/1')).toBeInTheDocument()
     expect(screen.getByText('Telemetry pending')).toBeInTheDocument()
   })
