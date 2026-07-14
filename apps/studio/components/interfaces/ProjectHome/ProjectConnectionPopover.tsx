@@ -121,6 +121,17 @@ export const ProjectConnectionPopover = ({ projectRef }: ProjectConnectionPopove
             },
           ]
         : []),
+      ...(!IS_PLATFORM
+        ? [
+            {
+              label: 'CLI setup commands',
+              value: cliCommands,
+              displayValue: cliCommands.replace(/\n/g, ' - '),
+              disabled: !projectRef,
+              icon: Terminal,
+            },
+          ]
+        : []),
       ...(IS_PLATFORM
         ? [
             {
