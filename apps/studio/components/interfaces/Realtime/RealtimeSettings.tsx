@@ -38,6 +38,7 @@ import {
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { IS_PLATFORM } from '@/lib/constants'
 
 const formId = 'realtime-configuration-form'
 
@@ -136,12 +137,14 @@ export const RealtimeSettings = () => {
   })
 
   const { allow_public, suspend } = form.watch()
+  const isSelfHosted = !IS_PLATFORM
   const isSettingToPrivate = !data?.private_only && !allow_public
   const isDisablingRealtime = !isRealtimeDisabled && suspend
   const isEnablingRealtime = isRealtimeDisabled && !suspend
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = (_data) => {
     if (!projectRef) return console.error('Project ref is required')
+    if (isSelfHosted) return
     setIsConfirmNextModalOpen(true)
   }
 
@@ -190,6 +193,14 @@ export const RealtimeSettings = () => {
           ) : (
             <Card>
               <CardContent className="space-y-4">
+                {isSelfHosted && (
+                  <Admonition
+                    showIcon={false}
+                    type="default"
+                    title="Realtime limits are managed by the self-hosted runtime"
+                    description="This page shows the default Studio shape for Realtime settings. Runtime changes should be made through the Realtime service environment/Compose configuration and redeployed."
+                  />
+                )}
                 <FormField
                   control={form.control}
                   name="suspend"
@@ -206,7 +217,7 @@ export const RealtimeSettings = () => {
                             id="suspend"
                             checked={!field.value}
                             onCheckedChange={(checked) => field.onChange(!checked)}
-                            disabled={!canUpdateConfig}
+                            disabled={isSelfHosted || !canUpdateConfig}
                           />
                         </FormControl>
                       </FormItemLayout>
@@ -264,7 +275,7 @@ export const RealtimeSettings = () => {
                                 id="allow_public"
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
-                                disabled={!canUpdateConfig}
+                                disabled={isSelfHosted || !canUpdateConfig}
                               />
                             </FormControl>
                           </FormItemLayout>
@@ -319,7 +330,7 @@ export const RealtimeSettings = () => {
                                   {...field}
                                   id="connection_pool"
                                   type="number"
-                                  disabled={!canUpdateConfig}
+                                  disabled={isSelfHosted || !canUpdateConfig}
                                   value={field.value || ''}
                                 />
                                 <InputGroupAddon align="inline-end">
@@ -359,7 +370,7 @@ export const RealtimeSettings = () => {
                                 {...field}
                                 id="max_concurrent_users"
                                 type="number"
-                                disabled={!canUpdateConfig}
+                                disabled={isSelfHosted || !canUpdateConfig}
                                 value={field.value || ''}
                               />
                               <InputGroupAddon align="inline-end">
@@ -388,7 +399,9 @@ export const RealtimeSettings = () => {
                                 {...field}
                                 id="max_events_per_second"
                                 type="number"
-                                disabled={!isUsageBillingEnabled || !canUpdateConfig}
+                                disabled={
+                                  isSelfHosted || !isUsageBillingEnabled || !canUpdateConfig
+                                }
                                 value={field.value || ''}
                               />
                               <InputGroupAddon align="inline-end">
@@ -444,7 +457,9 @@ export const RealtimeSettings = () => {
                                 {...field}
                                 id="max_presence_events_per_second"
                                 type="number"
-                                disabled={!isUsageBillingEnabled || !canUpdateConfig}
+                                disabled={
+                                  isSelfHosted || !isUsageBillingEnabled || !canUpdateConfig
+                                }
                                 value={field.value || ''}
                               />
                               <InputGroupAddon align="inline-end">
@@ -500,7 +515,9 @@ export const RealtimeSettings = () => {
                                 {...field}
                                 id="max_payload_size_in_kb"
                                 type="number"
-                                disabled={!isUsageBillingEnabled || !canUpdateConfig}
+                                disabled={
+                                  isSelfHosted || !isUsageBillingEnabled || !canUpdateConfig
+                                }
                                 value={field.value || ''}
                               />
                               <InputGroupAddon align="inline-end">
@@ -560,7 +577,12 @@ export const RealtimeSettings = () => {
                     variant="primary"
                     type="submit"
                     form={formId}
-                    disabled={!canUpdateConfig || isUpdatingConfig || !form.formState.isDirty}
+                    disabled={
+                      isSelfHosted ||
+                      !canUpdateConfig ||
+                      isUpdatingConfig ||
+                      !form.formState.isDirty
+                    }
                     loading={isUpdatingConfig}
                   >
                     Save changes

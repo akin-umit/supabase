@@ -86,7 +86,8 @@ export const ProjectHome = () => {
   const renderOrder = mergeSectionOrder(sectionOrder).filter((id) => {
     if (id === 'connect') return showConnectSection
     if (id === 'operations') return isSelfHosted
-    if (id === 'usage' || id === 'custom-report') return IS_PLATFORM
+    if (id === 'usage') return IS_PLATFORM || isSelfHosted
+    if (id === 'custom-report') return IS_PLATFORM
     return true
   })
 
@@ -128,12 +129,16 @@ export const ProjectHome = () => {
                     }
                     if (id === 'operations' && isSelfHosted) {
                       return (
-                        <div key={id} className="contents">
-                          <SortableSection id={id}>
-                            <SelfHostedOperationsSection />
-                          </SortableSection>
+                        <SortableSection key={id} id={id}>
+                          <SelfHostedOperationsSection />
+                        </SortableSection>
+                      )
+                    }
+                    if (id === 'usage' && isSelfHosted) {
+                      return (
+                        <SortableSection key={id} id={id}>
                           <SelfHostedUsageSection />
-                        </div>
+                        </SortableSection>
                       )
                     }
                     if (id === 'advisor') {

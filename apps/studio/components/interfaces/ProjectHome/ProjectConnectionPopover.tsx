@@ -29,6 +29,15 @@ const EMPTY_CONNECTION_INFO = {
   db_port: '',
   db_name: '',
 }
+const SELF_HOSTED_DIRECT_CONNECTION_STRING =
+  'postgresql://postgres:[YOUR-PASSWORD]@db:5432/postgres'
+
+export function getSelfHostedCliCommands() {
+  return [
+    'supabase init',
+    `supabase gen types typescript --db-url "${SELF_HOSTED_DIRECT_CONNECTION_STRING}"`,
+  ].join('\n')
+}
 
 interface ProjectConnectionPopoverProps {
   projectRef?: string
@@ -83,6 +92,7 @@ export const ProjectConnectionPopover = ({ projectRef }: ProjectConnectionPopove
       ].join('\n'),
     [projectRef]
   )
+  const selfHostedCliCommands = useMemo(() => getSelfHostedCliCommands(), [])
 
   // Self-hosted projects may not have a publishable key configured. Rather
   // than show a permanently-disabled "Publishable key unavailable" row, hide
@@ -140,7 +150,22 @@ export const ProjectConnectionPopover = ({ projectRef }: ProjectConnectionPopove
               icon: Terminal,
             },
           ]
-        : []),
+        : [
+            {
+              label: 'Direct connection string',
+              value: SELF_HOSTED_DIRECT_CONNECTION_STRING,
+              displayValue: SELF_HOSTED_DIRECT_CONNECTION_STRING,
+              disabled: false,
+              icon: Database,
+            },
+            {
+              label: 'CLI setup commands',
+              value: selfHostedCliCommands,
+              displayValue: selfHostedCliCommands.replace(/\n/g, ' - '),
+              disabled: false,
+              icon: Terminal,
+            },
+          ]),
     ],
     [
       canReadAPIKeys,
@@ -154,6 +179,7 @@ export const ProjectConnectionPopover = ({ projectRef }: ProjectConnectionPopove
       projectUrl,
       publishableKey?.api_key,
       showPublishableKey,
+      selfHostedCliCommands,
     ]
   )
 

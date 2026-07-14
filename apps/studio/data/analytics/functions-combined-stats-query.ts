@@ -3,6 +3,7 @@ import { operations } from 'api-types'
 
 import { analyticsKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
+import { IS_PLATFORM } from '@/lib/constants'
 import { UseCustomQueryOptions } from '@/types'
 
 export type FunctionsCombinedStatsVariables = {
@@ -66,6 +67,7 @@ export const useFunctionsCombinedStatsQuery = <TData = FunctionsCombinedStatsDat
       enabled &&
       typeof projectRef !== 'undefined' &&
       typeof functionId !== 'undefined' &&
-      typeof interval !== 'undefined',
+      typeof interval !== 'undefined' &&
+      IS_PLATFORM,
     ...options,
   })
