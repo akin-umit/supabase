@@ -53,6 +53,12 @@ describe('useGenerateSettingsMenu (self-hosted)', () => {
     expect(configGroup?.items.some((item) => item.key === 'general')).toBe(true)
     expect(configGroup?.items.some((item) => item.key === 'api-keys')).toBe(true)
     expect(configGroup?.items.some((item) => item.key === 'jwt')).toBe(true)
+    expect(configGroup?.items.find((item) => item.key === 'jwt')?.url).toBe(
+      '/project/project-ref/settings/jwt'
+    )
+    expect(getShortcutId(configGroup?.items.find((item) => item.key === 'jwt'))).toBe(
+      SHORTCUT_IDS.NAV_PROJECT_SETTINGS_JWT_KEYS
+    )
     expect(configGroup?.items.some((item) => item.key === 'log-drains')).toBe(true)
     expect(getShortcutId(configGroup?.items.find((item) => item.key === 'log-drains'))).toBe(
       SHORTCUT_IDS.NAV_PROJECT_SETTINGS_LOG_DRAINS

@@ -41,6 +41,17 @@ const infrastructureSchema = z
         maxClientConnections: z.number().int().min(1).max(1_000_000).optional(),
       })
       .strip(),
+    runtime: z
+      .object({
+        cpuPercent: z.number().min(0).max(100).optional(),
+        diskPercent: z.number().min(0).max(100).optional(),
+        memoryPercent: z.number().min(0).max(100).optional(),
+        connectionsCurrent: z.number().int().min(0).max(1_000_000).optional(),
+        connectionsMax: z.number().int().min(1).max(1_000_000).optional(),
+        updatedAt: isoTimestampSchema.optional(),
+      })
+      .strip()
+      .optional(),
     services: z
       .object({
         total: z.number().int().min(0).max(1000).default(0),

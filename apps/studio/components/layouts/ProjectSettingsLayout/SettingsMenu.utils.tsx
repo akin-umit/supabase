@@ -60,10 +60,9 @@ export const useGenerateSettingsMenu = () => {
           {
             name: 'JWT Keys',
             key: 'jwt',
-            url: legacyJwtKeysEnabled
-              ? `/project/${ref}/settings/jwt`
-              : `/project/${ref}/settings/jwt/signing-keys`,
+            url: `/project/${ref}/settings/jwt`,
             items: [],
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_JWT_KEYS,
           },
           ...(showLogDrains
             ? [

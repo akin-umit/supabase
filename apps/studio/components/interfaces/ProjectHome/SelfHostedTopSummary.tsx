@@ -6,10 +6,13 @@ import {
   Cpu,
   Database,
   GitCommitHorizontal,
+  HardDrive,
+  MemoryStick,
   Server,
   Workflow,
   XCircle,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import {
   Badge,
   Card,
@@ -110,6 +113,34 @@ function getServiceRows(data?: ProjectOperations) {
 function getOverallState(data?: ProjectOperations): SummaryState {
   if (!data) return 'unknown'
   return normalizeState(data.status)
+}
+
+function formatPercent(value?: number) {
+  return typeof value === 'number' ? `${Math.round(value)}%` : 'Awaiting telemetry'
+}
+
+function formatConnections(data?: ProjectOperations) {
+  const runtime = data?.infrastructure?.runtime
+  const current = runtime?.connectionsCurrent
+  const max = runtime?.connectionsMax ?? data?.infrastructure?.database.maxClientConnections
+
+  if (typeof current === 'number' && typeof max === 'number') return `${current}/${max}`
+  if (typeof max === 'number') return `0/${max}`
+  return 'Awaiting telemetry'
+}
+
+function RuntimeMetric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded border bg-surface-75 px-3 py-2">
+      <div className="mb-1 flex items-center gap-2 text-xs text-foreground-light">
+        {icon}
+        {label}
+      </div>
+      <p className="truncate font-mono text-sm text-foreground" title={value}>
+        {value}
+      </p>
+    </div>
+  )
 }
 
 function SelfHostedStatusStat({ data }: { data?: ProjectOperations }) {
@@ -276,20 +307,21 @@ export function SelfHostedInfrastructureDiagram() {
   const state = getOverallState(data)
   const services = getServiceRows(data)
   const healthyCount = services.filter((service) => service.state === 'healthy').length
-  const maxConnections = data?.infrastructure?.database.maxClientConnections
+  const runtime = data?.infrastructure?.runtime
+  const telemetryUpdatedAt = runtime?.updatedAt ? formatTimestamp(runtime.updatedAt) : undefined
 
   return (
     <Card className="h-[400px] md:h-[500px] overflow-hidden bg-transparent">
       <CardContent className="relative flex h-full items-center justify-center p-6">
         <div className="absolute inset-0 bg-[radial-gradient(hsl(var(--border))_1px,transparent_1px)] bg-[size:18px_18px] opacity-40" />
-        <div className="relative w-full max-w-md rounded-md border bg-surface-100 shadow-sm">
+        <div className="relative w-full max-w-lg rounded-md border bg-surface-100 shadow-sm">
           <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 border-b">
             <div className="flex items-start gap-3">
               <div className="rounded-md bg-surface-200 p-2 text-brand">
                 <Database size={18} strokeWidth={1.5} />
               </div>
               <div>
-                <CardTitle className="text-sm">Primary Database</CardTitle>
+                <CardTitle className="text-sm">Self-host Runtime</CardTitle>
                 <p className="text-xs text-foreground-light">{formatDatabaseEndpoint(data)}</p>
               </div>
             </div>
@@ -303,25 +335,37 @@ export function SelfHostedInfrastructureDiagram() {
               </>
             ) : (
               <>
-                <div className="grid grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <p className="text-foreground-light">Services</p>
-                    <p className="font-mono text-foreground">
-                      {healthyCount}/{services.length || 0}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-foreground-light">Pooler</p>
-                    <p className="font-mono text-foreground">
-                      {maxConnections ? `${maxConnections} max` : 'Unknown'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-foreground-light">Version</p>
-                    <p className="truncate font-mono text-foreground">
-                      {data?.deployment.version ?? 'Unknown'}
-                    </p>
-                  </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <RuntimeMetric
+                    icon={<Cpu size={14} strokeWidth={1.5} />}
+                    label="CPU"
+                    value={formatPercent(runtime?.cpuPercent)}
+                  />
+                  <RuntimeMetric
+                    icon={<HardDrive size={14} strokeWidth={1.5} />}
+                    label="Disk"
+                    value={formatPercent(runtime?.diskPercent)}
+                  />
+                  <RuntimeMetric
+                    icon={<MemoryStick size={14} strokeWidth={1.5} />}
+                    label="RAM"
+                    value={formatPercent(runtime?.memoryPercent)}
+                  />
+                  <RuntimeMetric
+                    icon={<Activity size={14} strokeWidth={1.5} />}
+                    label="Connections"
+                    value={formatConnections(data)}
+                  />
+                  <RuntimeMetric
+                    icon={<Server size={14} strokeWidth={1.5} />}
+                    label="Services"
+                    value={`${healthyCount}/${services.length || 0}`}
+                  />
+                  <RuntimeMetric
+                    icon={<Workflow size={14} strokeWidth={1.5} />}
+                    label="Version"
+                    value={data?.deployment.version ?? 'Unknown'}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {services.slice(0, 8).map((service) => (
@@ -338,6 +382,14 @@ export function SelfHostedInfrastructureDiagram() {
                       />
                     </div>
                   ))}
+                </div>
+                <div className="flex items-center justify-between gap-3 text-xs text-foreground-light">
+                  <span>
+                    {telemetryUpdatedAt ? `Telemetry ${telemetryUpdatedAt}` : 'Telemetry pending'}
+                  </span>
+                  <a className="underline" href={`/project/${projectRef}/settings/general`}>
+                    Open Settings
+                  </a>
                 </div>
               </>
             )}
