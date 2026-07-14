@@ -23,6 +23,8 @@ describe('getSelfHostedUsageServices', () => {
       [
         {
           timestamp: '2026-07-12T09:00:00Z',
+          total_api_requests: 20,
+          total_functions_requests: 1,
           total_rest_requests: 10,
           total_auth_requests: 4,
           total_storage_requests: 3,
@@ -33,10 +35,12 @@ describe('getSelfHostedUsageServices', () => {
     )
 
     expect(usage.services.map(({ title, total }) => [title, total])).toEqual([
-      ['REST / DB', 10],
-      ['Auth', 4],
+      ['API Gateway', 20],
+      ['Edge Functions', 1],
+      ['Postgres / REST', 10],
       ['Storage', 3],
       ['Realtime', 2],
+      ['Auth', 4],
     ])
   })
 })
@@ -54,6 +58,8 @@ describe('SelfHostedUsageSection', () => {
         result: [
           {
             timestamp: '2026-07-12T09:00:00Z',
+            total_api_requests: 20,
+            total_functions_requests: 1,
             total_rest_requests: 10,
             total_auth_requests: 4,
             total_storage_requests: 3,
@@ -68,8 +74,8 @@ describe('SelfHostedUsageSection', () => {
     expect(mockUseSelfHostedUsageQuery).toHaveBeenCalledWith('default', {
       refetchOnWindowFocus: false,
     })
-    expect(screen.getByText('19')).toBeInTheDocument()
-    expect(screen.getAllByTestId('usage-chart')).toHaveLength(4)
+    expect(screen.getByText('Total requests').previousElementSibling).toHaveTextContent('20')
+    expect(screen.getAllByTestId('usage-chart')).toHaveLength(6)
   })
 
   it('renders loading and empty states', () => {
@@ -85,7 +91,7 @@ describe('SelfHostedUsageSection', () => {
       data: { result: [] },
     })
     rerender(<SelfHostedUsageSection />)
-    expect(screen.getAllByText('No requests in the last 24 hours')).toHaveLength(4)
+    expect(screen.getAllByText('No requests in the last 24 hours')).toHaveLength(6)
   })
 
   it('renders a restrained error and retries', () => {

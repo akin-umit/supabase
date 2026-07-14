@@ -29,6 +29,10 @@ describe('api/self-hosted/project-operations', () => {
             lastApplied: '20260712090000_add_table',
             appliedAt: '2026-07-12T09:01:00Z',
           },
+          infrastructure: {
+            database: { host: 'db', port: 5432, maxClientConnections: 200, secret: 'drop-me' },
+            services: { total: 2, healthy: 1, unavailable: 1 },
+          },
           ignored: 'value',
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -45,6 +49,10 @@ describe('api/self-hosted/project-operations', () => {
         status: 'applied',
         lastApplied: '20260712090000_add_table',
         appliedAt: '2026-07-12T09:01:00Z',
+      },
+      infrastructure: {
+        database: { host: 'db', port: 5432, maxClientConnections: 200 },
+        services: { total: 2, healthy: 1, unavailable: 1 },
       },
     })
 

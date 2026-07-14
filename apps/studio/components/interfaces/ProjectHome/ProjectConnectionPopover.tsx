@@ -30,6 +30,42 @@ const EMPTY_CONNECTION_INFO = {
   db_name: '',
 }
 
+type DirectConnectionInfo = {
+  connectionString?: string | null
+  db_host?: string | null
+  db_name?: string | null
+  db_port?: number | string | null
+  db_user?: string | null
+}
+
+export const buildSafeDirectConnectionString = (
+  connectionInfo?: DirectConnectionInfo,
+  projectRef?: string
+) => {
+  if (
+    !connectionInfo?.db_host ||
+    !connectionInfo?.db_name ||
+    !connectionInfo?.db_user ||
+    !connectionInfo?.db_port
+  ) {
+    return ''
+  }
+
+  const dbPort = Number(connectionInfo.db_port)
+  if (!Number.isFinite(dbPort)) {
+    return ''
+  }
+
+  return getConnectionStrings({
+    connectionInfo: {
+      ...EMPTY_CONNECTION_INFO,
+      ...pluckObjectFields(connectionInfo, [...DB_FIELDS]),
+      db_port: dbPort,
+    },
+    metadata: { projectRef },
+  }).direct.uri
+}
+
 interface ProjectConnectionPopoverProps {
   projectRef?: string
 }
@@ -54,25 +90,14 @@ export const ProjectConnectionPopover = ({ projectRef }: ProjectConnectionPopove
 
   const { data: databases, isLoading: isLoadingDatabases } = useReadReplicasQuery(
     { projectRef },
-    { enabled: IS_PLATFORM && open && !!projectRef }
+    { enabled: open && !!projectRef }
   )
   const primaryDatabase = databases?.find((db) => db.identifier === projectRef)
 
-  const directConnectionString = useMemo(() => {
-    if (
-      !primaryDatabase?.db_host ||
-      !primaryDatabase?.db_name ||
-      !primaryDatabase?.db_user ||
-      !primaryDatabase?.db_port
-    ) {
-      return ''
-    }
-    const connectionInfo = pluckObjectFields(primaryDatabase, [...DB_FIELDS])
-    return getConnectionStrings({
-      connectionInfo: { ...EMPTY_CONNECTION_INFO, ...connectionInfo },
-      metadata: { projectRef },
-    }).direct.uri
-  }, [primaryDatabase, projectRef])
+  const directConnectionString = useMemo(
+    () => buildSafeDirectConnectionString(primaryDatabase, projectRef),
+    [primaryDatabase, projectRef]
+  )
 
   const cliCommands = useMemo(
     () =>
@@ -118,6 +143,26 @@ export const ProjectConnectionPopover = ({ projectRef }: ProjectConnectionPopove
                 !canReadAPIKeys ||
                 !publishableKey?.api_key,
               icon: KeyRound,
+            },
+          ]
+        : []),
+      ...(!IS_PLATFORM
+        ? [
+            {
+              label: 'Direct connection string',
+              value: directConnectionString,
+              displayValue: isLoadingDatabases
+                ? 'Loading connection string...'
+                : directConnectionString || 'Connection string unavailable',
+              disabled: isLoadingDatabases || !directConnectionString,
+              icon: Database,
+            },
+            {
+              label: 'CLI setup commands',
+              value: cliCommands,
+              displayValue: cliCommands.replace(/\n/g, ' - '),
+              disabled: !projectRef,
+              icon: Terminal,
             },
           ]
         : []),
