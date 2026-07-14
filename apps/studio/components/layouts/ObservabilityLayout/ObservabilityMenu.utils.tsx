@@ -63,16 +63,12 @@ export function generateObservabilityMenuItems(
             shortcutId: SHORTCUT_IDS.NAV_OBSERVABILITY_QUERY_PERFORMANCE,
           },
         ]),
-    ...(isPlatform
-      ? [
-          {
-            name: 'API Gateway',
-            key: 'api-overview',
-            url: `/project/${ref}/observability/api-overview${preservedQueryParams}`,
-            shortcutId: SHORTCUT_IDS.NAV_OBSERVABILITY_API_GATEWAY,
-          },
-        ]
-      : []),
+    {
+      name: 'API Gateway',
+      key: 'api-overview',
+      url: `/project/${ref}/observability/api-overview${preservedQueryParams}`,
+      shortcutId: SHORTCUT_IDS.NAV_OBSERVABILITY_API_GATEWAY,
+    },
   ]
 
   const productItems: ObservabilityMenuItem[] = [
@@ -126,13 +122,11 @@ export function generateObservabilityMenuItems(
     },
   ]
 
-  if (isPlatform) {
-    sections.push({
-      title: 'PRODUCT',
-      key: 'product-section',
-      items: productItems,
-    })
-  }
+  sections.push({
+    title: isPlatform ? 'PRODUCT' : 'PRODUCT / SELF-HOSTED',
+    key: 'product-section',
+    items: productItems,
+  })
 
   return sections
 }

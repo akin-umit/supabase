@@ -28,6 +28,7 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
   const { ref, isPlatform, showOverview, features } = options
   const passkeysInMenu = Boolean(features.passkeys)
   const baseUrl = `/project/${ref}/auth`
+  const showSelfHostedCoreConfiguration = !isPlatform
 
   return [
     {
@@ -64,7 +65,7 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
           : []),
       ],
     },
-    ...(features.emails && isPlatform
+    ...(features.emails && (isPlatform || showSelfHostedCoreConfiguration)
       ? [
           {
             title: 'Notifications',
@@ -96,6 +97,36 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
           items: [],
           // shortcutId: SHORTCUT_IDS.NAV_AUTH_POLICIES,
         },
+        ...(showSelfHostedCoreConfiguration
+          ? [
+              ...(features.signInProviders
+                ? [
+                    {
+                      name: 'Sign In / Providers',
+                      key: 'sign-in-up',
+                      pages: ['providers', 'third-party'],
+                      url: `${baseUrl}/providers`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_SIGN_IN,
+                    },
+                  ]
+                : []),
+              {
+                name: 'Sessions',
+                key: 'sessions',
+                url: `${baseUrl}/sessions`,
+                items: [],
+                shortcutId: SHORTCUT_IDS.NAV_AUTH_SESSIONS,
+              },
+              {
+                name: 'URL Configuration',
+                key: 'url-configuration',
+                url: `${baseUrl}/url-configuration`,
+                items: [],
+                shortcutId: SHORTCUT_IDS.NAV_AUTH_URL_CONFIGURATION,
+              },
+            ]
+          : []),
         ...(isPlatform
           ? [
               ...(features.signInProviders

@@ -39,7 +39,7 @@ describe('generateObservabilityMenuItems - PRODUCT section', () => {
     ])
   })
 
-  it('excludes PRODUCT section in self-hosted mode', () => {
+  it('includes self-hosted PRODUCT section in self-hosted mode', () => {
     const menu = generateObservabilityMenuItems({
       ref: REF,
       preservedQueryParams: QUERY_PARAMS,
@@ -49,8 +49,16 @@ describe('generateObservabilityMenuItems - PRODUCT section', () => {
       isPlatform: false,
     })
 
-    expect(sectionTitles(menu)).not.toContain('PRODUCT')
-    expect(menu.length).toBe(1) // Only GENERAL section
+    expect(sectionTitles(menu)).toContain('PRODUCT / SELF-HOSTED')
+    expect(menu.length).toBe(2)
+    expect(itemKeys(findSection(menu, 'PRODUCT / SELF-HOSTED'))).toEqual([
+      'database',
+      'postgrest',
+      'auth',
+      'edge-functions',
+      'storage',
+      'realtime',
+    ])
   })
 
   it('excludes Storage from PRODUCT when storageSupported is false', () => {
@@ -175,7 +183,7 @@ describe('generateObservabilityMenuItems - GENERAL section', () => {
     expect(itemKeys(generalSection)).toContain('api-overview')
   })
 
-  it('excludes API Gateway in self-hosted mode', () => {
+  it('includes API Gateway in self-hosted mode', () => {
     const menu = generateObservabilityMenuItems({
       ref: REF,
       preservedQueryParams: QUERY_PARAMS,
@@ -186,7 +194,7 @@ describe('generateObservabilityMenuItems - GENERAL section', () => {
     })
 
     const generalSection = findSection(menu, 'GENERAL')
-    expect(itemKeys(generalSection)).not.toContain('api-overview')
+    expect(itemKeys(generalSection)).toContain('api-overview')
   })
 })
 
@@ -228,7 +236,7 @@ describe('generateObservabilityMenuItems - URL construction', () => {
 })
 
 describe('generateObservabilityMenuItems - complete structure', () => {
-  it('returns only GENERAL in self-hosted with all standard items', () => {
+  it('returns GENERAL and self-hosted PRODUCT with all standard items', () => {
     const menu = generateObservabilityMenuItems({
       ref: REF,
       preservedQueryParams: QUERY_PARAMS,
@@ -238,12 +246,21 @@ describe('generateObservabilityMenuItems - complete structure', () => {
       isPlatform: false,
     })
 
-    expect(menu.length).toBe(1)
+    expect(menu.length).toBe(2)
     expect(menu[0].title).toBe('GENERAL')
     expect(itemKeys(menu[0])).toEqual([
       'observability', // Overview
       'query-performance',
-      // API Gateway excluded
+      'api-overview',
+    ])
+    expect(menu[1].title).toBe('PRODUCT / SELF-HOSTED')
+    expect(itemKeys(menu[1])).toEqual([
+      'database',
+      'postgrest',
+      'auth',
+      'edge-functions',
+      'storage',
+      'realtime',
     ])
   })
 

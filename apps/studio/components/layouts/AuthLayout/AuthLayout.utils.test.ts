@@ -89,7 +89,7 @@ describe('generateAuthMenu', () => {
     expect(names).not.toContain('Performance')
   })
 
-  it('self-hosted hides OAuth Apps, Notifications, and platform-only Configuration items', () => {
+  it('self-hosted hides platform-only items but keeps local auth configuration', () => {
     const menu = generateAuthMenu({
       ...allFeaturesEnabled,
       isPlatform: false,
@@ -98,12 +98,18 @@ describe('generateAuthMenu', () => {
     const groupTitles = menu.map((g) => g.title)
 
     expect(names).not.toContain('OAuth Apps')
-    expect(groupTitles).not.toContain('Notifications')
+    expect(names).not.toContain('OAuth Server')
+    expect(names).not.toContain('Audit Logs')
+    expect(groupTitles).toContain('Notifications')
+    expect(names).toContain('Emails')
 
-    // Configuration should only have Policies
     const configGroup = menu.find((g) => g.title === 'Configuration')!
-    expect(configGroup.items).toHaveLength(1)
-    expect(configGroup.items[0].name).toBe('Policies')
+    expect(configGroup.items.map((item) => item.name)).toEqual([
+      'Policies',
+      'Sign In / Providers',
+      'Sessions',
+      'URL Configuration',
+    ])
   })
 
   it('shows Overview when showOverview is true', () => {

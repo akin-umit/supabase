@@ -9,6 +9,8 @@ import type { UseCustomQueryOptions } from '@/types'
 
 const RAW_LOG_LIMIT = 10_000
 const SERVICE_QUERIES = {
+  total_api_requests: safeSql`select timestamp, id from edge_logs order by timestamp desc limit 10000`,
+  total_functions_requests: safeSql`select timestamp, id from function_edge_logs order by timestamp desc limit 10000`,
   total_rest_requests: safeSql`select timestamp, id from edge_logs order by timestamp desc limit 10000`,
   total_auth_requests: safeSql`select timestamp, id from auth_logs order by timestamp desc limit 10000`,
   total_storage_requests: safeSql`select timestamp, id from storage_logs order by timestamp desc limit 10000`,
@@ -31,6 +33,8 @@ export function mergeSelfHostedUsageRows(
       const timestamp = dayjs(row.timestamp).startOf('hour').toISOString()
       const bucket = buckets.get(timestamp) ?? {
         timestamp,
+        total_api_requests: 0,
+        total_functions_requests: 0,
         total_rest_requests: 0,
         total_auth_requests: 0,
         total_storage_requests: 0,
@@ -50,7 +54,7 @@ export async function getSelfHostedUsage(projectRef: string, signal?: AbortSigna
     iso_timestamp_start: end.subtract(24, 'hour').toISOString(),
     iso_timestamp_end: end.toISOString(),
   }
-  const responses = await Promise.all(
+  const responses = await Promise.allSettled(
     Object.entries(SERVICE_QUERIES).map(async ([metric, sql]) => {
       const data = await executeAnalyticsSql({
         projectRef,
@@ -63,7 +67,19 @@ export async function getSelfHostedUsage(projectRef: string, signal?: AbortSigna
     })
   )
 
-  return { result: mergeSelfHostedUsageRows(responses) }
+  const successfulResponses = responses
+    .filter(
+      (response): response is PromiseFulfilledResult<readonly [ServiceMetric, RawLogResponse]> => {
+        return response.status === 'fulfilled'
+      }
+    )
+    .map((response) => response.value)
+
+  if (successfulResponses.length === 0) {
+    throw new Error('Self-hosted usage data is unavailable')
+  }
+
+  return { result: mergeSelfHostedUsageRows(successfulResponses) }
 }
 
 export const useSelfHostedUsageQuery = <TData = SelfHostedUsageResponse>(

@@ -5,11 +5,16 @@ import { Badge, cn, Tooltip, TooltipContent, TooltipTrigger } from 'ui'
 import { InstanceConfiguration } from '../Settings/Infrastructure/InfrastructureConfiguration/InstanceConfiguration'
 import { ActivityStats } from '@/components/interfaces/ProjectHome/ActivityStats'
 import { ProjectConnectionPopover } from '@/components/interfaces/ProjectHome/ProjectConnectionPopover'
+import {
+  SelfHostedActivityStats,
+  SelfHostedInfrastructureDiagram,
+} from '@/components/interfaces/ProjectHome/SelfHostedTopSummary'
 import { ProjectPausedState } from '@/components/layouts/ProjectLayout/PausedState/ProjectPausedState'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { ProjectUpgradeFailedBanner } from '@/components/ui/ProjectUpgradeFailedBanner'
 import { useBranchesQuery } from '@/data/branches/branches-query'
 import { useProjectDetailQuery } from '@/data/projects/project-detail-query'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useIsOrioleDb, useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { DOCS_URL, IS_PLATFORM, PROJECT_STATUS } from '@/lib/constants'
 
@@ -17,6 +22,7 @@ export const TopSection = () => {
   const isOrioleDb = useIsOrioleDb()
   const { data: project } = useSelectedProjectQuery()
   const { data: parentProject } = useProjectDetailQuery({ ref: project?.parent_project_ref })
+  const { isSelfHosted } = useDeploymentMode()
 
   const { data: branches } = useBranchesQuery({
     projectRef: project?.parent_project_ref ?? project?.ref,
@@ -43,7 +49,7 @@ export const TopSection = () => {
       <div
         className={cn(
           'grid grid-cols-1 gap-8 py-0 w-full items-center',
-          IS_PLATFORM && 'md:grid-cols-2'
+          (IS_PLATFORM || isSelfHosted) && 'md:grid-cols-2'
         )}
       >
         <div className="flex flex-col">
@@ -78,13 +84,17 @@ export const TopSection = () => {
               <ProjectConnectionPopover projectRef={project?.ref} />
             </div>
           </div>
-          {IS_PLATFORM && (
+          {IS_PLATFORM ? (
             <div className="mt-8">
               <ActivityStats />
             </div>
-          )}
+          ) : isSelfHosted ? (
+            <div className="mt-8">
+              <SelfHostedActivityStats />
+            </div>
+          ) : null}
         </div>
-        {IS_PLATFORM && (
+        {IS_PLATFORM ? (
           <div>
             <div
               className={cn(
@@ -96,7 +106,11 @@ export const TopSection = () => {
               </ReactFlowProvider>
             </div>
           </div>
-        )}
+        ) : isSelfHosted ? (
+          <div>
+            <SelfHostedInfrastructureDiagram />
+          </div>
+        ) : null}
       </div>
       <ProjectUpgradeFailedBanner />
     </div>
