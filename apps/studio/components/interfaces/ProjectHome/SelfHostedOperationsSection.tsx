@@ -1,5 +1,5 @@
 import { useParams } from 'common'
-import { Activity, ArchiveRestore, GitCommitHorizontal, Workflow } from 'lucide-react'
+import { Activity, ArchiveRestore, Database, GitCommitHorizontal, Workflow } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from 'ui'
 
@@ -55,6 +55,7 @@ function getCards(data: ProjectOperations): OperationCard[] {
   const migrationAvailable =
     data.migration.status === 'applied' &&
     Boolean(data.migration.lastApplied || data.migration.appliedAt)
+  const infrastructure = data.infrastructure
 
   return [
     {
@@ -78,8 +79,10 @@ function getCards(data: ProjectOperations): OperationCard[] {
       title: 'Verified backup',
       value: data.backup.lastVerifiedAt
         ? formatTimestamp(data.backup.lastVerifiedAt)
-        : 'Unavailable',
-      detail: 'Latest verified recovery point',
+        : 'Awaiting evidence',
+      detail: backupAvailable
+        ? 'Latest verified recovery point'
+        : 'No verified recovery point has been published by the operator.',
       state: normalizeState(data.backup.status, backupAvailable),
       icon: <ArchiveRestore size={18} strokeWidth={1.5} />,
     },
@@ -87,13 +90,34 @@ function getCards(data: ProjectOperations): OperationCard[] {
       title: 'Applied migration',
       value:
         data.migration.lastApplied ??
-        (data.migration.appliedAt ? formatTimestamp(data.migration.appliedAt) : 'Unavailable'),
+        (data.migration.appliedAt
+          ? formatTimestamp(data.migration.appliedAt)
+          : 'Awaiting evidence'),
       detail:
         data.migration.lastApplied && data.migration.appliedAt
           ? `Applied ${formatTimestamp(data.migration.appliedAt)}`
-          : 'Latest applied schema change',
+          : 'No applied migration evidence has been published by the operator.',
       state: normalizeState(data.migration.status, migrationAvailable),
       icon: <Workflow size={18} strokeWidth={1.5} />,
+    },
+    {
+      title: 'Infrastructure',
+      value: infrastructure
+        ? `${infrastructure.database.host}:${infrastructure.database.port}`
+        : 'Unavailable',
+      detail: infrastructure
+        ? `${infrastructure.services.healthy}/${infrastructure.services.total} services healthy${
+            infrastructure.database.maxClientConnections
+              ? ` · ${infrastructure.database.maxClientConnections} max pooler conns`
+              : ''
+          }`
+        : 'Management summary is not available.',
+      state: infrastructure
+        ? infrastructure.services.unavailable === 0
+          ? 'healthy'
+          : 'degraded'
+        : 'unavailable',
+      icon: <Database size={18} strokeWidth={1.5} />,
     },
   ]
 }
@@ -105,7 +129,7 @@ export function SelfHostedOperationsSection() {
   })
   const cards: Array<OperationCard | null> = data
     ? getCards(data)
-    : Array.from({ length: 4 }, () => null)
+    : Array.from({ length: 5 }, () => null)
 
   return (
     <section aria-labelledby="self-hosted-operations-title">
@@ -128,7 +152,7 @@ export function SelfHostedOperationsSection() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-busy={isPending}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5" aria-busy={isPending}>
           {cards.map((card, index) => (
             <Card key={card?.title ?? index} className="min-h-40 bg-transparent">
               <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 border-b-0">
