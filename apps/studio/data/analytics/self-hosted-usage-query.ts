@@ -9,6 +9,8 @@ import type { UseCustomQueryOptions } from '@/types'
 
 const RAW_LOG_LIMIT = 10_000
 const SERVICE_QUERIES = {
+  total_api_requests: safeSql`select timestamp, id from edge_logs order by timestamp desc limit 10000`,
+  total_functions_requests: safeSql`select timestamp, id from function_edge_logs order by timestamp desc limit 10000`,
   total_rest_requests: safeSql`select timestamp, id from edge_logs order by timestamp desc limit 10000`,
   total_auth_requests: safeSql`select timestamp, id from auth_logs order by timestamp desc limit 10000`,
   total_storage_requests: safeSql`select timestamp, id from storage_logs order by timestamp desc limit 10000`,
@@ -31,6 +33,8 @@ export function mergeSelfHostedUsageRows(
       const timestamp = dayjs(row.timestamp).startOf('hour').toISOString()
       const bucket = buckets.get(timestamp) ?? {
         timestamp,
+        total_api_requests: 0,
+        total_functions_requests: 0,
         total_rest_requests: 0,
         total_auth_requests: 0,
         total_storage_requests: 0,

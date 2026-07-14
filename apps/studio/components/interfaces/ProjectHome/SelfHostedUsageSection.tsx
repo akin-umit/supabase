@@ -18,17 +18,19 @@ type LogsBarChartDatum = {
   warning_count: number
 }
 
-type ServiceKey = 'rest' | 'auth' | 'storage' | 'realtime'
+type ServiceKey = 'gateway' | 'functions' | 'rest' | 'storage' | 'realtime' | 'auth'
 
 const SERVICES: Array<{
   key: ServiceKey
   title: string
   dataKey: keyof UsageApiCounts
 }> = [
-  { key: 'rest', title: 'REST / DB', dataKey: 'total_rest_requests' },
-  { key: 'auth', title: 'Auth', dataKey: 'total_auth_requests' },
+  { key: 'gateway', title: 'API Gateway', dataKey: 'total_api_requests' },
+  { key: 'functions', title: 'Edge Functions', dataKey: 'total_functions_requests' },
+  { key: 'rest', title: 'Postgres / REST', dataKey: 'total_rest_requests' },
   { key: 'storage', title: 'Storage', dataKey: 'total_storage_requests' },
   { key: 'realtime', title: 'Realtime', dataKey: 'total_realtime_requests' },
+  { key: 'auth', title: 'Auth', dataKey: 'total_auth_requests' },
 ]
 
 export function getSelfHostedUsageServices(data: UsageApiCounts[], now = dayjs()) {
@@ -68,14 +70,18 @@ export function SelfHostedUsageSection() {
   })
   const usage = useMemo(() => getSelfHostedUsageServices(data?.result ?? []), [data?.result])
   const requestError = error ?? usage.error
-  const totalRequests = usage.services.reduce((sum, service) => sum + service.total, 0)
+  const gatewayTotal = usage.services.find((service) => service.key === 'gateway')?.total
+  const totalRequests =
+    gatewayTotal ?? usage.services.reduce((sum, service) => sum + service.total, 0)
 
   return (
     <section aria-labelledby="self-hosted-usage-title" className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 id="self-hosted-usage-title">Usage</h2>
-          <p className="text-sm text-foreground-light">Last 24 hours</p>
+          <p className="text-sm text-foreground-light">
+            Last 24 hours from the self-hosted Logflare backend
+          </p>
         </div>
         {!isPending && !requestError && (
           <div className="text-right">
@@ -100,7 +106,7 @@ export function SelfHostedUsageSection() {
           </CardContent>
         </Card>
       ) : (
-        <Row maxColumns={4} minWidth={280} aria-busy={isPending}>
+        <Row maxColumns={6} minWidth={260} aria-busy={isPending}>
           {usage.services.map((service) => (
             <Card key={service.key} className="mb-0 flex h-64 flex-col md:mb-0">
               <CardHeader className="flex flex-row items-end justify-between gap-2 space-y-0 border-b-0 pb-0">
