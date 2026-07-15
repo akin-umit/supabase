@@ -1,6 +1,6 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { groupBy, isEqual, isNull } from 'lodash'
 import { Plus, RefreshCw, Save } from 'lucide-react'
 import { DragEvent, useEffect, useState } from 'react'
@@ -18,6 +18,7 @@ import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { DatabaseSelector } from '@/components/ui/DatabaseSelector'
 import { DateRangePicker } from '@/components/ui/DateRangePicker'
 import { DocsButton } from '@/components/ui/DocsButton'
+import { LocalSetupGuide } from '@/components/ui/LocalSetupGuide'
 import { NoPermission } from '@/components/ui/NoPermission'
 import { DEFAULT_CHART_CONFIG } from '@/components/ui/QueryBlock/QueryBlock'
 import { AnalyticsInterval } from '@/data/analytics/constants'
@@ -40,6 +41,45 @@ import type { Dashboards } from '@/types'
 const DEFAULT_CHART_COLUMN_COUNT = 1
 const DEFAULT_CHART_ROW_COUNT = 1
 
+const SelfHostedReportsFallback = () => (
+  <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+    <div>
+      <h1>Custom Reports</h1>
+      <p className="text-foreground-light">
+        Self-hosted Studio keeps the standard Observability pages available, while saved custom
+        report editing depends on Supabase Cloud's user content service.
+      </p>
+    </div>
+    <LocalSetupGuide
+      variant="selfHosted"
+      docsHref={OBSERVABILITY_DOCS_HREFS.customReport}
+      body={
+        <>
+          Use Overview, Query Performance, API Gateway, Database, Auth, Edge Functions, Storage, and
+          Realtime reports for live self-hosted diagnostics. Saved custom report storage is disabled
+          in this build to avoid calling Cloud-only content APIs from self-hosted deployments.
+        </>
+      }
+    />
+    <div className="grid gap-3 rounded border bg-surface-100 p-4 text-sm md:grid-cols-2">
+      <div>
+        <p className="font-medium text-foreground">Available now</p>
+        <p className="text-foreground-light">
+          Runtime reports, query performance, API gateway metrics, and product-specific
+          Observability pages.
+        </p>
+      </div>
+      <div>
+        <p className="font-medium text-foreground">Operator roadmap</p>
+        <p className="text-foreground-light">
+          Persisted custom report definitions can be added later with a local metadata store instead
+          of Supabase Cloud's user content API.
+        </p>
+      </div>
+    </div>
+  </div>
+)
+
 const Reports = () => {
   const { id: reportId, ref } = useParams()
   const { profile } = useProfile()
@@ -58,10 +98,15 @@ const Reports = () => {
     data: userContents,
     isPending: isLoading,
     isSuccess,
-  } = useContentQuery({
-    projectRef: ref,
-    type: 'report',
-  })
+  } = useContentQuery(
+    {
+      projectRef: ref,
+      type: 'report',
+    },
+    {
+      enabled: IS_PLATFORM,
+    }
+  )
   const { mutate: upsertContent, isPending: isSaving } = useContentUpsertMutation({
     onSuccess: (_, vars) => {
       setHasEdits(false)
@@ -359,6 +404,10 @@ const Reports = () => {
     usePreventNavigationOnUnsavedChanges({
       hasChanges: hasEdits,
     })
+
+  if (!IS_PLATFORM) {
+    return <SelfHostedReportsFallback />
+  }
 
   if (isLoading || isLoadingPermissions) {
     return <LogoLoader />
