@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
@@ -59,7 +59,7 @@ export const BasicAuthSettingsForm = () => {
     isError,
     isSuccess,
     isPending: isLoading,
-  } = useAuthConfigQuery({ projectRef })
+  } = useAuthConfigQuery({ projectRef }, { enabled: IS_PLATFORM })
   const { mutate: updateAuthConfig, isPending: isUpdatingConfig } = useAuthConfigUpdateMutation()
 
   const { can: canReadConfig, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
@@ -117,6 +117,51 @@ export const BasicAuthSettingsForm = () => {
           toast.success('Successfully updated settings')
         },
       }
+    )
+  }
+
+  if (!IS_PLATFORM) {
+    return (
+      <PageSection>
+        <PageSectionMeta>
+          <PageSectionSummary>
+            <PageSectionTitle>User Signups</PageSectionTitle>
+          </PageSectionSummary>
+        </PageSectionMeta>
+        <PageSectionContent className="space-y-4">
+          <Card>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium">Self-hosted Auth configuration</h3>
+                <p className="text-sm text-foreground-light">
+                  Auth settings are managed by the GoTrue environment variables in your deployment.
+                  Update them in your secret manager or compose environment, then redeploy the Auth
+                  service.
+                </p>
+              </div>
+              <div className="divide-y rounded border text-sm">
+                {[
+                  ['GOTRUE_DISABLE_SIGNUP', 'Controls whether new users can sign up.'],
+                  ['GOTRUE_MAILER_AUTOCONFIRM', 'Controls whether email confirmation is required.'],
+                  ['GOTRUE_EXTERNAL_*', 'Configures OAuth and external provider credentials.'],
+                  ['GOTRUE_SITE_URL', 'Primary redirect URL for Auth flows.'],
+                  ['API_EXTERNAL_URL', 'Public Auth API URL, usually /auth/v1 on the gateway.'],
+                ].map(([name, description]) => (
+                  <div className="grid gap-2 px-4 py-3 md:grid-cols-[240px_1fr]" key={name}>
+                    <span className="font-mono text-xs text-foreground-light">{name}</span>
+                    <span>{description}</span>
+                  </div>
+                ))}
+              </div>
+              <Button asChild type="button" variant="default">
+                <Link href={`${DOCS_URL}/guides/self-hosting/auth/config`}>
+                  Open self-hosted Auth docs
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </PageSectionContent>
+      </PageSection>
     )
   }
 

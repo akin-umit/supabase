@@ -127,12 +127,57 @@ export const General = () => {
             />
           )}
           {isSelfHosted && (
-            <Admonition
-              type="default"
-              title="Self-hosted Supabase"
-              description={<p>Project settings are configured via environment variables.</p>}
-              actions={<DocsButton href={`${DOCS_URL}/guides/self-hosting`} />}
-            />
+            <>
+              <Admonition
+                type="default"
+                title="Self-hosted Supabase"
+                description={
+                  <p>
+                    Project settings are configured via environment variables and your deployment
+                    platform. Update secrets in the deployment environment, then redeploy affected
+                    services.
+                  </p>
+                }
+                actions={<DocsButton href={`${DOCS_URL}/guides/self-hosting`} />}
+              />
+              <Card>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium">Self-hosted runtime settings</h3>
+                    <p className="text-sm text-foreground-light">
+                      These are the settings that replace Supabase Cloud project controls in a
+                      self-hosted deployment.
+                    </p>
+                  </div>
+                  <div className="divide-y rounded border text-sm">
+                    {[
+                      [
+                        'SUPABASE_PUBLIC_URL',
+                        'Public gateway URL shown in connect strings and client setup.',
+                      ],
+                      [
+                        'API_EXTERNAL_URL',
+                        'Public Auth URL used by emails, OAuth callbacks, and SAML metadata.',
+                      ],
+                      ['SITE_URL', 'Default application redirect URL for Auth flows.'],
+                      [
+                        'STUDIO_DEFAULT_PROJECT',
+                        'Read-only project display name shown in this dashboard.',
+                      ],
+                      [
+                        'DASHBOARD_USERNAME / DASHBOARD_PASSWORD',
+                        'Basic Auth credentials protecting the self-hosted dashboard.',
+                      ],
+                    ].map(([name, description]) => (
+                      <div className="grid gap-2 px-4 py-3 md:grid-cols-[260px_1fr]" key={name}>
+                        <span className="font-mono text-xs text-foreground-light">{name}</span>
+                        <span>{description}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </PageSectionContent>
       </PageSection>
