@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { Edit, MoreVertical, Plus, Power, PowerOff, Search, Trash, X } from 'lucide-react'
 import { parseAsBoolean, parseAsStringLiteral, useQueryState } from 'nuqs'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -95,7 +95,10 @@ export const CustomAuthProvidersList = () => {
   const { ref: projectRef } = useParams()
 
   const { data: organization } = useSelectedOrganizationQuery()
-  const { data: authConfig, isPending: isAuthConfigLoading } = useAuthConfigQuery({ projectRef })
+  const { data: authConfig, isPending: isAuthConfigLoading } = useAuthConfigQuery(
+    { projectRef },
+    { enabled: IS_PLATFORM }
+  )
   const { hostEndpoint: clientEndpoint } = useProjectApiUrl({ projectRef })
   const nextPlan = getNextPlanForCustomProviders(organization?.plan?.id)
   const isCustomProvidersEnabled = !!authConfig?.CUSTOM_OAUTH_ENABLED
@@ -136,7 +139,7 @@ export const CustomAuthProvidersList = () => {
     isLoading: isPending,
     isError,
     error,
-  } = useOAuthCustomProvidersQuery({ projectRef })
+  } = useOAuthCustomProvidersQuery({ projectRef }, { enabled: IS_PLATFORM })
   const providerCount = customProviders?.length ?? 0
   const atProviderLimit = providerLimit !== Infinity && providerCount >= providerLimit
 
@@ -251,6 +254,16 @@ export const CustomAuthProvidersList = () => {
   const isCreateOrUpdateSheetVisible =
     isCustomProvidersEnabled && (showCreateSheet || !!providerToEdit)
   const canCreateProvider = isCustomProvidersEnabled && !atProviderLimit
+
+  if (!IS_PLATFORM) {
+    return (
+      <Admonition
+        type="default"
+        title="Self-hosted custom provider configuration"
+        description="Custom OAuth/OIDC providers are configured through GoTrue environment variables in self-hosted deployments. Keep provider secrets in Coolify or your secret manager, then redeploy the Auth service."
+      />
+    )
+  }
 
   if (isAuthConfigLoading || (isCustomProvidersEnabled && isPending)) {
     return <GenericSkeletonLoader />

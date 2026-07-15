@@ -1,7 +1,7 @@
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { ExternalLink } from 'lucide-react'
 import Link from 'next/link'
-import { Alert, AlertDescription, AlertTitle, Button, WarningIcon } from 'ui'
+import { Alert, AlertDescription, AlertTitle, Button, Card, CardContent, WarningIcon } from 'ui'
 import {
   PageSection,
   PageSectionContent,
@@ -18,6 +18,7 @@ import { AlertError } from '@/components/ui/AlertError'
 import { ResourceList } from '@/components/ui/Resource/ResourceList'
 import { HorizontalShimmerWithIcon } from '@/components/ui/Shimmers'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
+import { DOCS_URL } from '@/lib/constants'
 
 export const AuthProvidersForm = () => {
   const { ref: projectRef } = useParams()
@@ -27,7 +28,58 @@ export const AuthProvidersForm = () => {
     isPending: isLoading,
     isError,
     isSuccess,
-  } = useAuthConfigQuery({ projectRef })
+  } = useAuthConfigQuery({ projectRef }, { enabled: IS_PLATFORM })
+
+  if (!IS_PLATFORM) {
+    return (
+      <PageSection>
+        <PageSectionMeta>
+          <PageSectionSummary>
+            <PageSectionTitle>Auth Providers</PageSectionTitle>
+            <PageSectionDescription>
+              Authenticate your users through a suite of providers and login methods
+            </PageSectionDescription>
+          </PageSectionSummary>
+        </PageSectionMeta>
+        <PageSectionContent>
+          <Card>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium">Self-hosted provider configuration</h3>
+                <p className="text-sm text-foreground-light">
+                  Provider settings are managed through GoTrue environment variables in your
+                  deployment. Update the relevant variables in Coolify or your compose environment,
+                  then redeploy the Auth service.
+                </p>
+              </div>
+              <div className="divide-y rounded border text-sm">
+                {[
+                  ['EXTERNAL_EMAIL_ENABLED', 'Enables email/password and OTP login.'],
+                  [
+                    'GOTRUE_EXTERNAL_*_ENABLED',
+                    'Enables OAuth providers such as Google or GitHub.',
+                  ],
+                  ['GOTRUE_EXTERNAL_*_CLIENT_ID', 'Stores provider client identifiers.'],
+                  ['GOTRUE_EXTERNAL_*_SECRET', 'Stores provider client secrets outside Git.'],
+                  ['GOTRUE_SITE_URL', 'Controls the primary redirect URL for Auth flows.'],
+                ].map(([name, description]) => (
+                  <div className="grid gap-2 px-4 py-3 md:grid-cols-[260px_1fr]" key={name}>
+                    <span className="font-mono text-xs text-foreground-light">{name}</span>
+                    <span>{description}</span>
+                  </div>
+                ))}
+              </div>
+              <Button asChild type="button" variant="default">
+                <Link href={`${DOCS_URL}/guides/self-hosting/auth/config`}>
+                  Open self-hosted Auth docs
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </PageSectionContent>
+      </PageSection>
+    )
+  }
 
   return (
     <PageSection>
