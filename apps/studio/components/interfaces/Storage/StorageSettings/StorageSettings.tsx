@@ -253,11 +253,50 @@ export const StorageSettings = () => {
         <PageSectionContent className="flex flex-col gap-y-8">
           <Form {...form}>
             {!IS_PLATFORM ? (
-              <Admonition
-                type="default"
-                title="Storage settings are not available for self-hosted projects"
-                description="Storage settings are only available for Supabase Platform projects."
-              />
+              <Card>
+                <CardContent className="space-y-4">
+                  <Admonition
+                    type="default"
+                    title="Self-hosted Storage runtime settings"
+                    description="Storage limits and image transformation behavior are controlled by environment variables and docker-compose values in self-hosted deployments."
+                  />
+                  <div className="grid gap-3 text-sm md:grid-cols-2">
+                    <div className="rounded border bg-surface-100 p-4">
+                      <p className="font-mono text-xs text-foreground-light">FILE_SIZE_LIMIT</p>
+                      <p className="mt-2">
+                        Global upload size limit. Change this in the Storage service environment and
+                        redeploy.
+                      </p>
+                    </div>
+                    <div className="rounded border bg-surface-100 p-4">
+                      <p className="font-mono text-xs text-foreground-light">
+                        IMGPROXY_ENABLE_WEBP_DETECTION
+                      </p>
+                      <p className="mt-2">
+                        Image transformation behavior is controlled by imgproxy and Storage runtime
+                        configuration.
+                      </p>
+                    </div>
+                    <div className="rounded border bg-surface-100 p-4">
+                      <p className="font-mono text-xs text-foreground-light">
+                        STORAGE_BACKEND / FILE_STORAGE_BACKEND_PATH
+                      </p>
+                      <p className="mt-2">
+                        Storage backend and persistent path. Keep persistent volumes mounted before
+                        redeploying.
+                      </p>
+                    </div>
+                    <div className="rounded border bg-surface-100 p-4">
+                      <p className="font-mono text-xs text-foreground-light">
+                        S3_PROTOCOL_ACCESS_KEY_ID
+                      </p>
+                      <p className="mt-2">
+                        Optional S3-compatible access key id for self-hosted Storage clients.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ) : isLoading ? (
               <GenericSkeletonLoader />
             ) : (
