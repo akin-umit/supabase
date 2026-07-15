@@ -8,7 +8,7 @@ import { SidePanelVercelProjectLinker } from '@/components/interfaces/Organizati
 import { InlineLink } from '@/components/ui/InlineLink'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { BASE_PATH } from '@/lib/constants'
+import { BASE_PATH, IS_PLATFORM } from '@/lib/constants'
 
 export const IntegrationImageHandler = ({ title }: { title: 'vercel' | 'github' | 'aws' }) => {
   return (
@@ -62,6 +62,64 @@ export const IntegrationSettings = () => {
   // PrivateLink is not available in eu-central-2 (Zurich) until Feb 2026
   const isPrivateLinkUnsupportedRegion = project?.region === 'eu-central-2'
   const showAWSPrivateLink = showAWSPrivateLinkFeature && !isPrivateLinkUnsupportedRegion
+
+  if (!IS_PLATFORM) {
+    return (
+      <div className="space-y-6">
+        <Admonition
+          type="default"
+          title="Integrations are managed by the self-hosted operator"
+          description="This self-hosted Studio does not call Supabase Cloud integration APIs. Configure GitHub, deployment, private networking, and external providers in your Git repository, Compose files, CI, and hosting panel."
+        />
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="p-5">
+            <div className="mb-4 flex items-center gap-3">
+              <IntegrationSectionIcon title="github" />
+              <div>
+                <p className="text-sm font-medium">GitHub / CI</p>
+                <p className="text-sm text-foreground-light">
+                  Repository and deployment automation
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-foreground-light">
+              Use your private deployment repository and CI checks as the source of truth for image
+              pins, Compose changes, and release evidence.
+            </p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="mb-4 flex items-center gap-3">
+              <IntegrationSectionIcon title="vercel" />
+              <div>
+                <p className="text-sm font-medium">Hosting platform</p>
+                <p className="text-sm text-foreground-light">Coolify, Docker, or custom runtime</p>
+              </div>
+            </div>
+            <p className="text-sm text-foreground-light">
+              Manage domains, internal service ports, persistent volumes, and redeploy actions in
+              your hosting control plane.
+            </p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="mb-4 flex items-center gap-3">
+              <IntegrationSectionIcon title="aws" />
+              <div>
+                <p className="text-sm font-medium">Private infrastructure</p>
+                <p className="text-sm text-foreground-light">Network and storage providers</p>
+              </div>
+            </div>
+            <p className="text-sm text-foreground-light">
+              Keep provider credentials in environment variables or your secret manager. Do not
+              paste provider secrets into public repositories.
+            </p>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>

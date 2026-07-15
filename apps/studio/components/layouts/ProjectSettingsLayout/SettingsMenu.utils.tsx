@@ -64,6 +64,13 @@ export const useGenerateSettingsMenu = () => {
             items: [],
             shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_JWT_KEYS,
           },
+          {
+            name: 'Integrations',
+            key: 'integrations',
+            url: `/project/${ref}/settings/integrations`,
+            items: [],
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_INTEGRATIONS,
+          },
           ...(showLogDrains
             ? [
                 {

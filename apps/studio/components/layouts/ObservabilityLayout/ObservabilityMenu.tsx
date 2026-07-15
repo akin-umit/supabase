@@ -33,7 +33,7 @@ export const ObservabilityMenu = () => {
   const { profile } = useProfile()
   const { ref, id } = useParams()
   const pageKey = (id || router.pathname.split('/')[4] || 'observability') as string
-  const showOverview = useFlag('observabilityOverview')
+  const showOverview = useFlag('observabilityOverview') || !IS_PLATFORM
   const { isSupamonitorEnabled } = useSupamonitorStatus()
 
   const storageSupported = useIsFeatureEnabled('project_storage:all')
@@ -46,6 +46,7 @@ export const ObservabilityMenu = () => {
       subject: { id: profile?.id },
     }
   )
+  const canManageCustomReports = IS_PLATFORM && canCreateCustomReport
 
   // Preserve date range query parameters when navigating
   const preservedQueryParams = useMemo(() => {
@@ -155,7 +156,7 @@ export const ObservabilityMenu = () => {
     () => {
       setShowNewReportModal(true)
     },
-    { enabled: IS_PLATFORM && canCreateCustomReport }
+    { enabled: canManageCustomReports }
   )
 
   return (
@@ -177,85 +178,89 @@ export const ObservabilityMenu = () => {
             }))}
           />
 
-          {IS_PLATFORM && (
-            <>
-              <div className="h-px w-full bg-border-overlay" />
-              <div className="mx-2">
-                <Menu type="pills">
-                  <Menu.Group
-                    title={
-                      <span className="flex w-full items-center justify-between relative h-6">
-                        <span className="uppercase font-mono">Custom Reports</span>
-                        {reportMenuItems.length > 0 && (
-                          <ButtonTooltip
-                            variant="default"
-                            size="tiny"
-                            icon={<Plus />}
-                            disabled={!canCreateCustomReport}
-                            className="flex items-center justify-center h-6 w-6 absolute top-0 -right-1"
-                            onClick={() => {
-                              setShowNewReportModal(true)
-                            }}
-                            tooltip={{
-                              content: {
-                                side: 'bottom',
-                                text: !canCreateCustomReport
-                                  ? 'You need additional permissions to create custom reports'
-                                  : undefined,
-                              },
-                            }}
-                          />
-                        )}
-                      </span>
-                    }
-                  />
-                  {reportMenuItems.length > 0 &&
-                    reportMenuItems.map((item) => (
-                      <ObservabilityMenuItem
-                        key={item.id}
-                        item={item}
-                        pageKey={pageKey}
-                        onSelectEdit={() => {
-                          setSelectedReportToUpdate(item.report)
-                        }}
-                        onSelectDelete={() => {
-                          setSelectedReportToDelete(item.report)
-                          setDeleteModalOpen(true)
-                        }}
-                      />
-                    ))}
-                </Menu>
-                {reportMenuItems.length === 0 ? (
-                  <div className="px-2">
-                    <InnerSideBarEmptyPanel
-                      title="No custom reports yet"
-                      description="Create and save custom reports to track your project metrics"
-                      actions={
+          <>
+            <div className="h-px w-full bg-border-overlay" />
+            <div className="mx-2">
+              <Menu type="pills">
+                <Menu.Group
+                  title={
+                    <span className="flex w-full items-center justify-between relative h-6">
+                      <span className="uppercase font-mono">Custom Reports</span>
+                      {reportMenuItems.length > 0 && (
                         <ButtonTooltip
                           variant="default"
+                          size="tiny"
                           icon={<Plus />}
-                          disabled={!canCreateCustomReport}
+                          disabled={!canManageCustomReports}
+                          className="flex items-center justify-center h-6 w-6 absolute top-0 -right-1"
                           onClick={() => {
+                            if (!canManageCustomReports) return
                             setShowNewReportModal(true)
                           }}
                           tooltip={{
                             content: {
                               side: 'bottom',
-                              text: !canCreateCustomReport
-                                ? 'You need additional permissions to create custom reports'
+                              text: !canManageCustomReports
+                                ? IS_PLATFORM
+                                  ? 'You need additional permissions to create custom reports'
+                                  : 'Custom report editing is not available in this self-hosted build yet'
                                 : undefined,
                             },
                           }}
-                        >
-                          New custom report
-                        </ButtonTooltip>
-                      }
+                        />
+                      )}
+                    </span>
+                  }
+                />
+                {reportMenuItems.length > 0 &&
+                  reportMenuItems.map((item) => (
+                    <ObservabilityMenuItem
+                      key={item.id}
+                      item={item}
+                      pageKey={pageKey}
+                      onSelectEdit={() => {
+                        setSelectedReportToUpdate(item.report)
+                      }}
+                      onSelectDelete={() => {
+                        setSelectedReportToDelete(item.report)
+                        setDeleteModalOpen(true)
+                      }}
                     />
-                  </div>
-                ) : null}
-              </div>
-            </>
-          )}
+                  ))}
+              </Menu>
+              {reportMenuItems.length === 0 ? (
+                <div className="px-2">
+                  <InnerSideBarEmptyPanel
+                    title="No custom reports yet"
+                    description="Create and save custom reports to track your project metrics"
+                    actions={
+                      <ButtonTooltip
+                        variant="default"
+                        icon={<Plus />}
+                        disabled={!canManageCustomReports}
+                        onClick={() => {
+                          if (!canManageCustomReports) return
+                          setShowNewReportModal(true)
+                        }}
+                        tooltip={{
+                          content: {
+                            side: 'bottom',
+                            text: !canManageCustomReports
+                              ? IS_PLATFORM
+                                ? 'You need additional permissions to create custom reports'
+                                : 'Custom report editing is not available in this self-hosted build yet'
+                              : undefined,
+                          },
+                        }}
+                      >
+                        New custom report
+                      </ButtonTooltip>
+                    }
+                  />
+                </div>
+              ) : null}
+            </div>
+          </>
 
           <UpdateCustomReportModal
             onCancel={() => setSelectedReportToUpdate(undefined)}
