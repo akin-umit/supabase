@@ -6,11 +6,13 @@ import { CustomAuthProviders } from '@/components/interfaces/Auth/CustomAuthProv
 import { AuthProvidersLayout } from '@/components/layouts/AuthLayout/AuthProvidersLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const ProvidersPage: NextPageWithLayout = () => {
-  const showProviders = useIsFeatureEnabled('authentication:show_providers')
-  const showCustomProviders = useIsFeatureEnabled('authentication:show_custom_providers')
+  const showProviders = !IS_PLATFORM || useIsFeatureEnabled('authentication:show_providers')
+  const showCustomProviders =
+    !IS_PLATFORM || useIsFeatureEnabled('authentication:show_custom_providers')
 
   return (
     <PageContainer size="default">

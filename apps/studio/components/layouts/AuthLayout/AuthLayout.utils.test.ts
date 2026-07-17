@@ -109,7 +109,11 @@ describe('generateAuthMenu', () => {
       'Sign In / Providers',
       'Passkeys',
       'Sessions',
+      'Rate Limits',
+      'Multi-Factor',
       'URL Configuration',
+      'Attack Protection',
+      'Performance',
     ])
   })
 

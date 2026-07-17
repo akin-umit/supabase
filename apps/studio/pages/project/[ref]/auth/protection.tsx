@@ -18,11 +18,13 @@ import { NoPermission } from '@/components/ui/NoPermission'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const ProtectionPage: NextPageWithLayout = () => {
   const { ref } = useParams()
-  const showAttackProtection = useIsFeatureEnabled('authentication:attack_protection')
+  const showAttackProtection =
+    !IS_PLATFORM || useIsFeatureEnabled('authentication:attack_protection')
 
   const { can: canReadAuthSettings, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
     PermissionAction.READ,

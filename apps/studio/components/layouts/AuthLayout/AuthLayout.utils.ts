@@ -129,6 +129,28 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
                 items: [],
                 shortcutId: SHORTCUT_IDS.NAV_AUTH_SESSIONS,
               },
+              ...(features.rateLimits
+                ? [
+                    {
+                      name: 'Rate Limits',
+                      key: 'rate-limits',
+                      url: `${baseUrl}/rate-limits`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_RATE_LIMITS,
+                    },
+                  ]
+                : []),
+              ...(features.multiFactor
+                ? [
+                    {
+                      name: 'Multi-Factor',
+                      key: 'mfa',
+                      url: `${baseUrl}/mfa`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_MFA,
+                    },
+                  ]
+                : []),
               {
                 name: 'URL Configuration',
                 key: 'url-configuration',
@@ -136,6 +158,28 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
                 items: [],
                 shortcutId: SHORTCUT_IDS.NAV_AUTH_URL_CONFIGURATION,
               },
+              ...(features.attackProtection
+                ? [
+                    {
+                      name: 'Attack Protection',
+                      key: 'protection',
+                      url: `${baseUrl}/protection`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_PROTECTION,
+                    },
+                  ]
+                : []),
+              ...(features.performance
+                ? [
+                    {
+                      name: 'Performance',
+                      key: 'performance',
+                      url: `${baseUrl}/performance`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_PERFORMANCE,
+                    },
+                  ]
+                : []),
             ]
           : []),
         ...(isPlatform
@@ -276,12 +320,12 @@ export const useGenerateAuthMenu = (): ProductMenuGroup[] => {
     isPlatform: IS_PLATFORM,
     showOverview,
     features: {
-      signInProviders: authenticationSignInProviders,
-      rateLimits: authenticationRateLimits,
-      emails: authenticationEmails,
-      multiFactor: authenticationMultiFactor,
-      attackProtection: authenticationAttackProtection,
-      performance: authenticationPerformance,
+      signInProviders: !IS_PLATFORM || authenticationSignInProviders,
+      rateLimits: !IS_PLATFORM || authenticationRateLimits,
+      emails: !IS_PLATFORM || authenticationEmails,
+      multiFactor: !IS_PLATFORM || authenticationMultiFactor,
+      attackProtection: !IS_PLATFORM || authenticationAttackProtection,
+      performance: !IS_PLATFORM || authenticationPerformance,
       passkeys: !IS_PLATFORM || enablePasskeyAuth,
     },
   })

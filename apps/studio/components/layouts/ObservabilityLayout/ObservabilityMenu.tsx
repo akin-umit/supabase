@@ -62,10 +62,16 @@ export const ObservabilityMenu = () => {
     return queryString ? `?${queryString}` : ''
   }, [router.query])
 
-  const { data: content, isPending: isLoading } = useContentQuery({
-    projectRef: ref,
-    type: 'report',
-  })
+  const { data: content, isPending: isLoading } = useContentQuery(
+    {
+      projectRef: ref,
+      type: 'report',
+    },
+    {
+      enabled: IS_PLATFORM,
+      initialData: IS_PLATFORM ? undefined : { cursor: undefined, content: [] },
+    }
+  )
   const { mutateAsync: deleteReport } = useContentDeleteMutation({
     // Toasts are driven by toast.promise in onConfirmDeleteReport. This no-op keeps the hook
     // from showing its own default error toast, while its optimistic rollback still runs.

@@ -18,11 +18,12 @@ import { NoPermission } from '@/components/ui/NoPermission'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const MfaPage: NextPageWithLayout = () => {
   const { ref } = useParams()
-  const showMFA = useIsFeatureEnabled('authentication:multi_factor')
+  const showMFA = !IS_PLATFORM || useIsFeatureEnabled('authentication:multi_factor')
 
   const { can: canReadAuthSettings, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
     PermissionAction.READ,

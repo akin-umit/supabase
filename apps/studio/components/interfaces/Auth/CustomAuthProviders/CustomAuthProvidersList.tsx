@@ -95,10 +95,7 @@ export const CustomAuthProvidersList = () => {
   const { ref: projectRef } = useParams()
 
   const { data: organization } = useSelectedOrganizationQuery()
-  const { data: authConfig, isPending: isAuthConfigLoading } = useAuthConfigQuery(
-    { projectRef },
-    { enabled: IS_PLATFORM }
-  )
+  const { data: authConfig, isPending: isAuthConfigLoading } = useAuthConfigQuery({ projectRef })
   const { hostEndpoint: clientEndpoint } = useProjectApiUrl({ projectRef })
   const nextPlan = getNextPlanForCustomProviders(organization?.plan?.id)
   const isCustomProvidersEnabled = !!authConfig?.CUSTOM_OAUTH_ENABLED
@@ -139,7 +136,10 @@ export const CustomAuthProvidersList = () => {
     isLoading: isPending,
     isError,
     error,
-  } = useOAuthCustomProvidersQuery({ projectRef }, { enabled: IS_PLATFORM })
+  } = useOAuthCustomProvidersQuery(
+    { projectRef },
+    { enabled: IS_PLATFORM && isCustomProvidersEnabled }
+  )
   const providerCount = customProviders?.length ?? 0
   const atProviderLimit = providerLimit !== Infinity && providerCount >= providerLimit
 
@@ -255,18 +255,55 @@ export const CustomAuthProvidersList = () => {
     isCustomProvidersEnabled && (showCreateSheet || !!providerToEdit)
   const canCreateProvider = isCustomProvidersEnabled && !atProviderLimit
 
-  if (!IS_PLATFORM) {
-    return (
-      <Admonition
-        type="default"
-        title="Self-hosted custom provider configuration"
-        description="Custom OAuth/OIDC providers are configured through GoTrue environment variables in self-hosted deployments. Keep provider secrets in Coolify or your secret manager, then redeploy the Auth service."
-      />
-    )
+  if (isAuthConfigLoading || (IS_PLATFORM && isCustomProvidersEnabled && isPending)) {
+    return <GenericSkeletonLoader />
   }
 
-  if (isAuthConfigLoading || (isCustomProvidersEnabled && isPending)) {
-    return <GenericSkeletonLoader />
+  if (!IS_PLATFORM) {
+    return (
+      <div className="flex flex-col gap-y-4">
+        <Admonition
+          type="default"
+          title="Self-hosted custom provider configuration"
+          description="Custom OAuth/OIDC providers are configured through GoTrue environment variables in self-hosted deployments. Studio reads the supported operator flags here, but provider CRUD remains disabled because self-hosted GoTrue does not expose the Supabase Cloud custom provider management API."
+        />
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Runtime setting</TableHead>
+                <TableHead>Current value</TableHead>
+                <TableHead>Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>
+                  <Badge className="font-mono">CUSTOM_OAUTH_ENABLED</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={isCustomProvidersEnabled ? 'success' : 'default'}>
+                    {isCustomProvidersEnabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-foreground-light">
+                  Read from GOTRUE_CUSTOM_OAUTH_ENABLED or CUSTOM_OAUTH_ENABLED.
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <Badge className="font-mono">CUSTOM_OAUTH_MAX_PROVIDERS</Badge>
+                </TableCell>
+                <TableCell>{providerLimit}</TableCell>
+                <TableCell className="text-foreground-light">
+                  Read from GOTRUE_CUSTOM_OAUTH_MAX_PROVIDERS or CUSTOM_OAUTH_MAX_PROVIDERS.
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
+    )
   }
 
   if (!isCustomProvidersEnabled) {

@@ -18,11 +18,12 @@ import { NoPermission } from '@/components/ui/NoPermission'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const PerformancePage: NextPageWithLayout = () => {
   const { ref } = useParams()
-  const showPerformance = useIsFeatureEnabled('authentication:performance')
+  const showPerformance = !IS_PLATFORM || useIsFeatureEnabled('authentication:performance')
 
   const { can: canReadAuthSettings, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
     PermissionAction.READ,
