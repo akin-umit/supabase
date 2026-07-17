@@ -1,4 +1,4 @@
-import { Card } from 'ui'
+import { Badge, Card } from 'ui'
 import { Admonition } from 'ui-patterns/admonition'
 
 import { AWSPrivateLinkSection } from './AWSPrivateLink/AWSPrivateLinkSection'
@@ -77,7 +77,10 @@ export const IntegrationSettings = () => {
             <div className="mb-4 flex items-center gap-3">
               <IntegrationSectionIcon title="github" />
               <div>
-                <p className="text-sm font-medium">GitHub / CI</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">GitHub / CI</p>
+                  <Badge variant="success">Source of truth</Badge>
+                </div>
                 <p className="text-sm text-foreground-light">
                   Repository and deployment automation
                 </p>
@@ -87,13 +90,20 @@ export const IntegrationSettings = () => {
               Use your private deployment repository and CI checks as the source of truth for image
               pins, Compose changes, and release evidence.
             </p>
+            <div className="mt-4 rounded border bg-surface-100 p-3 text-xs text-foreground-light">
+              Expected files: docker-compose.yml, .env.example, CI workflows, acceptance tests, and
+              changelog evidence.
+            </div>
           </Card>
 
           <Card className="p-5">
             <div className="mb-4 flex items-center gap-3">
               <IntegrationSectionIcon title="vercel" />
               <div>
-                <p className="text-sm font-medium">Hosting platform</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">Hosting platform</p>
+                  <Badge variant="default">Operator</Badge>
+                </div>
                 <p className="text-sm text-foreground-light">Coolify, Docker, or custom runtime</p>
               </div>
             </div>
@@ -101,13 +111,20 @@ export const IntegrationSettings = () => {
               Manage domains, internal service ports, persistent volumes, and redeploy actions in
               your hosting control plane.
             </p>
+            <div className="mt-4 rounded border bg-surface-100 p-3 text-xs text-foreground-light">
+              Studio can display runtime evidence, but container restarts and volume changes stay in
+              the hosting panel.
+            </div>
           </Card>
 
           <Card className="p-5">
             <div className="mb-4 flex items-center gap-3">
               <IntegrationSectionIcon title="aws" />
               <div>
-                <p className="text-sm font-medium">Private infrastructure</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">Private infrastructure</p>
+                  <Badge variant="warning">Secrets outside Studio</Badge>
+                </div>
                 <p className="text-sm text-foreground-light">Network and storage providers</p>
               </div>
             </div>
@@ -115,8 +132,37 @@ export const IntegrationSettings = () => {
               Keep provider credentials in environment variables or your secret manager. Do not
               paste provider secrets into public repositories.
             </p>
+            <div className="mt-4 rounded border bg-surface-100 p-3 text-xs text-foreground-light">
+              Examples: S3-compatible storage, SMTP, OAuth providers, private network rules, and
+              external log sinks.
+            </div>
           </Card>
         </div>
+        <Card className="p-5">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium">Cloud integration parity map</p>
+              <p className="text-sm text-foreground-light">
+                Supabase Cloud connects these from hosted APIs. In self-hosted mode the same
+                decisions are explicit operator tasks.
+              </p>
+            </div>
+            <Badge variant="default">Self-hosted</Badge>
+          </div>
+          <div className="grid gap-3 text-sm md:grid-cols-2">
+            {[
+              ['GitHub deploys', 'Connect repository webhooks in the hosting platform.'],
+              ['Vercel previews', 'Use your frontend platform and public API URL variables.'],
+              ['AWS PrivateLink', 'Use private networking from your infrastructure provider.'],
+              ['SMTP and OAuth', 'Configure Auth service environment variables and callbacks.'],
+            ].map(([title, description]) => (
+              <div className="rounded border bg-surface-100 p-3" key={title}>
+                <p className="font-medium">{title}</p>
+                <p className="mt-1 text-foreground-light">{description}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
     )
   }

@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
+  Badge,
   Button,
   Card,
   CardContent,
@@ -194,12 +195,48 @@ export const RealtimeSettings = () => {
             <Card>
               <CardContent className="space-y-4">
                 {isSelfHosted && (
-                  <Admonition
-                    showIcon={false}
-                    type="default"
-                    title="Realtime limits are managed by the self-hosted runtime"
-                    description="This page shows the default Studio shape for Realtime settings. Runtime changes should be made through the Realtime service environment/Compose configuration and redeployed."
-                  />
+                  <>
+                    <div className="flex items-start justify-between gap-4">
+                      <Admonition
+                        className="flex-1"
+                        showIcon={false}
+                        type="default"
+                        title="Realtime limits are managed by the self-hosted runtime"
+                        description="Studio keeps the same Realtime settings surface as Cloud, but writes are intentionally disabled. Change limits in the Realtime service environment or Compose file, then redeploy Realtime and Kong."
+                      />
+                      <Badge variant="default">Read-only</Badge>
+                    </div>
+                    <div className="grid gap-3 text-sm md:grid-cols-2">
+                      {[
+                        [
+                          'Enable Realtime service',
+                          'REALTIME_ENABLED / service replica state',
+                          'Controls whether clients can connect to the Realtime service.',
+                        ],
+                        [
+                          'Database connection pool size',
+                          'DB_POOL / MAX_CONNECTIONS',
+                          'Controls authorization and database-change fanout capacity.',
+                        ],
+                        [
+                          'Max concurrent clients',
+                          'MAX_CONCURRENT_USERS',
+                          'Protects the service from too many simultaneous websocket clients.',
+                        ],
+                        [
+                          'Payload and event limits',
+                          'MAX_EVENTS_PER_SECOND / MAX_PAYLOAD_SIZE_IN_KB',
+                          'Limits broadcast, presence, and database-change event volume.',
+                        ],
+                      ].map(([title, envName, description]) => (
+                        <div className="rounded border bg-surface-100 p-3" key={title}>
+                          <p className="font-medium">{title}</p>
+                          <p className="mt-1 font-mono text-xs text-foreground-light">{envName}</p>
+                          <p className="mt-2 text-foreground-light">{description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
                 <FormField
                   control={form.control}

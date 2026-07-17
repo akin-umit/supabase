@@ -3,7 +3,17 @@ import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { IS_PLATFORM, useParams } from 'common'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { Button, Card, CardContent, CardFooter, Form, FormControl, FormField, Input } from 'ui'
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardFooter,
+  Form,
+  FormControl,
+  FormField,
+  Input,
+} from 'ui'
 import { Admonition } from 'ui-patterns/admonition'
 import { Input as PasswordInput } from 'ui-patterns/DataInputs/Input'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
@@ -22,6 +32,7 @@ import { ProjectAccessSection } from './ProjectAccessSection'
 import { DocsButton } from '@/components/ui/DocsButton'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { useBranchesQuery } from '@/data/branches/branches-query'
+import { useProjectSettingsV2Query } from '@/data/config/project-settings-v2-query'
 import { useProjectUpdateMutation } from '@/data/projects/project-update-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
@@ -31,6 +42,7 @@ import { DOCS_URL } from '@/lib/constants'
 export const General = () => {
   const { ref } = useParams()
   const { data: project } = useSelectedProjectQuery()
+  const { data: settings } = useProjectSettingsV2Query({ projectRef: ref })
   const isBranch = Boolean(project?.parent_project_ref)
   const entityLabel = isBranch ? 'Branch' : 'Project'
 
@@ -81,6 +93,32 @@ export const General = () => {
   }
 
   const { isCli, isSelfHosted } = useDeploymentMode()
+  const protocol = settings?.app_config?.protocol ?? 'https'
+  const endpoint = settings?.app_config?.endpoint
+  const publicUrl = endpoint ? `${protocol}://${endpoint}` : undefined
+
+  const selfHostedRuntimeRows = [
+    {
+      label: 'Public project URL',
+      value: publicUrl ?? 'Configured through SUPABASE_PUBLIC_URL',
+      description: 'Shown in Connect, client setup, Auth callbacks, and public API examples.',
+    },
+    {
+      label: 'Project ref',
+      value: project?.ref ?? ref ?? 'default',
+      description: 'Used by Studio routing and self-hosted API paths.',
+    },
+    {
+      label: 'Region / runtime',
+      value: project?.region ?? 'self-hosted',
+      description: 'Cloud region controls are replaced by your server, Docker, and hosting panel.',
+    },
+    {
+      label: 'Dashboard auth',
+      value: 'DASHBOARD_USERNAME / DASHBOARD_PASSWORD',
+      description: 'Basic Auth is managed in the deployment environment, not inside Studio.',
+    },
+  ]
 
   if (!IS_PLATFORM) {
     return (
@@ -142,38 +180,51 @@ export const General = () => {
               />
               <Card>
                 <CardContent className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium">Self-hosted runtime settings</h3>
-                    <p className="text-sm text-foreground-light">
-                      These are the settings that replace Supabase Cloud project controls in a
-                      self-hosted deployment.
-                    </p>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-medium">Self-hosted runtime settings</h3>
+                      <p className="text-sm text-foreground-light">
+                        These values mirror the Cloud project settings surface while keeping the
+                        source of truth in your deployment environment.
+                      </p>
+                    </div>
+                    <Badge variant="default">Read-only</Badge>
                   </div>
                   <div className="divide-y rounded border text-sm">
-                    {[
-                      [
-                        'SUPABASE_PUBLIC_URL',
-                        'Public gateway URL shown in connect strings and client setup.',
-                      ],
-                      [
-                        'API_EXTERNAL_URL',
-                        'Public Auth URL used by emails, OAuth callbacks, and SAML metadata.',
-                      ],
-                      ['SITE_URL', 'Default application redirect URL for Auth flows.'],
-                      [
-                        'STUDIO_DEFAULT_PROJECT',
-                        'Read-only project display name shown in this dashboard.',
-                      ],
-                      [
-                        'DASHBOARD_USERNAME / DASHBOARD_PASSWORD',
-                        'Basic Auth credentials protecting the self-hosted dashboard.',
-                      ],
-                    ].map(([name, description]) => (
-                      <div className="grid gap-2 px-4 py-3 md:grid-cols-[260px_1fr]" key={name}>
-                        <span className="font-mono text-xs text-foreground-light">{name}</span>
-                        <span>{description}</span>
+                    {selfHostedRuntimeRows.map(({ label, value, description }) => (
+                      <div className="grid gap-3 px-4 py-3 md:grid-cols-[220px_1fr]" key={label}>
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-foreground-light">
+                            {label}
+                          </p>
+                          <PasswordInput copy readOnly size="small" value={value} />
+                        </div>
+                        <span className="self-center">{description}</span>
                       </div>
                     ))}
+                  </div>
+                  <div className="grid gap-3 text-sm md:grid-cols-3">
+                    <div className="rounded border bg-surface-100 p-4">
+                      <p className="font-medium">Domains</p>
+                      <p className="mt-1 text-foreground-light">
+                        Change public URLs in Coolify, reverse proxy, DNS, and Compose environment
+                        values.
+                      </p>
+                    </div>
+                    <div className="rounded border bg-surface-100 p-4">
+                      <p className="font-medium">Ownership</p>
+                      <p className="mt-1 text-foreground-light">
+                        Team access is controlled by your dashboard auth, Git repository, and host
+                        operator accounts.
+                      </p>
+                    </div>
+                    <div className="rounded border bg-surface-100 p-4">
+                      <p className="font-medium">Lifecycle</p>
+                      <p className="mt-1 text-foreground-light">
+                        Pause, restore, backup, and delete actions happen at container and volume
+                        level.
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

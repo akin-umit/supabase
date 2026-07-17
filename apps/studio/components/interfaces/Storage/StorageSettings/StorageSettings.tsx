@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
+  Badge,
   Button,
   Card,
   CardContent,
@@ -255,43 +256,66 @@ export const StorageSettings = () => {
             {!IS_PLATFORM ? (
               <Card>
                 <CardContent className="space-y-4">
-                  <Admonition
-                    type="default"
-                    title="Self-hosted Storage runtime settings"
-                    description="Storage limits and image transformation behavior are controlled by environment variables and docker-compose values in self-hosted deployments."
-                  />
+                  <div className="flex items-start justify-between gap-4">
+                    <Admonition
+                      className="flex-1"
+                      type="default"
+                      title="Self-hosted Storage runtime settings"
+                      description="Storage limits, image transformation, backend paths, and S3 access are controlled by environment variables and docker-compose values in self-hosted deployments."
+                    />
+                    <Badge variant="default">Operator managed</Badge>
+                  </div>
                   <div className="grid gap-3 text-sm md:grid-cols-2">
                     <div className="rounded border bg-surface-100 p-4">
-                      <p className="font-mono text-xs text-foreground-light">FILE_SIZE_LIMIT</p>
-                      <p className="mt-2">
-                        Global upload size limit. Change this in the Storage service environment and
-                        redeploy.
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium">Global file size limit</p>
+                        <Badge variant="default">Read-only</Badge>
+                      </div>
+                      <p className="mt-2 font-mono text-xs text-foreground-light">
+                        FILE_SIZE_LIMIT
+                      </p>
+                      <p className="mt-2 text-foreground-light">
+                        Change this in the Storage service environment and redeploy. Per-bucket
+                        limits remain visible from the Files view.
                       </p>
                     </div>
                     <div className="rounded border bg-surface-100 p-4">
-                      <p className="font-mono text-xs text-foreground-light">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium">Image transformations</p>
+                        <Badge variant="default">Runtime</Badge>
+                      </div>
+                      <p className="mt-2 font-mono text-xs text-foreground-light">
                         IMGPROXY_ENABLE_WEBP_DETECTION
                       </p>
-                      <p className="mt-2">
-                        Image transformation behavior is controlled by imgproxy and Storage runtime
-                        configuration.
+                      <p className="mt-2 text-foreground-light">
+                        Configure imgproxy and Storage service values together before enabling
+                        production image resizing.
                       </p>
                     </div>
                     <div className="rounded border bg-surface-100 p-4">
-                      <p className="font-mono text-xs text-foreground-light">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium">Storage backend</p>
+                        <Badge variant="success">Required</Badge>
+                      </div>
+                      <p className="mt-2 font-mono text-xs text-foreground-light">
                         STORAGE_BACKEND / FILE_STORAGE_BACKEND_PATH
                       </p>
-                      <p className="mt-2">
-                        Storage backend and persistent path. Keep persistent volumes mounted before
-                        redeploying.
+                      <p className="mt-2 text-foreground-light">
+                        Keep persistent volumes mounted before redeploying so buckets and objects do
+                        not disappear.
                       </p>
                     </div>
                     <div className="rounded border bg-surface-100 p-4">
-                      <p className="font-mono text-xs text-foreground-light">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium">S3 protocol</p>
+                        <Badge variant="success">Supported</Badge>
+                      </div>
+                      <p className="mt-2 font-mono text-xs text-foreground-light">
                         S3_PROTOCOL_ACCESS_KEY_ID
                       </p>
-                      <p className="mt-2">
-                        Optional S3-compatible access key id for self-hosted Storage clients.
+                      <p className="mt-2 text-foreground-light">
+                        Pair this with S3_PROTOCOL_ACCESS_KEY_SECRET and the /storage/v1/s3
+                        endpoint.
                       </p>
                     </div>
                   </div>

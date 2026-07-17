@@ -1,5 +1,6 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { IS_PLATFORM } from 'common'
+import { Badge, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'ui'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
 import { JWTSecretKeysTable } from '@/components/interfaces/JwtSecrets/jwt-secret-keys-table'
@@ -47,35 +48,69 @@ const JWTSigningKeysPage: NextPageWithLayout = () => {
             docsHref={`${DOCS_URL}/guides/self-hosting/self-hosted-auth-keys`}
           />
         )}
-        <div className="rounded border bg-surface-100">
+        <Card>
           <div className="border-b px-5 py-4">
-            <h3 className="text-sm font-medium">Self-hosted signing key evidence</h3>
-            <p className="text-sm text-foreground-light">
-              These values are read from your self-hosted runtime configuration. Rotate or replace
-              them in your environment/secret manager, then redeploy the Auth and API services.
-            </p>
-          </div>
-          <div className="divide-y text-sm">
-            <div className="grid gap-2 px-5 py-4 md:grid-cols-[220px_1fr]">
-              <span className="font-mono text-xs text-foreground-light">SUPABASE_JWKS</span>
-              <span>JSON Web Key Set used by API services to verify Auth-issued JWTs.</span>
-            </div>
-            <div className="grid gap-2 px-5 py-4 md:grid-cols-[220px_1fr]">
-              <span className="font-mono text-xs text-foreground-light">JWT_SECRET</span>
-              <span>Legacy symmetric signing secret for older anon and service-role JWTs.</span>
-            </div>
-            <div className="grid gap-2 px-5 py-4 md:grid-cols-[220px_1fr]">
-              <span className="font-mono text-xs text-foreground-light">SUPABASE_ANON_KEY</span>
-              <span>Deprecated legacy anonymous key. Prefer publishable keys where available.</span>
-            </div>
-            <div className="grid gap-2 px-5 py-4 md:grid-cols-[220px_1fr]">
-              <span className="font-mono text-xs text-foreground-light">
-                SUPABASE_SERVICE_ROLE_KEY
-              </span>
-              <span>Deprecated legacy service role key. Keep it server-side only.</span>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-medium">JWT signing keys</h3>
+                <p className="text-sm text-foreground-light">
+                  Self-hosted projects use runtime-provided signing material. Studio mirrors the
+                  Cloud key management surface, but rotation must happen in your secret manager or
+                  deployment environment.
+                </p>
+              </div>
+              <Badge variant="default">Operator managed</Badge>
             </div>
           </div>
-        </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cloud control</TableHead>
+                <TableHead>Self-hosted source</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Operator action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>JWT Signing Keys</TableCell>
+                <TableCell className="font-mono text-xs">SUPABASE_JWKS</TableCell>
+                <TableCell>
+                  <Badge variant="success">Supported</Badge>
+                </TableCell>
+                <TableCell>
+                  Rotate in the environment, then redeploy Auth, Kong, and REST.
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Legacy JWT Secret</TableCell>
+                <TableCell className="font-mono text-xs">JWT_SECRET</TableCell>
+                <TableCell>
+                  <Badge variant="warning">Legacy</Badge>
+                </TableCell>
+                <TableCell>
+                  Keep only for existing anon and service role JWT compatibility.
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Publishable / anon key</TableCell>
+                <TableCell className="font-mono text-xs">SUPABASE_ANON_KEY</TableCell>
+                <TableCell>
+                  <Badge variant="default">Read-only</Badge>
+                </TableCell>
+                <TableCell>Regenerate through the deployment secrets and publish safely.</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Secret / service role key</TableCell>
+                <TableCell className="font-mono text-xs">SUPABASE_SERVICE_ROLE_KEY</TableCell>
+                <TableCell>
+                  <Badge variant="warning">Server only</Badge>
+                </TableCell>
+                <TableCell>Never expose to browser clients or public repositories.</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Card>
       </div>
     )
   }

@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import {
   Alert,
   AlertDescription,
+  Badge,
   Button,
   Card,
   CardContent,
@@ -146,16 +147,30 @@ export const S3Connection = () => {
             {!IS_PLATFORM && (
               <Card>
                 <CardContent className="space-y-4">
-                  <Alert>
-                    <AlertTitle>Self-hosted Storage S3</AlertTitle>
-                    <AlertDescription>
-                      S3 protocol settings are managed by the Storage service environment and
-                      docker-compose runtime. Studio shows the expected connection shape here, but
-                      does not rotate self-hosted S3 credentials from the browser.
-                    </AlertDescription>
-                  </Alert>
+                  <div className="flex items-start justify-between gap-4">
+                    <Alert className="flex-1">
+                      <AlertTitle>Self-hosted Storage S3</AlertTitle>
+                      <AlertDescription>
+                        S3 protocol settings are managed by the Storage service environment and
+                        docker-compose runtime. Studio shows the same connection fields as Cloud,
+                        but credential rotation stays in your secret manager.
+                      </AlertDescription>
+                    </Alert>
+                    <Badge variant="success">Available</Badge>
+                  </div>
                   <Table>
                     <TableBody>
+                      <TableRow>
+                        <TableCell className="w-56 font-mono text-xs">S3 protocol</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="success">Enabled by runtime</Badge>
+                            <span className="text-sm text-foreground-light">
+                              Controlled by Storage service env values
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
                       <TableRow>
                         <TableCell className="w-56 font-mono text-xs">Endpoint</TableCell>
                         <TableCell>
@@ -184,6 +199,26 @@ export const S3Connection = () => {
                       </TableRow>
                     </TableBody>
                   </Table>
+                  <div className="grid gap-3 text-sm md:grid-cols-3">
+                    <div className="rounded border bg-surface-100 p-3">
+                      <p className="font-medium">Client setup</p>
+                      <p className="mt-1 text-foreground-light">
+                        Use the endpoint, region, and access key pair with any S3-compatible SDK.
+                      </p>
+                    </div>
+                    <div className="rounded border bg-surface-100 p-3">
+                      <p className="font-medium">Credential rotation</p>
+                      <p className="mt-1 text-foreground-light">
+                        Update Storage environment variables, then redeploy Storage and Kong.
+                      </p>
+                    </div>
+                    <div className="rounded border bg-surface-100 p-3">
+                      <p className="font-medium">Public API path</p>
+                      <p className="mt-1 text-foreground-light">
+                        Keep the gateway route open at /storage/v1/s3 for S3 clients.
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -334,7 +369,10 @@ export const S3Connection = () => {
                   <TableBody>
                     <TableRow>
                       <TableCell className="font-mono text-xs">S3_PROTOCOL_ACCESS_KEY_ID</TableCell>
-                      <TableCell>Public key id used by S3-compatible clients.</TableCell>
+                      <TableCell>
+                        Public key id used by S3-compatible clients. Create and rotate it in the
+                        deployment environment.
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell className="font-mono text-xs">
@@ -347,6 +385,11 @@ export const S3Connection = () => {
                     </TableRow>
                   </TableBody>
                 </Table>
+                <CardFooter className="justify-end">
+                  <Button disabled type="button">
+                    New access key
+                  </Button>
+                </CardFooter>
               </Card>
             ) : projectIsLoading || isLoadingPermissions ? (
               <GenericSkeletonLoader />
