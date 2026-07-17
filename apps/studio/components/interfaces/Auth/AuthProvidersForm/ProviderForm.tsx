@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { Check } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useQueryState } from 'nuqs'
@@ -61,6 +61,7 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canManageConfig = IS_PLATFORM && canUpdateConfig
 
   const shouldDisableField = (field: string): boolean => {
     const shouldDisableSmsFields =
@@ -240,7 +241,7 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
                     name={x}
                     properties={provider.properties[x]}
                     control={form.control}
-                    readOnly={shouldDisableField(x) || !canUpdateConfig}
+                    readOnly={shouldDisableField(x) || !canManageConfig}
                     hasAccess={hasAccess}
                   />
                 )
@@ -294,13 +295,15 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
                   form={formId}
                   type="submit"
                   loading={isUpdatingConfig}
-                  disabled={isUpdatingConfig || !canUpdateConfig || !form.formState.isDirty}
+                  disabled={isUpdatingConfig || !canManageConfig || !form.formState.isDirty}
                   tooltip={{
                     content: {
                       side: 'bottom',
-                      text: !canUpdateConfig
-                        ? 'You need additional permissions to update provider settings'
-                        : undefined,
+                      text: !IS_PLATFORM
+                        ? 'Self-hosted provider settings are managed with GoTrue environment variables and require an Auth service redeploy'
+                        : !canUpdateConfig
+                          ? 'You need additional permissions to update provider settings'
+                          : undefined,
                     },
                   }}
                 >

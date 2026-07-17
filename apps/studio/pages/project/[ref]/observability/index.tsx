@@ -1,5 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useFeatureFlags, useFlag, useParams } from 'common'
+import { IS_PLATFORM, useFeatureFlags, useFlag, useParams } from 'common'
 import { useRouter } from 'next/router'
 import { parseAsBoolean, useQueryState } from 'nuqs'
 import { useEffect } from 'react'
@@ -31,10 +31,15 @@ export const UserReportPage: NextPageWithLayout = () => {
     isPending: isLoading,
     isSuccess,
     data,
-  } = useContentQuery({
-    projectRef: ref,
-    type: 'report',
-  })
+  } = useContentQuery(
+    {
+      projectRef: ref,
+      type: 'report',
+    },
+    {
+      enabled: IS_PLATFORM,
+    }
+  )
 
   useEffect(() => {
     if (!isSuccess) return
@@ -56,6 +61,10 @@ export const UserReportPage: NextPageWithLayout = () => {
       subject: { id: profile?.id },
     }
   )
+
+  if (!IS_PLATFORM) {
+    return <ObservabilityOverview />
+  }
 
   // Wait for flags to load before rendering to avoid flashing wrong page
   if (!flagsLoaded || isLoading) {

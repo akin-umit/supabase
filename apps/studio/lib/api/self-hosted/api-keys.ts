@@ -19,6 +19,10 @@ export type NonPlatformApiKey = {
  */
 const SECRET_KEY_VISIBLE_PREFIX_LENGTH = 15
 
+function getServiceRoleKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY ?? ''
+}
+
 export function parseRevealQuery(value: string | string[] | undefined): boolean {
   const raw = Array.isArray(value) ? value[0] : value
   return raw === 'true'
@@ -39,7 +43,7 @@ export function getNonPlatformApiKeys(): NonPlatformApiKey[] {
     },
     {
       name: 'service_role',
-      api_key: process.env.SUPABASE_SERVICE_KEY ?? '',
+      api_key: getServiceRoleKey(),
       id: 'service_role',
       type: 'legacy',
       hash: '',

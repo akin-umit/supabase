@@ -5,6 +5,7 @@ import { authKeys } from './keys'
 import type { components } from '@/data/api'
 import { handleError, patch } from '@/data/fetchers'
 import { lintKeys } from '@/data/lint/keys'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
 export type AuthConfigUpdateVariables = {
@@ -14,6 +15,12 @@ export type AuthConfigUpdateVariables = {
 }
 
 export async function updateAuthConfig({ projectRef, config }: AuthConfigUpdateVariables) {
+  if (!IS_PLATFORM) {
+    throw new Error(
+      'Self-hosted Auth configuration is managed with GoTrue environment variables. Update the deployment environment and redeploy the Auth service.'
+    )
+  }
+
   const { data, error } = await patch('/platform/auth/{ref}/config', {
     params: {
       path: { ref: projectRef },

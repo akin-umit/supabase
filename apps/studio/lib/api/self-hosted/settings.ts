@@ -1,8 +1,15 @@
 import { components } from 'api-types'
 
-import { AUTH_JWT_SECRET, POSTGRES_PORT } from './constants'
+import {
+  AUTH_JWT_SECRET,
+  DEFAULT_EXPOSED_SCHEMAS,
+  POSTGRES_DATABASE,
+  POSTGRES_HOST,
+  POSTGRES_PORT,
+  POSTGRES_USER_READ_WRITE,
+} from './constants'
 import { assertSelfHosted } from './util'
-import { PROJECT_DB_HOST, PROJECT_ENDPOINT, PROJECT_ENDPOINT_PROTOCOL } from '@/lib/constants/api'
+import { PROJECT_ENDPOINT, PROJECT_ENDPOINT_PROTOCOL } from '@/lib/constants/api'
 
 type ProjectAppConfig = components['schemas']['ProjectSettingsResponse']['app_config'] & {
   protocol?: string
@@ -10,6 +17,14 @@ type ProjectAppConfig = components['schemas']['ProjectSettingsResponse']['app_co
 
 export type ProjectSettings = components['schemas']['ProjectSettingsResponse'] & {
   app_config?: ProjectAppConfig
+}
+
+function firstExposedSchema() {
+  return DEFAULT_EXPOSED_SCHEMAS.split(',').map((schema) => schema.trim())[0] || 'public'
+}
+
+function getServiceRoleKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY ?? ''
 }
 
 /**
@@ -22,24 +37,24 @@ export function getProjectSettings() {
 
   const response = {
     app_config: {
-      db_schema: 'public',
+      db_schema: firstExposedSchema(),
       endpoint: PROJECT_ENDPOINT,
       storage_endpoint: PROJECT_ENDPOINT,
       // manually added to force the frontend to use the correct URL
       protocol: PROJECT_ENDPOINT_PROTOCOL,
     },
-    cloud_provider: 'AWS',
-    db_dns_name: '-',
-    db_host: PROJECT_DB_HOST,
+    cloud_provider: 'Self-hosted',
+    db_dns_name: POSTGRES_HOST,
+    db_host: POSTGRES_HOST,
     db_ip_addr_config: 'legacy' as const,
-    db_name: 'postgres',
+    db_name: POSTGRES_DATABASE,
     db_port: POSTGRES_PORT,
-    db_user: 'postgres',
+    db_user: POSTGRES_USER_READ_WRITE,
     inserted_at: '2021-08-02T06:40:40.646Z',
-    jwt_secret: AUTH_JWT_SECRET,
+    jwt_secret: process.env.JWT_SECRET || AUTH_JWT_SECRET,
     name: process.env.DEFAULT_PROJECT_NAME || 'Default Project',
     ref: 'default',
-    region: 'local',
+    region: process.env.SUPABASE_REGION || process.env.REGION || 'self-hosted',
     service_api_keys: [
       {
         api_key: process.env.SUPABASE_ANON_KEY ?? '',
@@ -47,7 +62,7 @@ export function getProjectSettings() {
         tags: 'anon',
       },
       {
-        api_key: process.env.SUPABASE_SERVICE_KEY ?? '',
+        api_key: getServiceRoleKey(),
         name: 'service_role key',
         tags: 'service_role',
       },

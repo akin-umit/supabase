@@ -82,6 +82,32 @@ export const HelpPanel = ({
             />
             <div className="flex flex-col gap-4 border-t pt-5">
               <div className="px-5 flex flex-col gap-0.5">
+                <h5 className="text-foreground">Supabase Turkiye Community</h5>
+                <p className="text-xs text-foreground-lighter text-balance">
+                  Turkish self-hosting notes, Coolify runbooks, and community-maintained Studio
+                  fixes for local operators.
+                </p>
+              </div>
+              <div className="px-5">
+                <a
+                  href="https://github.com/akin-umit/supabase-turkiye-community"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex items-center gap-3 rounded-sm border bg-surface-100 px-4 py-3 text-sm transition hover:bg-surface-200"
+                >
+                  <SVG
+                    src={`${router.basePath}/img/supabase-turkiye-community.svg`}
+                    className="h-10 w-10 shrink-0"
+                  />
+                  <span>
+                    <span className="text-foreground">Open Supabase Turkiye Community</span>
+                    <span className="mt-1 block text-xs text-foreground-lighter">
+                      Guides, accepted changes, and self-hosting evidence for this distribution.
+                    </span>
+                  </span>
+                </a>
+              </div>
+              <div className="px-5 flex flex-col gap-0.5">
                 <h5 className="text-foreground">Community support</h5>
                 <p className="text-xs text-foreground-lighter text-balance">
                   Our Discord community can help with code-related issues. Many questions are

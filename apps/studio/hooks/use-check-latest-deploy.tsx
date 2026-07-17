@@ -1,4 +1,3 @@
-import { IS_PLATFORM } from 'common'
 import dayjs from 'dayjs'
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
@@ -6,7 +5,7 @@ import { toast } from 'sonner'
 import { Button, StatusIcon } from 'ui'
 
 import { useDeploymentCommitQuery } from '@/data/utils/deployment-commit-query'
-import { BASE_PATH } from '@/lib/constants'
+import { BASE_PATH, IS_PLATFORM } from '@/lib/constants'
 
 const DeployCheckToast = ({ id }: { id: string | number }) => {
   const router = useRouter()

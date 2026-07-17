@@ -6,6 +6,7 @@ import {
   RegionLimitation,
   VECTOR_BUCKETS_AVAILABLE_REGIONS,
 } from '@/components/interfaces/Storage/VectorBuckets/RegionLimitation'
+import { VectorBucketsLocalDisabledState } from '@/components/interfaces/Storage/VectorBuckets/VectorBucketsLocalDisabledState'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { StorageBucketsLayout } from '@/components/layouts/StorageLayout/StorageBucketsLayout'
 import StorageLayout from '@/components/layouts/StorageLayout/StorageLayout'
@@ -28,7 +29,7 @@ const StorageVectorsPage: NextPageWithLayout = () => {
   } else if (IS_PLATFORM && !isVectorBucketsEnabled) {
     return <BucketsUpgradePlan type="vector" />
   } else if (!isVectorBucketsEnabled) {
-    return null
+    return <VectorBucketsLocalDisabledState />
   } else {
     return <VectorsBuckets />
   }

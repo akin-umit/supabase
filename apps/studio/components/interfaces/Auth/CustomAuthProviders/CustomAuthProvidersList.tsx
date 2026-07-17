@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { Edit, MoreVertical, Plus, Power, PowerOff, Search, Trash, X } from 'lucide-react'
 import { parseAsBoolean, parseAsStringLiteral, useQueryState } from 'nuqs'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -136,7 +136,10 @@ export const CustomAuthProvidersList = () => {
     isLoading: isPending,
     isError,
     error,
-  } = useOAuthCustomProvidersQuery({ projectRef })
+  } = useOAuthCustomProvidersQuery(
+    { projectRef },
+    { enabled: IS_PLATFORM && isCustomProvidersEnabled }
+  )
   const providerCount = customProviders?.length ?? 0
   const atProviderLimit = providerLimit !== Infinity && providerCount >= providerLimit
 
@@ -252,8 +255,55 @@ export const CustomAuthProvidersList = () => {
     isCustomProvidersEnabled && (showCreateSheet || !!providerToEdit)
   const canCreateProvider = isCustomProvidersEnabled && !atProviderLimit
 
-  if (isAuthConfigLoading || (isCustomProvidersEnabled && isPending)) {
+  if (isAuthConfigLoading || (IS_PLATFORM && isCustomProvidersEnabled && isPending)) {
     return <GenericSkeletonLoader />
+  }
+
+  if (!IS_PLATFORM) {
+    return (
+      <div className="flex flex-col gap-y-4">
+        <Admonition
+          type="default"
+          title="Self-hosted custom provider configuration"
+          description="Custom OAuth/OIDC providers are configured through GoTrue environment variables in self-hosted deployments. Studio reads the supported operator flags here, but provider CRUD remains disabled because self-hosted GoTrue does not expose the Supabase Cloud custom provider management API."
+        />
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Runtime setting</TableHead>
+                <TableHead>Current value</TableHead>
+                <TableHead>Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>
+                  <Badge className="font-mono">CUSTOM_OAUTH_ENABLED</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={isCustomProvidersEnabled ? 'success' : 'default'}>
+                    {isCustomProvidersEnabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-foreground-light">
+                  Read from GOTRUE_CUSTOM_OAUTH_ENABLED or CUSTOM_OAUTH_ENABLED.
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <Badge className="font-mono">CUSTOM_OAUTH_MAX_PROVIDERS</Badge>
+                </TableCell>
+                <TableCell>{providerLimit}</TableCell>
+                <TableCell className="text-foreground-light">
+                  Read from GOTRUE_CUSTOM_OAUTH_MAX_PROVIDERS or CUSTOM_OAUTH_MAX_PROVIDERS.
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
+    )
   }
 
   if (!isCustomProvidersEnabled) {

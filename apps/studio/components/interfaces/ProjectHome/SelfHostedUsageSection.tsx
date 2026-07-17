@@ -18,17 +18,19 @@ type LogsBarChartDatum = {
   warning_count: number
 }
 
-type ServiceKey = 'rest' | 'auth' | 'storage' | 'realtime'
+type ServiceKey = 'api' | 'functions' | 'rest' | 'auth' | 'storage' | 'realtime'
 
 const SERVICES: Array<{
   key: ServiceKey
   title: string
   dataKey: keyof UsageApiCounts
 }> = [
-  { key: 'rest', title: 'REST / DB', dataKey: 'total_rest_requests' },
-  { key: 'auth', title: 'Auth', dataKey: 'total_auth_requests' },
+  { key: 'api', title: 'API Gateway', dataKey: 'total_api_requests' },
+  { key: 'functions', title: 'Edge Functions', dataKey: 'total_functions_requests' },
+  { key: 'rest', title: 'Postgres / REST', dataKey: 'total_rest_requests' },
   { key: 'storage', title: 'Storage', dataKey: 'total_storage_requests' },
   { key: 'realtime', title: 'Realtime', dataKey: 'total_realtime_requests' },
+  { key: 'auth', title: 'Auth', dataKey: 'total_auth_requests' },
 ]
 
 export function getSelfHostedUsageServices(data: UsageApiCounts[], now = dayjs()) {

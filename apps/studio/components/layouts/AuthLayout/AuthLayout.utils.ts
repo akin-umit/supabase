@@ -28,6 +28,7 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
   const { ref, isPlatform, showOverview, features } = options
   const passkeysInMenu = Boolean(features.passkeys)
   const baseUrl = `/project/${ref}/auth`
+  const showSelfHostedCoreConfiguration = !isPlatform
 
   return [
     {
@@ -64,7 +65,7 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
           : []),
       ],
     },
-    ...(features.emails && isPlatform
+    ...(features.emails && (isPlatform || showSelfHostedCoreConfiguration)
       ? [
           {
             title: 'Notifications',
@@ -96,6 +97,91 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
           items: [],
           // shortcutId: SHORTCUT_IDS.NAV_AUTH_POLICIES,
         },
+        ...(showSelfHostedCoreConfiguration
+          ? [
+              ...(features.signInProviders
+                ? [
+                    {
+                      name: 'Sign In / Providers',
+                      key: 'sign-in-up',
+                      pages: ['providers', 'third-party'],
+                      url: `${baseUrl}/providers`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_SIGN_IN,
+                    },
+                  ]
+                : []),
+              ...(passkeysInMenu
+                ? [
+                    {
+                      name: 'Passkeys',
+                      key: 'passkeys',
+                      url: `${baseUrl}/passkeys`,
+                      label: 'Beta',
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_PASSKEYS,
+                    },
+                  ]
+                : []),
+              {
+                name: 'Sessions',
+                key: 'sessions',
+                url: `${baseUrl}/sessions`,
+                items: [],
+                shortcutId: SHORTCUT_IDS.NAV_AUTH_SESSIONS,
+              },
+              ...(features.rateLimits
+                ? [
+                    {
+                      name: 'Rate Limits',
+                      key: 'rate-limits',
+                      url: `${baseUrl}/rate-limits`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_RATE_LIMITS,
+                    },
+                  ]
+                : []),
+              ...(features.multiFactor
+                ? [
+                    {
+                      name: 'Multi-Factor',
+                      key: 'mfa',
+                      url: `${baseUrl}/mfa`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_MFA,
+                    },
+                  ]
+                : []),
+              {
+                name: 'URL Configuration',
+                key: 'url-configuration',
+                url: `${baseUrl}/url-configuration`,
+                items: [],
+                shortcutId: SHORTCUT_IDS.NAV_AUTH_URL_CONFIGURATION,
+              },
+              ...(features.attackProtection
+                ? [
+                    {
+                      name: 'Attack Protection',
+                      key: 'protection',
+                      url: `${baseUrl}/protection`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_PROTECTION,
+                    },
+                  ]
+                : []),
+              ...(features.performance
+                ? [
+                    {
+                      name: 'Performance',
+                      key: 'performance',
+                      url: `${baseUrl}/performance`,
+                      items: [],
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_PERFORMANCE,
+                    },
+                  ]
+                : []),
+            ]
+          : []),
         ...(isPlatform
           ? [
               ...(features.signInProviders
@@ -234,13 +320,13 @@ export const useGenerateAuthMenu = (): ProductMenuGroup[] => {
     isPlatform: IS_PLATFORM,
     showOverview,
     features: {
-      signInProviders: authenticationSignInProviders,
-      rateLimits: authenticationRateLimits,
-      emails: authenticationEmails,
-      multiFactor: authenticationMultiFactor,
-      attackProtection: authenticationAttackProtection,
-      performance: authenticationPerformance,
-      passkeys: enablePasskeyAuth,
+      signInProviders: !IS_PLATFORM || authenticationSignInProviders,
+      rateLimits: !IS_PLATFORM || authenticationRateLimits,
+      emails: !IS_PLATFORM || authenticationEmails,
+      multiFactor: !IS_PLATFORM || authenticationMultiFactor,
+      attackProtection: !IS_PLATFORM || authenticationAttackProtection,
+      performance: !IS_PLATFORM || authenticationPerformance,
+      passkeys: !IS_PLATFORM || enablePasskeyAuth,
     },
   })
 }

@@ -32,6 +32,36 @@ const migrationSchema = z
   })
   .strip()
 
+const infrastructureSchema = z
+  .object({
+    database: z
+      .object({
+        host: z.string().trim().min(1).max(255),
+        port: z.number().int().min(1).max(65_535),
+        maxClientConnections: z.number().int().min(1).max(1_000_000).optional(),
+      })
+      .strip(),
+    runtime: z
+      .object({
+        cpuPercent: z.number().min(0).max(100).optional(),
+        diskPercent: z.number().min(0).max(100).optional(),
+        memoryPercent: z.number().min(0).max(100).optional(),
+        connectionsCurrent: z.number().int().min(0).max(1_000_000).optional(),
+        connectionsMax: z.number().int().min(1).max(1_000_000).optional(),
+        updatedAt: isoTimestampSchema.optional(),
+      })
+      .strip()
+      .optional(),
+    services: z
+      .object({
+        total: z.number().int().min(0).max(1000).default(0),
+        healthy: z.number().int().min(0).max(1000).default(0),
+        unavailable: z.number().int().min(0).max(1000).default(0),
+      })
+      .strip(),
+  })
+  .strip()
+
 const projectOperationsSchema = z
   .object({
     generatedAt: isoTimestampSchema,
@@ -40,6 +70,7 @@ const projectOperationsSchema = z
     deployment: deploymentSchema,
     backup: backupSchema,
     migration: migrationSchema,
+    infrastructure: infrastructureSchema.optional(),
   })
   .strip()
 

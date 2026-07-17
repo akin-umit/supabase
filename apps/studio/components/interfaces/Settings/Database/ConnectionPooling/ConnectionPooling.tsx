@@ -47,7 +47,7 @@ import { useProjectAddonsQuery } from '@/data/subscriptions/project-addons-query
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 const formId = 'pooling-configuration-form'
 
@@ -151,6 +151,30 @@ export const ConnectionPooling = () => {
   useEffect(() => {
     if (isSuccessPgbouncerConfig) resetForm()
   }, [isSuccessPgbouncerConfig])
+
+  if (!IS_PLATFORM) {
+    return (
+      <PageSection id="connection-pooler">
+        <PageSectionMeta>
+          <PageSectionSummary>
+            <PageSectionTitle>Connection pooling</PageSectionTitle>
+          </PageSectionSummary>
+          <PageSectionAside>
+            <DocsButton
+              href={`${DOCS_URL}/guides/database/connecting-to-postgres#connection-pooler`}
+            />
+          </PageSectionAside>
+        </PageSectionMeta>
+        <PageSectionContent className="space-y-4">
+          <Admonition
+            type="default"
+            title="Connection pooling is managed outside Studio for this self-hosted runtime"
+            description="Configure PgBouncer/Supavisor through your Compose environment and redeploy. Studio will not stay in a permanent loading state for this hosted-only configuration API."
+          />
+        </PageSectionContent>
+      </PageSection>
+    )
+  }
 
   return (
     <PageSection id="connection-pooler">

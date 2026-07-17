@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { AlertTitle } from '@ui/components/shadcn/ui/alert'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import {
   Alert,
   AlertDescription,
+  Badge,
   Button,
   Card,
   CardContent,
@@ -105,6 +106,8 @@ export const S3Connection = () => {
   const endpoint = settings?.app_config?.storage_endpoint || settings?.app_config?.endpoint
   const hasStorageCreds = storageCreds?.data && storageCreds.data.length > 0
   const s3connectionUrl = getConnectionURL(projectRef ?? '', protocol, endpoint)
+  const selfHostedS3Endpoint =
+    endpoint !== undefined ? s3connectionUrl : 'https://<your-domain>/storage/v1/s3'
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = async (data) => {
     if (!projectRef) return console.error('Project ref is required')
@@ -141,6 +144,85 @@ export const S3Connection = () => {
           </PageSectionMeta>
 
           <PageSectionContent>
+            {!IS_PLATFORM && (
+              <Card>
+                <CardContent className="space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <Alert className="flex-1">
+                      <AlertTitle>Self-hosted Storage S3</AlertTitle>
+                      <AlertDescription>
+                        S3 protocol settings are managed by the Storage service environment and
+                        docker-compose runtime. Studio shows the same connection fields as Cloud,
+                        but credential rotation stays in your secret manager.
+                      </AlertDescription>
+                    </Alert>
+                    <Badge variant="success">Available</Badge>
+                  </div>
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="w-56 font-mono text-xs">S3 protocol</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="success">Enabled by runtime</Badge>
+                            <span className="text-sm text-foreground-light">
+                              Controlled by Storage service env values
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="w-56 font-mono text-xs">Endpoint</TableCell>
+                        <TableCell>
+                          <Input readOnly copy value={selfHostedS3Endpoint} />
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-mono text-xs">Region</TableCell>
+                        <TableCell>
+                          <Input readOnly copy value={project?.region ?? 'self-hosted'} />
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-mono text-xs">
+                          S3_PROTOCOL_ACCESS_KEY_ID
+                        </TableCell>
+                        <TableCell>Set in the Storage service environment.</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-mono text-xs">
+                          S3_PROTOCOL_ACCESS_KEY_SECRET
+                        </TableCell>
+                        <TableCell>
+                          Keep server-side only and rotate through your secret manager.
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                  <div className="grid gap-3 text-sm md:grid-cols-3">
+                    <div className="rounded border bg-surface-100 p-3">
+                      <p className="font-medium">Client setup</p>
+                      <p className="mt-1 text-foreground-light">
+                        Use the endpoint, region, and access key pair with any S3-compatible SDK.
+                      </p>
+                    </div>
+                    <div className="rounded border bg-surface-100 p-3">
+                      <p className="font-medium">Credential rotation</p>
+                      <p className="mt-1 text-foreground-light">
+                        Update Storage environment variables, then redeploy Storage and Kong.
+                      </p>
+                    </div>
+                    <div className="rounded border bg-surface-100 p-3">
+                      <p className="font-medium">Public API path</p>
+                      <p className="mt-1 text-foreground-light">
+                        Keep the gateway route open at /storage/v1/s3 for S3 clients.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {isErrorStorageConfig && (
               <AlertError
                 className="mb-4"
@@ -151,7 +233,7 @@ export const S3Connection = () => {
 
             <Form {...form}>
               <form id="s3-connection-form" onSubmit={form.handleSubmit(onSubmit)}>
-                {projectIsLoading ? (
+                {!IS_PLATFORM ? null : projectIsLoading ? (
                   <GenericSkeletonLoader />
                 ) : isProjectActive ? (
                   <Card>
@@ -275,7 +357,39 @@ export const S3Connection = () => {
           </PageSectionMeta>
 
           <PageSectionContent>
-            {projectIsLoading || isLoadingPermissions ? (
+            {!IS_PLATFORM ? (
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Self-hosted credential source</TableHead>
+                      <TableHead>Description</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">S3_PROTOCOL_ACCESS_KEY_ID</TableCell>
+                      <TableCell>
+                        Public key id used by S3-compatible clients. Create and rotate it in the
+                        deployment environment.
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">
+                        S3_PROTOCOL_ACCESS_KEY_SECRET
+                      </TableCell>
+                      <TableCell>
+                        Secret key value. Change it in the runtime environment, then redeploy the
+                        Storage service.
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+                <CardFooter className="justify-end text-sm text-foreground-light">
+                  Create or rotate access keys in the Storage service environment, then redeploy.
+                </CardFooter>
+              </Card>
+            ) : projectIsLoading || isLoadingPermissions ? (
               <GenericSkeletonLoader />
             ) : !canReadS3Credentials ? (
               <NoPermission resourceText="view this project's S3 access keys" />

@@ -49,4 +49,15 @@ describe('VectorBucketsErrorState', () => {
     expect(screen.getByText('Contact support')).toBeInTheDocument()
     expect(screen.queryByText('Vector buckets are not enabled')).not.toBeInTheDocument()
   })
+
+  test('self-hosted: shows runtime API guidance, not the CLI config.toml fallback', () => {
+    mockUseDeploymentMode.mockReturnValue(deploymentMode({ isSelfHosted: true }))
+
+    customRender(<VectorBucketsErrorState error={new ResponseError('storage vector API failed')} />)
+
+    expect(screen.getByText('Vector bucket API is not available')).toBeInTheDocument()
+    expect(screen.getByText('storage vector API failed')).toBeInTheDocument()
+    expect(screen.queryByText('supabase/config.toml')).not.toBeInTheDocument()
+    expect(screen.queryByText('Contact support')).not.toBeInTheDocument()
+  })
 })

@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
@@ -70,6 +70,7 @@ export const BasicAuthSettingsForm = () => {
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canManageConfig = IS_PLATFORM && canUpdateConfig
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -128,6 +129,16 @@ export const BasicAuthSettingsForm = () => {
         </PageSectionSummary>
       </PageSectionMeta>
       <PageSectionContent>
+        {!IS_PLATFORM && (
+          <Alert className="mb-4">
+            <AlertTitle>Self-hosted Auth configuration</AlertTitle>
+            <AlertDescription>
+              These controls mirror your current GoTrue environment values. Change them in your
+              deployment environment, then redeploy the Auth service.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {isError && (
           <AlertError
             error={authConfigError}
@@ -177,7 +188,7 @@ export const BasicAuthSettingsForm = () => {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            disabled={!canUpdateConfig}
+                            disabled={!canManageConfig}
                           />
                         </FormControl>
                       </FormItemLayout>
@@ -210,7 +221,7 @@ export const BasicAuthSettingsForm = () => {
                             <Switch
                               checked={field.value}
                               onCheckedChange={field.onChange}
-                              disabled={!canUpdateConfig}
+                              disabled={!canManageConfig}
                             />
                           </FormControl>
                         </FormItemLayout>
@@ -243,7 +254,7 @@ export const BasicAuthSettingsForm = () => {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            disabled={!canUpdateConfig}
+                            disabled={!canManageConfig}
                           />
                         </FormControl>
                       </FormItemLayout>
@@ -323,7 +334,7 @@ export const BasicAuthSettingsForm = () => {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            disabled={!canUpdateConfig}
+                            disabled={!canManageConfig}
                           />
                         </FormControl>
                       </FormItemLayout>
@@ -339,7 +350,7 @@ export const BasicAuthSettingsForm = () => {
                   <Button
                     variant="primary"
                     type="submit"
-                    disabled={!canUpdateConfig || isUpdatingConfig || !isDirty}
+                    disabled={!canManageConfig || isUpdatingConfig || !isDirty}
                     loading={isUpdatingConfig}
                   >
                     Save changes

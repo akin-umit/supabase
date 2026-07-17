@@ -234,7 +234,7 @@ function buildRootHead() {
     { rel: 'shortcut icon', href: `${BASE_PATH}${FAVICON_ROUTE}/favicon.ico` },
     { rel: 'icon', type: 'image/x-icon', href: `${BASE_PATH}${FAVICON_ROUTE}/favicon.ico` },
     { rel: 'apple-touch-icon', href: `${BASE_PATH}${FAVICON_ROUTE}/favicon.ico` },
-    { rel: 'manifest', href: `${BASE_PATH}${FAVICON_ROUTE}/manifest.json` },
+    ...(IS_PLATFORM ? [{ rel: 'manifest', href: `${BASE_PATH}${FAVICON_ROUTE}/manifest.json` }] : []),
   ]
 
   if (IS_PLATFORM) {

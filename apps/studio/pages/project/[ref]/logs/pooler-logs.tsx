@@ -7,6 +7,7 @@ import { LogsPreviewer } from '@/components/interfaces/Settings/Logs/LogsPreview
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import LogsLayout from '@/components/layouts/LogsLayout/LogsLayout'
 import { useSupavisorConfigurationQuery } from '@/data/database/supavisor-configuration-query'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 export const LogPage: NextPageWithLayout = () => {
@@ -15,7 +16,7 @@ export const LogPage: NextPageWithLayout = () => {
   const { isPending: isLoading } = useSupavisorConfigurationQuery({ projectRef: ref ?? 'default' })
 
   // this prevents initial load of pooler logs before config has been retrieved
-  if (isLoading) return <LogoLoader />
+  if (IS_PLATFORM && isLoading) return <LogoLoader />
 
   return (
     <LogsPreviewer

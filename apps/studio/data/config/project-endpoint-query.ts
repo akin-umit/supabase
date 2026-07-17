@@ -8,7 +8,11 @@ export const useProjectApiUrl = (
   { projectRef }: { projectRef?: string },
   { enabled = true }: { enabled?: boolean } = {}
 ) => {
-  const { data } = useProjectAddonsQuery({ projectRef }, { enabled })
+  const isPlatformCustomDomainLookupEnabled = enabled && IS_PLATFORM
+  const { data } = useProjectAddonsQuery(
+    { projectRef },
+    { enabled: isPlatformCustomDomainLookupEnabled }
+  )
   const hasCustomDomainsAddon = !!data?.selected_addons.find((x) => x.type === 'custom_domain')
 
   const {
@@ -17,7 +21,7 @@ export const useProjectApiUrl = (
     isPending: isLoadingCustomDomains,
     isSuccess: isSuccessCustomDomains,
     isError: isErrorCustomDomains,
-  } = useCustomDomainsQuery({ projectRef }, { enabled })
+  } = useCustomDomainsQuery({ projectRef }, { enabled: isPlatformCustomDomainLookupEnabled })
   const isCustomDomainsActive = customDomainData?.customDomain?.status === 'active'
   const customEndpoint =
     hasCustomDomainsAddon && isCustomDomainsActive
@@ -47,8 +51,14 @@ export const useProjectApiUrl = (
     hostEndpoint,
     storageEndpoint,
     error: projectSettingsError || (hasCustomDomainsAddon ? customDomainsError : undefined),
-    isPending: isLoadingProjectSettings || (hasCustomDomainsAddon && isLoadingCustomDomains),
-    isSuccess: isSuccessProjectSettings && (!hasCustomDomainsAddon || isSuccessCustomDomains),
-    isError: isErrorProjectSettings || (hasCustomDomainsAddon && isErrorCustomDomains),
+    isPending:
+      isLoadingProjectSettings ||
+      (isPlatformCustomDomainLookupEnabled && hasCustomDomainsAddon && isLoadingCustomDomains),
+    isSuccess:
+      isSuccessProjectSettings &&
+      (!isPlatformCustomDomainLookupEnabled || !hasCustomDomainsAddon || isSuccessCustomDomains),
+    isError:
+      isErrorProjectSettings ||
+      (isPlatformCustomDomainLookupEnabled && hasCustomDomainsAddon && isErrorCustomDomains),
   }
 }
