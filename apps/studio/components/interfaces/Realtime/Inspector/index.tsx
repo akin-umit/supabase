@@ -98,7 +98,7 @@ export const RealtimeInspector = () => {
       />
       <div className="relative flex flex-col grow">
         <div className="flex grow">
-          {(logData ?? []).length > 0 ? (
+          {(logData ?? []).length > 0 || hasChannel || isListening ? (
             <MessagesTable
               hasChannelSet={hasChannel}
               enabled={isListening}

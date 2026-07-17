@@ -88,11 +88,11 @@ export const ObservabilityOverview = () => {
       {
         key: 'data_api' as const,
         name: 'API Gateway',
-        reportUrl: undefined,
+        reportUrl: `/project/${projectRef}/observability/api-overview`,
         logType: 'edge' as const,
         logsUrl: getLogsUrl('edge', '/logs/edge-logs'),
         enabled: isDataApiEnabled,
-        hasReport: false,
+        hasReport: true,
       },
       {
         key: 'db' as const,
