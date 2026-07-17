@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
+import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'common'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -24,6 +25,7 @@ import {
 import { Admonition } from 'ui-patterns/admonition'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
+import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
 import { AlertError } from '@/components/ui/AlertError'
@@ -39,12 +41,27 @@ import {
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import type { SelfHostedRealtimeConfig } from '@/lib/api/self-hosted/realtime'
 import { IS_PLATFORM } from '@/lib/constants'
 
 const formId = 'realtime-configuration-form'
 
+async function fetchSelfHostedRealtimeConfig(projectRef?: string) {
+  if (!projectRef) throw new Error('Project ref is required')
+
+  const response = await fetch(`/api/platform/projects/${projectRef}/config/realtime`)
+  const payload = await response.json()
+
+  if (!response.ok) {
+    throw new Error(payload?.error?.message ?? 'Failed to retrieve self-hosted realtime settings')
+  }
+
+  return payload as SelfHostedRealtimeConfig
+}
+
 export const RealtimeSettings = () => {
   const { ref: projectRef } = useParams()
+  const isSelfHosted = !IS_PLATFORM
   const { data: project } = useSelectedProjectQuery()
   const { data: organization, isSuccess: isSuccessOrganization } = useSelectedOrganizationQuery()
   const { can: canUpdateConfig, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
@@ -58,8 +75,21 @@ export const RealtimeSettings = () => {
     projectRef: project?.ref,
     connectionString: project?.connectionString,
   })
-  const { data, error, isError } = useRealtimeConfigurationQuery({
-    projectRef,
+  const { data, error, isError } = useRealtimeConfigurationQuery(
+    {
+      projectRef,
+    },
+    { enabled: IS_PLATFORM }
+  )
+  const {
+    data: selfHostedConfig,
+    error: selfHostedError,
+    isPending: isLoadingSelfHostedConfig,
+    isError: isSelfHostedConfigError,
+  } = useQuery<SelfHostedRealtimeConfig, Error>({
+    queryKey: ['self-hosted', 'realtime-config', projectRef],
+    queryFn: () => fetchSelfHostedRealtimeConfig(projectRef),
+    enabled: isSelfHosted && typeof projectRef !== 'undefined',
   })
 
   const { data: policies, isSuccess: isSuccessPolicies } = useDatabasePoliciesQuery({
@@ -70,7 +100,10 @@ export const RealtimeSettings = () => {
 
   const isFreePlan = organization?.plan.id === 'free'
   const isUsageBillingEnabled = organization?.usage_billing_enabled
-  const isRealtimeDisabled = data?.suspend ?? REALTIME_DEFAULT_CONFIG.suspend
+  const realtimeConfig = isSelfHosted ? selfHostedConfig : data
+  const realtimeConfigError = isSelfHosted ? selfHostedError : error
+  const hasRealtimeConfigError = isSelfHosted ? isSelfHostedConfigError : isError
+  const isRealtimeDisabled = realtimeConfig?.suspend ?? REALTIME_DEFAULT_CONFIG.suspend
   // Check if RLS policies exist for realtime.messages table
   const realtimeMessagesPolicies = policies?.filter(
     (policy) => policy.schema === 'realtime' && policy.table === 'messages'
@@ -132,16 +165,16 @@ export const RealtimeSettings = () => {
       allow_public: !REALTIME_DEFAULT_CONFIG.private_only,
     },
     values: {
-      ...(data ?? REALTIME_DEFAULT_CONFIG),
-      allow_public: !(data?.private_only ?? REALTIME_DEFAULT_CONFIG.private_only),
+      ...(realtimeConfig ?? REALTIME_DEFAULT_CONFIG),
+      allow_public: !(realtimeConfig?.private_only ?? REALTIME_DEFAULT_CONFIG.private_only),
     } as any,
   })
 
   const { allow_public, suspend } = form.watch()
-  const isSelfHosted = !IS_PLATFORM
-  const isSettingToPrivate = !data?.private_only && !allow_public
+  const isSettingToPrivate = !realtimeConfig?.private_only && !allow_public
   const isDisablingRealtime = !isRealtimeDisabled && suspend
   const isEnablingRealtime = isRealtimeDisabled && !suspend
+  const selfHostedSources = selfHostedConfig?.sources
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = (_data) => {
     if (!projectRef) return console.error('Project ref is required')
@@ -189,8 +222,13 @@ export const RealtimeSettings = () => {
     <>
       <Form {...form}>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
-          {isError ? (
-            <AlertError error={error} subject="Failed to retrieve realtime settings" />
+          {hasRealtimeConfigError ? (
+            <AlertError
+              error={realtimeConfigError}
+              subject="Failed to retrieve realtime settings"
+            />
+          ) : isSelfHosted && isLoadingSelfHostedConfig ? (
+            <GenericSkeletonLoader />
           ) : (
             <Card>
               <CardContent className="space-y-4">
@@ -210,22 +248,22 @@ export const RealtimeSettings = () => {
                       {[
                         [
                           'Enable Realtime service',
-                          'REALTIME_ENABLED / service replica state',
+                          selfHostedSources?.suspend ?? 'REALTIME_ENABLED',
                           'Controls whether clients can connect to the Realtime service.',
                         ],
                         [
                           'Database connection pool size',
-                          'DB_POOL / MAX_CONNECTIONS',
+                          selfHostedSources?.connection_pool ?? 'DB_POOL_SIZE',
                           'Controls authorization and database-change fanout capacity.',
                         ],
                         [
                           'Max concurrent clients',
-                          'MAX_CONCURRENT_USERS',
+                          selfHostedSources?.max_concurrent_users ?? 'TENANT_MAX_CONCURRENT_USERS',
                           'Protects the service from too many simultaneous websocket clients.',
                         ],
                         [
                           'Payload and event limits',
-                          'MAX_EVENTS_PER_SECOND / MAX_PAYLOAD_SIZE_IN_KB',
+                          `${selfHostedSources?.max_events_per_second ?? 'TENANT_MAX_EVENTS_PER_SECOND'} / ${selfHostedSources?.max_payload_size_in_kb ?? 'TENANT_MAX_PAYLOAD_SIZE_IN_KB'}`,
                           'Limits broadcast, presence, and database-change event volume.',
                         ],
                       ].map(([title, envName, description]) => (
@@ -367,7 +405,8 @@ export const RealtimeSettings = () => {
                                   {...field}
                                   id="connection_pool"
                                   type="number"
-                                  disabled={isSelfHosted || !canUpdateConfig}
+                                  readOnly={isSelfHosted}
+                                  disabled={!isSelfHosted && !canUpdateConfig}
                                   value={field.value || ''}
                                 />
                                 <InputGroupAddon align="inline-end">
@@ -407,7 +446,8 @@ export const RealtimeSettings = () => {
                                 {...field}
                                 id="max_concurrent_users"
                                 type="number"
-                                disabled={isSelfHosted || !canUpdateConfig}
+                                readOnly={isSelfHosted}
+                                disabled={!isSelfHosted && !canUpdateConfig}
                                 value={field.value || ''}
                               />
                               <InputGroupAddon align="inline-end">
@@ -436,8 +476,9 @@ export const RealtimeSettings = () => {
                                 {...field}
                                 id="max_events_per_second"
                                 type="number"
+                                readOnly={isSelfHosted}
                                 disabled={
-                                  isSelfHosted || !isUsageBillingEnabled || !canUpdateConfig
+                                  !isSelfHosted && (!isUsageBillingEnabled || !canUpdateConfig)
                                 }
                                 value={field.value || ''}
                               />
@@ -449,7 +490,7 @@ export const RealtimeSettings = () => {
                         </FormItemLayout>
                       )}
                     />
-                    {isSuccessOrganization && !isUsageBillingEnabled && (
+                    {!isSelfHosted && isSuccessOrganization && !isUsageBillingEnabled && (
                       <Admonition showIcon={false} type="default">
                         <div className="flex items-center gap-x-2">
                           <div>
@@ -494,8 +535,9 @@ export const RealtimeSettings = () => {
                                 {...field}
                                 id="max_presence_events_per_second"
                                 type="number"
+                                readOnly={isSelfHosted}
                                 disabled={
-                                  isSelfHosted || !isUsageBillingEnabled || !canUpdateConfig
+                                  !isSelfHosted && (!isUsageBillingEnabled || !canUpdateConfig)
                                 }
                                 value={field.value || ''}
                               />
@@ -507,7 +549,7 @@ export const RealtimeSettings = () => {
                         </FormItemLayout>
                       )}
                     />
-                    {isSuccessOrganization && !isUsageBillingEnabled && (
+                    {!isSelfHosted && isSuccessOrganization && !isUsageBillingEnabled && (
                       <Admonition showIcon={false} type="default">
                         <div className="flex items-center gap-x-2">
                           <div>
@@ -552,8 +594,9 @@ export const RealtimeSettings = () => {
                                 {...field}
                                 id="max_payload_size_in_kb"
                                 type="number"
+                                readOnly={isSelfHosted}
                                 disabled={
-                                  isSelfHosted || !isUsageBillingEnabled || !canUpdateConfig
+                                  !isSelfHosted && (!isUsageBillingEnabled || !canUpdateConfig)
                                 }
                                 value={field.value || ''}
                               />
@@ -565,7 +608,7 @@ export const RealtimeSettings = () => {
                         </FormItemLayout>
                       )}
                     />
-                    {isSuccessOrganization && !isUsageBillingEnabled && (
+                    {!isSelfHosted && isSuccessOrganization && !isUsageBillingEnabled && (
                       <Admonition showIcon={false} type="default">
                         <div className="flex items-center gap-x-2">
                           <div>
@@ -606,7 +649,7 @@ export const RealtimeSettings = () => {
                 </div>
                 <div className="flex items-center gap-x-2">
                   {form.formState.isDirty && (
-                    <Button variant="default" onClick={() => form.reset(data as any)}>
+                    <Button variant="default" onClick={() => form.reset(realtimeConfig as any)}>
                       Cancel
                     </Button>
                   )}

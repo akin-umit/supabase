@@ -237,30 +237,34 @@ export const ObservabilityMenu = () => {
               {reportMenuItems.length === 0 ? (
                 <div className="px-2">
                   <InnerSideBarEmptyPanel
-                    title="No custom reports yet"
-                    description="Create and save custom reports to track your project metrics"
+                    title={IS_PLATFORM ? 'No custom reports yet' : 'Custom reports unavailable'}
+                    description={
+                      IS_PLATFORM
+                        ? 'Create and save custom reports to track your project metrics'
+                        : 'Saved custom reports depend on Supabase Cloud content APIs and are disabled in this self-hosted build.'
+                    }
                     actions={
-                      <ButtonTooltip
-                        variant="default"
-                        icon={<Plus />}
-                        disabled={!canManageCustomReports}
-                        onClick={() => {
-                          if (!canManageCustomReports) return
-                          setShowNewReportModal(true)
-                        }}
-                        tooltip={{
-                          content: {
-                            side: 'bottom',
-                            text: !canManageCustomReports
-                              ? IS_PLATFORM
+                      IS_PLATFORM ? (
+                        <ButtonTooltip
+                          variant="default"
+                          icon={<Plus />}
+                          disabled={!canManageCustomReports}
+                          onClick={() => {
+                            if (!canManageCustomReports) return
+                            setShowNewReportModal(true)
+                          }}
+                          tooltip={{
+                            content: {
+                              side: 'bottom',
+                              text: !canManageCustomReports
                                 ? 'You need additional permissions to create custom reports'
-                                : 'Custom report editing is not available in this self-hosted build yet'
-                              : undefined,
-                          },
-                        }}
-                      >
-                        New custom report
-                      </ButtonTooltip>
+                                : undefined,
+                            },
+                          }}
+                        >
+                          New custom report
+                        </ButtonTooltip>
+                      ) : undefined
                     }
                   />
                 </div>
@@ -268,36 +272,42 @@ export const ObservabilityMenu = () => {
             </div>
           </>
 
-          <UpdateCustomReportModal
-            onCancel={() => setSelectedReportToUpdate(undefined)}
-            selectedReport={selectedReportToUpdate}
-            initialValues={{
-              name: selectedReportToUpdate?.name || '',
-              description: selectedReportToUpdate?.description || '',
-            }}
-          />
+          {IS_PLATFORM && (
+            <UpdateCustomReportModal
+              onCancel={() => setSelectedReportToUpdate(undefined)}
+              selectedReport={selectedReportToUpdate}
+              initialValues={{
+                name: selectedReportToUpdate?.name || '',
+                description: selectedReportToUpdate?.description || '',
+              }}
+            />
+          )}
 
-          <ConfirmationModal
-            title="Delete custom report"
-            confirmLabel="Delete report"
-            size="medium"
-            loading={false}
-            visible={deleteModalOpen}
-            onCancel={() => setDeleteModalOpen(false)}
-            onConfirm={onConfirmDeleteReport}
-          >
-            <div className="text-sm text-foreground-light grid gap-4">
-              <div className="grid gap-1">
-                <p>Are you sure you want to delete '{selectedReportToDelete?.name}'?</p>
+          {IS_PLATFORM && (
+            <ConfirmationModal
+              title="Delete custom report"
+              confirmLabel="Delete report"
+              size="medium"
+              loading={false}
+              visible={deleteModalOpen}
+              onCancel={() => setDeleteModalOpen(false)}
+              onConfirm={onConfirmDeleteReport}
+            >
+              <div className="text-sm text-foreground-light grid gap-4">
+                <div className="grid gap-1">
+                  <p>Are you sure you want to delete '{selectedReportToDelete?.name}'?</p>
+                </div>
               </div>
-            </div>
-          </ConfirmationModal>
+            </ConfirmationModal>
+          )}
 
-          <CreateReportModal
-            visible={showNewReportModal}
-            onCancel={() => setShowNewReportModal(false)}
-            afterSubmit={() => setShowNewReportModal(false)}
-          />
+          {IS_PLATFORM && (
+            <CreateReportModal
+              visible={showNewReportModal}
+              onCancel={() => setShowNewReportModal(false)}
+              afterSubmit={() => setShowNewReportModal(false)}
+            />
+          )}
         </div>
       )}
     </div>

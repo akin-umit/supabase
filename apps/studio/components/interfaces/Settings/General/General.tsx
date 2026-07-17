@@ -114,6 +114,21 @@ export const General = () => {
       description: 'Cloud region controls are replaced by your server, Docker, and hosting panel.',
     },
     {
+      label: 'Database host',
+      value: settings?.db_host ?? 'Configured through POSTGRES_HOST',
+      description: 'Read from the Studio runtime and used by database settings surfaces.',
+    },
+    {
+      label: 'Database name',
+      value: settings?.db_name ?? 'Configured through POSTGRES_DB',
+      description: 'Read-only here; change it in Postgres and deployment configuration.',
+    },
+    {
+      label: 'REST schema',
+      value: settings?.app_config?.db_schema ?? 'Configured through PGRST_DB_SCHEMAS',
+      description: 'The first schema exposed by PostgREST for API examples and settings.',
+    },
+    {
       label: 'Dashboard auth',
       value: 'DASHBOARD_USERNAME / DASHBOARD_PASSWORD',
       description: 'Basic Auth is managed in the deployment environment, not inside Studio.',
@@ -188,7 +203,7 @@ export const General = () => {
                         source of truth in your deployment environment.
                       </p>
                     </div>
-                    <Badge variant="default">Read-only</Badge>
+                    <Badge variant="default">Runtime read-only</Badge>
                   </div>
                   <div className="divide-y rounded border text-sm">
                     {selfHostedRuntimeRows.map(({ label, value, description }) => (

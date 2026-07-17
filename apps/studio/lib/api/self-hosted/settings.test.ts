@@ -9,7 +9,6 @@ vi.mock('./util', () => ({
 vi.mock('@/lib/constants/api', () => ({
   PROJECT_ENDPOINT: 'localhost:8000',
   PROJECT_ENDPOINT_PROTOCOL: 'http',
-  PROJECT_DB_HOST: 'localhost',
 }))
 
 describe('api/self-hosted/settings', () => {
@@ -45,13 +44,13 @@ describe('api/self-hosted/settings', () => {
     it('should return correct default values', () => {
       const settings = getProjectSettings()
 
-      expect(settings.cloud_provider).toBe('AWS')
-      expect(settings.db_host).toBe('localhost')
+      expect(settings.cloud_provider).toBe('Self-hosted')
+      expect(settings.db_host).toBe('db')
       expect(settings.db_name).toBe('postgres')
       expect(settings.db_port).toBe(5432)
-      expect(settings.db_user).toBe('postgres')
+      expect(settings.db_user).toBe('supabase_admin')
       expect(settings.ref).toBe('default')
-      expect(settings.region).toBe('local')
+      expect(settings.region).toBe('self-hosted')
       expect(settings.status).toBe('ACTIVE_HEALTHY')
       expect(settings.ssl_enforced).toBe(false)
     })
@@ -93,6 +92,32 @@ describe('api/self-hosted/settings', () => {
       expect(settings.name).toBe('My Custom Project')
       expect(settings.service_api_keys[0].api_key).toBe('custom-anon-key')
       expect(settings.service_api_keys[1].api_key).toBe('custom-service-key')
+    })
+
+    it('uses self-hosted runtime database and schema env vars when set', async () => {
+      vi.stubEnv('PGRST_DB_SCHEMAS', 'public,storage,graphql_public')
+      vi.stubEnv('POSTGRES_HOST', 'postgres.internal')
+      vi.stubEnv('POSTGRES_DB', 'tenantdb')
+      vi.stubEnv('POSTGRES_PORT', '6543')
+      vi.stubEnv('POSTGRES_USER_READ_WRITE', 'operator_admin')
+      vi.stubEnv('SUPABASE_REGION', 'tr-local')
+      vi.stubEnv('JWT_SECRET', 'legacy-jwt-secret-from-runtime')
+      vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service-role-key-value')
+      vi.stubEnv('SUPABASE_SERVICE_KEY', 'old-service-key-value')
+
+      vi.resetModules()
+      const { getProjectSettings: getSettings } = await import('./settings')
+      const settings = getSettings()
+
+      expect(settings.app_config?.db_schema).toBe('public')
+      expect(settings.db_dns_name).toBe('postgres.internal')
+      expect(settings.db_host).toBe('postgres.internal')
+      expect(settings.db_name).toBe('tenantdb')
+      expect(settings.db_port).toBe(6543)
+      expect(settings.db_user).toBe('operator_admin')
+      expect(settings.region).toBe('tr-local')
+      expect(settings.jwt_secret).toBe('legacy-jwt-secret-from-runtime')
+      expect(settings.service_api_keys[1].api_key).toBe('service-role-key-value')
     })
 
     it('should use default JWT secret when not set', async () => {

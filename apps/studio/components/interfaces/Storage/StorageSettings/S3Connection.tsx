@@ -385,10 +385,8 @@ export const S3Connection = () => {
                     </TableRow>
                   </TableBody>
                 </Table>
-                <CardFooter className="justify-end">
-                  <Button disabled type="button">
-                    New access key
-                  </Button>
+                <CardFooter className="justify-end text-sm text-foreground-light">
+                  Create or rotate access keys in the Storage service environment, then redeploy.
                 </CardFooter>
               </Card>
             ) : projectIsLoading || isLoadingPermissions ? (

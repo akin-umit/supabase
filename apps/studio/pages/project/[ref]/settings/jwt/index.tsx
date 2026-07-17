@@ -76,15 +76,15 @@ const JWTSigningKeysPage: NextPageWithLayout = () => {
                 <TableCell>JWT Signing Keys</TableCell>
                 <TableCell className="font-mono text-xs">SUPABASE_JWKS</TableCell>
                 <TableCell>
-                  <Badge variant="success">Supported</Badge>
+                  <Badge variant="default">Runtime env</Badge>
                 </TableCell>
                 <TableCell>
-                  Rotate in the environment, then redeploy Auth, Kong, and REST.
+                  If configured, rotate in the environment, then redeploy Auth, Kong, and REST.
                 </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>Legacy JWT Secret</TableCell>
-                <TableCell className="font-mono text-xs">JWT_SECRET</TableCell>
+                <TableCell className="font-mono text-xs">JWT_SECRET / AUTH_JWT_SECRET</TableCell>
                 <TableCell>
                   <Badge variant="warning">Legacy</Badge>
                 </TableCell>
@@ -102,7 +102,9 @@ const JWTSigningKeysPage: NextPageWithLayout = () => {
               </TableRow>
               <TableRow>
                 <TableCell>Secret / service role key</TableCell>
-                <TableCell className="font-mono text-xs">SUPABASE_SERVICE_ROLE_KEY</TableCell>
+                <TableCell className="font-mono text-xs">
+                  SUPABASE_SERVICE_ROLE_KEY / SUPABASE_SERVICE_KEY
+                </TableCell>
                 <TableCell>
                   <Badge variant="warning">Server only</Badge>
                 </TableCell>

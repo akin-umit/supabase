@@ -174,5 +174,21 @@ describe('/api/v1/projects/[ref]/api-keys', () => {
         'secret',
       ])
     })
+
+    it('prefers SUPABASE_SERVICE_ROLE_KEY over the legacy Studio service key env name', async () => {
+      vi.stubEnv('SUPABASE_ANON_KEY', 'anon-key-value')
+      vi.stubEnv('SUPABASE_SERVICE_KEY', 'legacy-service-key-value')
+      vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service-role-key-value')
+      vi.stubEnv('SUPABASE_PUBLISHABLE_KEY', '')
+      vi.stubEnv('SUPABASE_SECRET_KEY', '')
+
+      const { req, res } = createMocks({ method: 'GET', query: { ref: 'default' } })
+      await handler(req, res)
+
+      const data = JSON.parse(res._getData())
+      expect(data.find((k: { id: string }) => k.id === 'service_role')?.api_key).toBe(
+        'service-role-key-value'
+      )
+    })
   })
 })

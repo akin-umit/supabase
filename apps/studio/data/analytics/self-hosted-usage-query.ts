@@ -8,16 +8,32 @@ import { safeSql } from '@/data/logs/safe-analytics-sql'
 import type { UseCustomQueryOptions } from '@/types'
 
 const RAW_LOG_LIMIT = 10_000
-const SERVICE_QUERIES = {
-  total_api_requests: safeSql`select timestamp, id from edge_logs order by timestamp desc limit 10000`,
+export const SELF_HOSTED_USAGE_SERVICE_QUERIES = {
+  total_api_requests: safeSql`
+    select edge_logs.timestamp, edge_logs.id
+    from edge_logs
+    cross join unnest(metadata) as m
+    cross join unnest(m.request) as request
+    where request.path is null or request.path not like '/rest/v1%'
+    order by timestamp desc
+    limit 10000
+  `,
   total_functions_requests: safeSql`select timestamp, id from function_edge_logs order by timestamp desc limit 10000`,
-  total_rest_requests: safeSql`select timestamp, id from edge_logs order by timestamp desc limit 10000`,
+  total_rest_requests: safeSql`
+    select edge_logs.timestamp, edge_logs.id
+    from edge_logs
+    cross join unnest(metadata) as m
+    cross join unnest(m.request) as request
+    where request.path like '/rest/v1%'
+    order by timestamp desc
+    limit 10000
+  `,
   total_auth_requests: safeSql`select timestamp, id from auth_logs order by timestamp desc limit 10000`,
   total_storage_requests: safeSql`select timestamp, id from storage_logs order by timestamp desc limit 10000`,
   total_realtime_requests: safeSql`select timestamp, id from realtime_logs order by timestamp desc limit 10000`,
 } as const
 
-type ServiceMetric = keyof typeof SERVICE_QUERIES
+type ServiceMetric = keyof typeof SELF_HOSTED_USAGE_SERVICE_QUERIES
 type RawLogRow = { timestamp: string; id: string }
 type RawLogResponse = { result?: RawLogRow[] }
 
@@ -55,7 +71,7 @@ export async function getSelfHostedUsage(projectRef: string, signal?: AbortSigna
     iso_timestamp_end: end.toISOString(),
   }
   const responses = await Promise.allSettled(
-    Object.entries(SERVICE_QUERIES).map(async ([metric, sql]) => {
+    Object.entries(SELF_HOSTED_USAGE_SERVICE_QUERIES).map(async ([metric, sql]) => {
       const data = await executeAnalyticsSql({
         projectRef,
         endpoint: '/platform/projects/{ref}/analytics/endpoints/logs.all',
