@@ -107,6 +107,7 @@ describe('generateAuthMenu', () => {
     expect(configGroup.items.map((item) => item.name)).toEqual([
       'Policies',
       'Sign In / Providers',
+      'Passkeys',
       'Sessions',
       'URL Configuration',
     ])

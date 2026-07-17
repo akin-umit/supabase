@@ -17,7 +17,7 @@ import type { NextPageWithLayout } from '@/types'
 
 const PasskeysPage: NextPageWithLayout = () => {
   const { hasLoaded: flagsLoaded } = useFeatureFlags()
-  const isPasskeyAuthEnabled = useFlag('enablePasskeyAuth')
+  const isPasskeyAuthEnabled = !IS_PLATFORM || useFlag('enablePasskeyAuth')
 
   const isResolvingPasskeyFlag = IS_PLATFORM && !flagsLoaded
 

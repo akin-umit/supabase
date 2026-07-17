@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
@@ -170,6 +170,7 @@ export const PasskeysSettingsForm = () => {
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canManageConfig = IS_PLATFORM && canUpdateConfig
 
   const formValues =
     isSuccess && authConfig ? buildPasskeysFormValues(authConfig, project) : undefined
@@ -232,7 +233,7 @@ export const PasskeysSettingsForm = () => {
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      disabled={!canUpdateConfig}
+                      disabled={!canManageConfig}
                     />
                   </FormControl>
                 </FormItemLayout>
@@ -253,7 +254,7 @@ export const PasskeysSettingsForm = () => {
                       description="A human-readable name for your application shown during passkey registration."
                     >
                       <FormControl>
-                        <Input {...field} placeholder="My project" />
+                        <Input {...field} placeholder="My project" disabled={!canManageConfig} />
                       </FormControl>
                     </FormItemLayout>
                   )}
@@ -270,7 +271,7 @@ export const PasskeysSettingsForm = () => {
                       description='The domain name for your application (e.g. "example.com"). This determines which passkeys can be used.'
                     >
                       <FormControl>
-                        <Input {...field} placeholder="example.com" />
+                        <Input {...field} placeholder="example.com" disabled={!canManageConfig} />
                       </FormControl>
                     </FormItemLayout>
                   )}
@@ -287,7 +288,11 @@ export const PasskeysSettingsForm = () => {
                       description='Comma-separated list of allowed origins (e.g. "https://example.com"). HTTPS is required except for localhost. Android app origins are also accepted.'
                     >
                       <FormControl>
-                        <Input {...field} placeholder="https://example.com" />
+                        <Input
+                          {...field}
+                          placeholder="https://example.com"
+                          disabled={!canManageConfig}
+                        />
                       </FormControl>
                     </FormItemLayout>
                   )}
@@ -300,14 +305,14 @@ export const PasskeysSettingsForm = () => {
             <Button
               variant="default"
               onClick={() => form.reset(buildPasskeysFormValues(authConfig, project))}
-              disabled={isPending}
+              disabled={isPending || !canManageConfig}
             >
               Cancel
             </Button>
             <Button
               variant="primary"
               type="submit"
-              disabled={!canUpdateConfig || !form.formState.isDirty}
+              disabled={!canManageConfig || !form.formState.isDirty}
               loading={isPending}
             >
               Save changes

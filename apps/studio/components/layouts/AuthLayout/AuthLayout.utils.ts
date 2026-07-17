@@ -111,6 +111,17 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
                     },
                   ]
                 : []),
+              ...(passkeysInMenu
+                ? [
+                    {
+                      name: 'Passkeys',
+                      key: 'passkeys',
+                      url: `${baseUrl}/passkeys`,
+                      label: 'Beta',
+                      shortcutId: SHORTCUT_IDS.NAV_AUTH_PASSKEYS,
+                    },
+                  ]
+                : []),
               {
                 name: 'Sessions',
                 key: 'sessions',
@@ -271,7 +282,7 @@ export const useGenerateAuthMenu = (): ProductMenuGroup[] => {
       multiFactor: authenticationMultiFactor,
       attackProtection: authenticationAttackProtection,
       performance: authenticationPerformance,
-      passkeys: enablePasskeyAuth,
+      passkeys: !IS_PLATFORM || enablePasskeyAuth,
     },
   })
 }
