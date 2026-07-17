@@ -59,7 +59,7 @@ export const BasicAuthSettingsForm = () => {
     isError,
     isSuccess,
     isPending: isLoading,
-  } = useAuthConfigQuery({ projectRef }, { enabled: IS_PLATFORM })
+  } = useAuthConfigQuery({ projectRef })
   const { mutate: updateAuthConfig, isPending: isUpdatingConfig } = useAuthConfigUpdateMutation()
 
   const { can: canReadConfig, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
@@ -70,6 +70,7 @@ export const BasicAuthSettingsForm = () => {
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canManageConfig = IS_PLATFORM && canUpdateConfig
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -120,51 +121,6 @@ export const BasicAuthSettingsForm = () => {
     )
   }
 
-  if (!IS_PLATFORM) {
-    return (
-      <PageSection>
-        <PageSectionMeta>
-          <PageSectionSummary>
-            <PageSectionTitle>User Signups</PageSectionTitle>
-          </PageSectionSummary>
-        </PageSectionMeta>
-        <PageSectionContent className="space-y-4">
-          <Card>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium">Self-hosted Auth configuration</h3>
-                <p className="text-sm text-foreground-light">
-                  Auth settings are managed by the GoTrue environment variables in your deployment.
-                  Update them in your secret manager or compose environment, then redeploy the Auth
-                  service.
-                </p>
-              </div>
-              <div className="divide-y rounded border text-sm">
-                {[
-                  ['GOTRUE_DISABLE_SIGNUP', 'Controls whether new users can sign up.'],
-                  ['GOTRUE_MAILER_AUTOCONFIRM', 'Controls whether email confirmation is required.'],
-                  ['GOTRUE_EXTERNAL_*', 'Configures OAuth and external provider credentials.'],
-                  ['GOTRUE_SITE_URL', 'Primary redirect URL for Auth flows.'],
-                  ['API_EXTERNAL_URL', 'Public Auth API URL, usually /auth/v1 on the gateway.'],
-                ].map(([name, description]) => (
-                  <div className="grid gap-2 px-4 py-3 md:grid-cols-[240px_1fr]" key={name}>
-                    <span className="font-mono text-xs text-foreground-light">{name}</span>
-                    <span>{description}</span>
-                  </div>
-                ))}
-              </div>
-              <Button asChild type="button" variant="default">
-                <Link href={`${DOCS_URL}/guides/self-hosting/auth/config`}>
-                  Open self-hosted Auth docs
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </PageSectionContent>
-      </PageSection>
-    )
-  }
-
   return (
     <PageSection>
       <PageSectionMeta>
@@ -173,6 +129,16 @@ export const BasicAuthSettingsForm = () => {
         </PageSectionSummary>
       </PageSectionMeta>
       <PageSectionContent>
+        {!IS_PLATFORM && (
+          <Alert className="mb-4">
+            <AlertTitle>Self-hosted Auth configuration</AlertTitle>
+            <AlertDescription>
+              These controls mirror your current GoTrue environment values. Change them in your
+              deployment environment, then redeploy the Auth service.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {isError && (
           <AlertError
             error={authConfigError}
@@ -222,7 +188,7 @@ export const BasicAuthSettingsForm = () => {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            disabled={!canUpdateConfig}
+                            disabled={!canManageConfig}
                           />
                         </FormControl>
                       </FormItemLayout>
@@ -255,7 +221,7 @@ export const BasicAuthSettingsForm = () => {
                             <Switch
                               checked={field.value}
                               onCheckedChange={field.onChange}
-                              disabled={!canUpdateConfig}
+                              disabled={!canManageConfig}
                             />
                           </FormControl>
                         </FormItemLayout>
@@ -288,7 +254,7 @@ export const BasicAuthSettingsForm = () => {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            disabled={!canUpdateConfig}
+                            disabled={!canManageConfig}
                           />
                         </FormControl>
                       </FormItemLayout>
@@ -368,7 +334,7 @@ export const BasicAuthSettingsForm = () => {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            disabled={!canUpdateConfig}
+                            disabled={!canManageConfig}
                           />
                         </FormControl>
                       </FormItemLayout>
@@ -384,7 +350,7 @@ export const BasicAuthSettingsForm = () => {
                   <Button
                     variant="primary"
                     type="submit"
-                    disabled={!canUpdateConfig || isUpdatingConfig || !isDirty}
+                    disabled={!canManageConfig || isUpdatingConfig || !isDirty}
                     loading={isUpdatingConfig}
                   >
                     Save changes
