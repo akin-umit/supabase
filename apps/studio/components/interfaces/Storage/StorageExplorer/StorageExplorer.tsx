@@ -16,7 +16,6 @@ import { useStorageExplorerShortcuts } from './useStorageExplorerShortcuts'
 import { useStoragePreference } from './useStoragePreference'
 import { useProjectStorageConfigQuery } from '@/data/config/project-storage-config-query'
 import type { Bucket } from '@/data/storage/buckets-query'
-import { IS_PLATFORM } from '@/lib/constants'
 import { useStorageExplorerStateSnapshot } from '@/state/storage-explorer'
 
 export const StorageExplorer = () => {
@@ -44,7 +43,7 @@ export const StorageExplorer = () => {
   } = useStorageExplorerStateSnapshot()
   const { view } = useStoragePreference(projectRef)
 
-  useProjectStorageConfigQuery({ projectRef: ref }, { enabled: IS_PLATFORM })
+  useProjectStorageConfigQuery({ projectRef: ref })
   const { data: bucket, isLoading: isBucketQueryLoading } = useSelectedBucket()
 
   // Detect when transitioning between buckets to avoid showing stale content from the previous bucket.

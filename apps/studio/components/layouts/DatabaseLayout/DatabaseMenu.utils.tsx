@@ -93,13 +93,13 @@ export const useGenerateDatabaseMenu = (): ProductMenuGroup[] => {
           url: getDatabaseURL('policies'),
           shortcutId: SHORTCUT_IDS.NAV_DATABASE_POLICIES,
         },
-        showRoles && {
+        (!IS_PLATFORM || showRoles) && {
           name: 'Roles',
           key: 'roles',
           url: getDatabaseURL('roles'),
           shortcutId: SHORTCUT_IDS.NAV_DATABASE_ROLES,
         },
-        columnLevelPrivileges && {
+        (!IS_PLATFORM || columnLevelPrivileges) && {
           name: 'Column Privileges',
           key: 'column-privileges',
           url: getDatabaseURL('column-privileges'),
@@ -121,15 +121,14 @@ export const useGenerateDatabaseMenu = (): ProductMenuGroup[] => {
     {
       title: 'Platform',
       items: [
-        IS_PLATFORM &&
-          showPgReplicate && {
+        (!IS_PLATFORM || showPgReplicate) && {
             name: 'Replication',
             key: 'replication',
             url: getDatabaseURL('replication'),
-            label: enablePgReplicate ? 'New' : undefined,
+            label: !IS_PLATFORM || enablePgReplicate ? 'New' : undefined,
             shortcutId: SHORTCUT_IDS.NAV_DATABASE_REPLICATION,
           },
-        IS_PLATFORM && {
+        {
           name: 'Backups',
           key: 'backups',
           url: pitrEnabled ? getDatabaseURL('backups/pitr') : getDatabaseURL('backups/scheduled'),

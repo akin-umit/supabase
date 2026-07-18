@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
 import { apiWrapper } from '@/lib/api/apiWrapper'
-import { getSelfHostedRealtimeConfig } from '@/lib/api/self-hosted/realtime'
+import { getSelfHostedStorageConfig } from '@/lib/api/self-hosted/storage'
 import { IS_PLATFORM } from '@/lib/constants'
 
 export default (req: NextApiRequest, res: NextApiResponse) => apiWrapper(req, res, handler)
@@ -11,7 +11,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   switch (method) {
     case 'GET':
-      return handleGet(req, res)
+      return handleGet(res)
     case 'PATCH':
       return handlePatch(req, res)
     default:
@@ -20,27 +20,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-const handleGet = async (_req: NextApiRequest, res: NextApiResponse) => {
+const handleGet = async (res: NextApiResponse) => {
   if (IS_PLATFORM) {
     return res
       .status(404)
-      .json({ error: { message: 'Realtime self-hosted config is not available on platform' } })
+      .json({ error: { message: 'Storage self-hosted config is not available on platform' } })
   }
 
-  return res.status(200).json(getSelfHostedRealtimeConfig())
+  return res.status(200).json(getSelfHostedStorageConfig())
 }
 
 const handlePatch = async (_req: NextApiRequest, res: NextApiResponse) => {
   if (IS_PLATFORM) {
     return res
       .status(404)
-      .json({ error: { message: 'Realtime self-hosted config is not available on platform' } })
+      .json({ error: { message: 'Storage self-hosted config is not available on platform' } })
   }
 
   return res.status(405).json({
     error: {
       message:
-        'Realtime settings are managed by the self-hosted runtime environment. Update Compose or your secret manager, then redeploy Realtime.',
+        'Storage settings are managed by the self-hosted runtime environment. Update Compose or your secret manager, then redeploy Storage.',
     },
   })
 }

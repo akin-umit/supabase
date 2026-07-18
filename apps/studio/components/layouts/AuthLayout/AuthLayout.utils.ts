@@ -52,17 +52,13 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
           items: [],
           shortcutId: SHORTCUT_IDS.NAV_AUTH_USERS,
         },
-        ...(isPlatform
-          ? [
-              {
-                name: 'OAuth Apps',
-                key: 'oauth-apps',
-                url: `${baseUrl}/oauth-apps`,
-                items: [],
-                shortcutId: SHORTCUT_IDS.NAV_AUTH_OAUTH_APPS,
-              },
-            ]
-          : []),
+        {
+          name: 'OAuth Apps',
+          key: 'oauth-apps',
+          url: `${baseUrl}/oauth-apps`,
+          items: [],
+          shortcutId: SHORTCUT_IDS.NAV_AUTH_OAUTH_APPS,
+        },
       ],
     },
     ...(features.emails && (isPlatform || showSelfHostedCoreConfiguration)
@@ -123,6 +119,13 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
                   ]
                 : []),
               {
+                name: 'OAuth Server',
+                key: 'oauth-server',
+                url: `${baseUrl}/oauth-server`,
+                label: 'Beta',
+                shortcutId: SHORTCUT_IDS.NAV_AUTH_OAUTH_SERVER,
+              },
+              {
                 name: 'Sessions',
                 key: 'sessions',
                 url: `${baseUrl}/sessions`,
@@ -169,6 +172,21 @@ export function generateAuthMenu(options: GenerateAuthMenuOptions): ProductMenuG
                     },
                   ]
                 : []),
+              {
+                name: 'Auth Hooks',
+                key: 'hooks',
+                url: `${baseUrl}/hooks`,
+                items: [],
+                label: 'Beta',
+                shortcutId: SHORTCUT_IDS.NAV_AUTH_HOOKS,
+              },
+              {
+                name: 'Audit Logs',
+                key: 'audit-logs',
+                url: `${baseUrl}/audit-logs`,
+                items: [],
+                shortcutId: SHORTCUT_IDS.NAV_AUTH_AUDIT_LOGS,
+              },
               ...(features.performance
                 ? [
                     {

@@ -16,7 +16,7 @@ vi.mock('@/lib/constants', async () => {
 })
 
 vi.mock('common', () => ({
-  useFlag: vi.fn().mockReturnValue(false),
+  useFlag: vi.fn().mockReturnValue(true),
   useParams: vi.fn().mockReturnValue({ ref: 'project-ref' }),
 }))
 
@@ -101,26 +101,29 @@ describe('useGenerateSettingsMenu (self-hosted)', () => {
     expect(integrationsGroup?.items.some((item) => item.key === 'vault')).toBe(true)
   })
 
-  it('links dashboard preferences to the self-hosted account settings surface', () => {
+  it('links dashboard preferences to the project settings surface', () => {
     const { result } = renderHook(() => useGenerateSettingsMenu())
     const configGroup = result.current.find((group) => group.title === 'Configuration')
     const dashboardItem = configGroup?.items.find((item) => item.key === 'dashboard')
 
     expect(dashboardItem?.name).toBe('Dashboard Preferences')
-    expect(dashboardItem?.url).toBe('/account/me#dashboard')
+    expect(dashboardItem?.url).toBe('/project/project-ref/settings/dashboard')
   })
 
-  it('does not include platform-only settings in self-hosted mode', () => {
+  it('includes the standard project settings surfaces in self-hosted mode', () => {
     const { result } = renderHook(() => useGenerateSettingsMenu())
     const configGroup = result.current.find((group) => group.title === 'Configuration')
 
-    expect(configGroup?.items.some((item) => item.key === 'compute-and-disk')).toBe(false)
-    expect(configGroup?.items.some((item) => item.key === 'infrastructure')).toBe(false)
-    expect(configGroup?.items.some((item) => item.key === 'addons')).toBe(false)
+    expect(configGroup?.items.some((item) => item.key === 'compute-and-disk')).toBe(true)
+    expect(configGroup?.items.some((item) => item.key === 'infrastructure')).toBe(true)
+    expect(configGroup?.items.some((item) => item.key === 'integrations')).toBe(true)
+    expect(configGroup?.items.some((item) => item.key === 'addons')).toBe(true)
   })
 
-  it('does not include billing group in self-hosted mode', () => {
+  it('includes billing links in self-hosted mode', () => {
     const { result } = renderHook(() => useGenerateSettingsMenu())
-    expect(result.current.some((group) => group.title === 'Billing')).toBe(false)
+    const billingGroup = result.current.find((group) => group.title === 'Billing')
+
+    expect(billingGroup?.items.map((item) => item.key)).toEqual(['subscription', 'usage'])
   })
 })

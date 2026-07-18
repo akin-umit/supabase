@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -22,7 +21,6 @@ import {
   SelectValue,
   Switch,
 } from 'ui'
-import { Admonition } from 'ui-patterns/admonition'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import { PageSection, PageSectionContent } from 'ui-patterns/PageSection'
@@ -75,6 +73,8 @@ export const StorageSettings = () => {
     PermissionAction.STORAGE_ADMIN_WRITE,
     '*'
   )
+  const canReadStorageSurface = !IS_PLATFORM || canReadStorageSettings
+  const canUpdateStorageSurface = IS_PLATFORM && canUpdateStorageSettings
 
   const {
     data: config,
@@ -108,9 +108,11 @@ export const StorageSettings = () => {
   } = useCheckEntitlements('storage.image_transformations')
 
   const isSpendCapOn =
-    organization?.plan.id === 'pro' && organization?.usage_billing_enabled === false
+    IS_PLATFORM && organization?.plan.id === 'pro' && organization?.usage_billing_enabled === false
+  const canConfigureFileSize = !IS_PLATFORM || hasAccessToFileSizeConfiguration
+  const canUseImageTransformations = !IS_PLATFORM || hasAccessToImageTransformations
   const hasLimitedStorageAccess =
-    !hasAccessToImageTransformations && !hasAccessToFileSizeConfiguration
+    IS_PLATFORM && !hasAccessToImageTransformations && !hasAccessToFileSizeConfiguration
 
   const [isUpdating, setIsUpdating] = useState(false)
   const [initialValues, setInitialValues] = useState<StorageSettingsState>({
@@ -120,7 +122,7 @@ export const StorageSettings = () => {
   })
 
   const maxBytes = useMemo(() => {
-    if (organization?.usage_billing_enabled || isEntitlementUnlimited()) {
+    if (!IS_PLATFORM || organization?.usage_billing_enabled || isEntitlementUnlimited()) {
       return STORAGE_FILE_SIZE_LIMIT_MAX_BYTES_UNCAPPED
     } else {
       return getEntitlementNumericValue() ?? STORAGE_FILE_SIZE_LIMIT_MAX_BYTES_CAPPED
@@ -230,7 +232,7 @@ export const StorageSettings = () => {
       const { fileSizeLimit, features } = config
       const { value, unit } = convertFromBytes(fileSizeLimit ?? 0)
       const imageTransformationEnabled =
-        features?.imageTransformation?.enabled ?? hasAccessToImageTransformations
+        features?.imageTransformation?.enabled ?? canUseImageTransformations
 
       setInitialValues({
         fileSizeLimit: value,
@@ -246,86 +248,18 @@ export const StorageSettings = () => {
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, config, isLoading, hasAccessToImageTransformations])
+  }, [isSuccess, config, isLoading, canUseImageTransformations])
 
   return (
     <PageContainer>
       <PageSection>
         <PageSectionContent className="flex flex-col gap-y-8">
           <Form {...form}>
-            {!IS_PLATFORM ? (
-              <Card>
-                <CardContent className="space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <Admonition
-                      className="flex-1"
-                      type="default"
-                      title="Self-hosted Storage runtime settings"
-                      description="Storage limits, image transformation, backend paths, and S3 access are controlled by environment variables and docker-compose values in self-hosted deployments."
-                    />
-                    <Badge variant="default">Operator managed</Badge>
-                  </div>
-                  <div className="grid gap-3 text-sm md:grid-cols-2">
-                    <div className="rounded border bg-surface-100 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-medium">Global file size limit</p>
-                        <Badge variant="default">Read-only</Badge>
-                      </div>
-                      <p className="mt-2 font-mono text-xs text-foreground-light">
-                        FILE_SIZE_LIMIT
-                      </p>
-                      <p className="mt-2 text-foreground-light">
-                        Change this in the Storage service environment and redeploy. Per-bucket
-                        limits remain visible from the Files view.
-                      </p>
-                    </div>
-                    <div className="rounded border bg-surface-100 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-medium">Image transformations</p>
-                        <Badge variant="default">Runtime</Badge>
-                      </div>
-                      <p className="mt-2 font-mono text-xs text-foreground-light">
-                        IMGPROXY_ENABLE_WEBP_DETECTION
-                      </p>
-                      <p className="mt-2 text-foreground-light">
-                        Configure imgproxy and Storage service values together before enabling
-                        production image resizing.
-                      </p>
-                    </div>
-                    <div className="rounded border bg-surface-100 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-medium">Storage backend</p>
-                        <Badge variant="success">Required</Badge>
-                      </div>
-                      <p className="mt-2 font-mono text-xs text-foreground-light">
-                        STORAGE_BACKEND / FILE_STORAGE_BACKEND_PATH
-                      </p>
-                      <p className="mt-2 text-foreground-light">
-                        Keep persistent volumes mounted before redeploying so buckets and objects do
-                        not disappear.
-                      </p>
-                    </div>
-                    <div className="rounded border bg-surface-100 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-medium">S3 protocol</p>
-                        <Badge variant="success">Supported</Badge>
-                      </div>
-                      <p className="mt-2 font-mono text-xs text-foreground-light">
-                        S3_PROTOCOL_ACCESS_KEY_ID
-                      </p>
-                      <p className="mt-2 text-foreground-light">
-                        Pair this with S3_PROTOCOL_ACCESS_KEY_SECRET and the /storage/v1/s3
-                        endpoint.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : isLoading ? (
+            {isLoading ? (
               <GenericSkeletonLoader />
             ) : (
               <>
-                {!canReadStorageSettings && (
+                {!canReadStorageSurface && (
                   <NoPermission resourceText="view storage upload limit settings" />
                 )}
                 {isError && (
@@ -361,9 +295,9 @@ export const StorageSettings = () => {
                                 <Switch
                                   size="large"
                                   disabled={
-                                    !hasAccessToImageTransformations || !canUpdateStorageSettings
+                                    !canUseImageTransformations || !canUpdateStorageSurface
                                   }
-                                  checked={hasAccessToImageTransformations && field.value}
+                                  checked={canUseImageTransformations && field.value}
                                   onCheckedChange={field.onChange}
                                 />
                               </FormControl>
@@ -410,7 +344,7 @@ export const StorageSettings = () => {
                                     }}
                                     className="w-32 rounded-r-none border-r-0"
                                     disabled={
-                                      !hasAccessToFileSizeConfiguration || !canUpdateStorageSettings
+                                      !canConfigureFileSize || !canUpdateStorageSurface
                                     }
                                   />
                                   <FormField
@@ -424,8 +358,7 @@ export const StorageSettings = () => {
                                           form.clearErrors('fileSizeLimit')
                                         }}
                                         disabled={
-                                          !hasAccessToFileSizeConfiguration ||
-                                          !canUpdateStorageSettings
+                                          !canConfigureFileSize || !canUpdateStorageSurface
                                         }
                                       >
                                         <SelectTrigger className="w-[90px] text-xs font-mono rounded-l-none bg-surface-300">
@@ -437,7 +370,7 @@ export const StorageSettings = () => {
                                           {Object.values(StorageSizeUnits).map((unit: string) => (
                                             <SelectItem
                                               key={unit}
-                                              disabled={!hasAccessToFileSizeConfiguration}
+                                              disabled={!canConfigureFileSize}
                                               value={unit}
                                             >
                                               {unit}
@@ -495,10 +428,12 @@ export const StorageSettings = () => {
                         />
                       )}
 
-                      {!canUpdateStorageSettings && (
+                      {!canUpdateStorageSurface && (
                         <CardContent>
                           <p className="text-sm text-foreground-light">
-                            You need additional permissions to update storage settings
+                            {!IS_PLATFORM
+                              ? 'Storage settings are managed by the self-hosted runtime environment.'
+                              : 'You need additional permissions to update storage settings'}
                           </p>
                         </CardContent>
                       )}
@@ -510,7 +445,7 @@ export const StorageSettings = () => {
                             type="reset"
                             onClick={() => form.reset()}
                             disabled={
-                              !form.formState.isDirty || !canUpdateStorageSettings || isUpdating
+                              !form.formState.isDirty || !canUpdateStorageSurface || isUpdating
                             }
                           >
                             Cancel
@@ -521,7 +456,7 @@ export const StorageSettings = () => {
                           type="submit"
                           loading={isUpdating}
                           disabled={
-                            !canUpdateStorageSettings || isUpdating || !form.formState.isDirty
+                            !canUpdateStorageSurface || isUpdating || !form.formState.isDirty
                           }
                         >
                           Save

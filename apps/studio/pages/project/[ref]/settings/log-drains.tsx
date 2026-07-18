@@ -5,22 +5,12 @@ import { cloneElement, useState, type ReactElement } from 'react'
 import { toast } from 'sonner'
 import {
   Alert,
-  Badge,
   Button,
-  Card,
-  CardContent,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from 'ui'
-import { Admonition } from 'ui-patterns/admonition'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
@@ -32,7 +22,6 @@ import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { PageLayout } from '@/components/layouts/PageLayout/PageLayout'
 import SettingsLayout from '@/components/layouts/ProjectSettingsLayout/SettingsLayout'
 import { ScaffoldContainer, ScaffoldSection } from '@/components/layouts/Scaffold'
-import { AlertError } from '@/components/ui/AlertError'
 import { DocsButton } from '@/components/ui/DocsButton'
 import { Shortcut } from '@/components/ui/Shortcut'
 import {
@@ -65,17 +54,14 @@ const LogDrainsSettings: NextPageWithLayout = () => {
 
   const { hasAccess: hasAccessToLogDrains, isLoading: isLoadingEntitlement } =
     useCheckEntitlements('log_drains')
+  const hasLogDrainSurfaceAccess = hasAccessToLogDrains || !IS_PLATFORM
+  const canManageLogDrainSurface = canManageLogDrains || !IS_PLATFORM
 
   const enabledDrainTypes = useEnabledLogDrainTypes()
 
-  const {
-    data: logDrains,
-    isPending: isLoadingLogDrains,
-    isError: isErrorLogDrains,
-    error: logDrainsError,
-  } = useLogDrainsQuery(
+  const { data: logDrains } = useLogDrainsQuery(
     { ref },
-    { enabled: !isLoadingEntitlement && (hasAccessToLogDrains || !IS_PLATFORM) }
+    { enabled: !isLoadingEntitlement && hasLogDrainSurfaceAccess }
   )
 
   const { mutate: createLogDrain, isPending: createLoading } = useCreateLogDrainMutation({
@@ -120,92 +106,6 @@ const LogDrainsSettings: NextPageWithLayout = () => {
     setSelectedLogDrain(null)
     setMode('create')
     setOpen(true)
-  }
-
-  const selfHostedContent = (
-    <ScaffoldSection isFullWidth id="log-drains" className="gap-6">
-      <ScaffoldContainer className="flex flex-col gap-6" bottomPadding>
-        <Admonition
-          type="default"
-          title="Log drains are operator managed in self-hosted Studio"
-          description={
-            <p>
-              Studio can read Logflare drain destinations when{' '}
-              <code className="text-code-inline">LOGFLARE_URL</code> and{' '}
-              <code className="text-code-inline">LOGFLARE_PRIVATE_ACCESS_TOKEN</code> are available
-              to the runtime. Creating, updating, deleting, and billing actions remain explicit
-              operator tasks.
-            </p>
-          }
-          actions={<DocsButton href={`${DOCS_URL}/guides/telemetry/log-drains`} />}
-        />
-
-        <Card>
-          <CardContent className="space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-sm font-medium">Runtime log drain status</h3>
-                <p className="text-sm text-foreground-light">
-                  Existing destinations are listed only when the self-hosted analytics API can read
-                  them from Logflare.
-                </p>
-              </div>
-              <Badge variant="default">Read-only</Badge>
-            </div>
-            {isLoadingLogDrains ? (
-              <GenericSkeletonLoader />
-            ) : isErrorLogDrains ? (
-              <AlertError subject="Failed to load log drains" error={logDrainsError} />
-            ) : logDrains && logDrains.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Destination</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logDrains.map((drain) => (
-                    <TableRow key={drain.id}>
-                      <TableCell className="font-medium">{drain.name}</TableCell>
-                      <TableCell className="text-foreground-light">
-                        {drain.description || '-'}
-                      </TableCell>
-                      <TableCell className="text-foreground-light">{drain.type}</TableCell>
-                      <TableCell>
-                        <Badge variant="default">Operator managed</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="rounded border bg-surface-100 p-4 text-sm">
-                <p className="font-medium">No readable log drains found</p>
-                <p className="mt-1 text-foreground-light">
-                  Configure destinations in Logflare or your deployment platform, then expose the
-                  Logflare URL and private access token to Studio for read-only visibility.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </ScaffoldContainer>
-    </ScaffoldSection>
-  )
-
-  if (!IS_PLATFORM) {
-    return (
-      <PageLayout
-        title="Log Drains"
-        subtitle="Read-only view of self-hosted log drain destinations"
-        secondaryActions={<DocsButton href={`${DOCS_URL}/guides/telemetry/log-drains`} />}
-      >
-        {selfHostedContent}
-      </PageLayout>
-    )
   }
 
   const content = (
@@ -255,7 +155,7 @@ const LogDrainsSettings: NextPageWithLayout = () => {
 
         {isLoadingPermissions ? (
           <GenericSkeletonLoader />
-        ) : !canManageLogDrains ? (
+        ) : !canManageLogDrainSurface ? (
           <Alert variant="default">You do not have permission to manage log drains</Alert>
         ) : (
           <LogDrains onUpdateDrainClick={handleUpdateClick} onNewDrainClick={handleNewClick} />
@@ -297,7 +197,7 @@ const LogDrainsSettings: NextPageWithLayout = () => {
   )
 
   // [kemal]: Ordinarily <PageLayout /> would be bundled with the getLayout function below, however in this case we need access to some bits for the "Add destination" button to render as part of the in-built page header in <PageLayout />.
-  if (!isLoadingEntitlement && hasAccessToLogDrains) {
+  if (!isLoadingEntitlement && hasLogDrainSurfaceAccess) {
     return (
       <PageLayout
         title="Log Drains"
@@ -309,12 +209,12 @@ const LogDrainsSettings: NextPageWithLayout = () => {
                 <Shortcut
                   id={SHORTCUT_IDS.LOG_DRAINS_ADD_DESTINATION}
                   onTrigger={handleAddDestinationClick}
-                  options={{ enabled: hasAccessToLogDrains && canManageLogDrains }}
+                  options={{ enabled: hasLogDrainSurfaceAccess && canManageLogDrainSurface }}
                   side="bottom"
                   tooltipOpen={open ? false : undefined}
                 >
                   <Button
-                    disabled={!hasAccessToLogDrains || !canManageLogDrains}
+                    disabled={!hasLogDrainSurfaceAccess || !canManageLogDrainSurface}
                     onClick={handleAddDestinationClick}
                     variant="primary"
                     className="rounded-r-none px-3"

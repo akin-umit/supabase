@@ -1,10 +1,9 @@
-import { zodResolver } from '@hookform/resolvers/zod'
+﻿import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { IS_PLATFORM, useParams } from 'common'
+import { useParams } from 'common'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -29,20 +28,15 @@ import * as z from 'zod'
 
 import { AVAILABLE_REPLICA_REGIONS } from '../Infrastructure/InfrastructureConfiguration/InstanceConfiguration.constants'
 import { ProjectAccessSection } from './ProjectAccessSection'
-import { DocsButton } from '@/components/ui/DocsButton'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { useBranchesQuery } from '@/data/branches/branches-query'
-import { useProjectSettingsV2Query } from '@/data/config/project-settings-v2-query'
 import { useProjectUpdateMutation } from '@/data/projects/project-update-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
-import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
 
 export const General = () => {
   const { ref } = useParams()
   const { data: project } = useSelectedProjectQuery()
-  const { data: settings } = useProjectSettingsV2Query({ projectRef: ref })
   const isBranch = Boolean(project?.parent_project_ref)
   const entityLabel = isBranch ? 'Branch' : 'Project'
 
@@ -89,164 +83,6 @@ export const General = () => {
           toast.success('Successfully saved settings')
         },
       }
-    )
-  }
-
-  const { isCli, isSelfHosted } = useDeploymentMode()
-  const protocol = settings?.app_config?.protocol ?? 'https'
-  const endpoint = settings?.app_config?.endpoint
-  const publicUrl = endpoint ? `${protocol}://${endpoint}` : undefined
-
-  const selfHostedRuntimeRows = [
-    {
-      label: 'Public project URL',
-      value: publicUrl ?? 'Configured through SUPABASE_PUBLIC_URL',
-      description: 'Shown in Connect, client setup, Auth callbacks, and public API examples.',
-    },
-    {
-      label: 'Project ref',
-      value: project?.ref ?? ref ?? 'default',
-      description: 'Used by Studio routing and self-hosted API paths.',
-    },
-    {
-      label: 'Region / runtime',
-      value: project?.region ?? 'self-hosted',
-      description: 'Cloud region controls are replaced by your server, Docker, and hosting panel.',
-    },
-    {
-      label: 'Database host',
-      value: settings?.db_host ?? 'Configured through POSTGRES_HOST',
-      description: 'Read from the Studio runtime and used by database settings surfaces.',
-    },
-    {
-      label: 'Database name',
-      value: settings?.db_name ?? 'Configured through POSTGRES_DB',
-      description: 'Read-only here; change it in Postgres and deployment configuration.',
-    },
-    {
-      label: 'REST schema',
-      value: settings?.app_config?.db_schema ?? 'Configured through PGRST_DB_SCHEMAS',
-      description: 'The first schema exposed by PostgREST for API examples and settings.',
-    },
-    {
-      label: 'Dashboard auth',
-      value: 'DASHBOARD_USERNAME / DASHBOARD_PASSWORD',
-      description: 'Basic Auth is managed in the deployment environment, not inside Studio.',
-    },
-  ]
-
-  if (!IS_PLATFORM) {
-    return (
-      <PageSection>
-        <PageSectionMeta>
-          <PageSectionSummary>
-            <PageSectionTitle>General settings</PageSectionTitle>
-          </PageSectionSummary>
-        </PageSectionMeta>
-        <PageSectionContent className="space-y-4">
-          {project === undefined ? (
-            <Card>
-              <CardContent>
-                <GenericSkeletonLoader />
-              </CardContent>
-            </Card>
-          ) : (
-            <Form {...form}>
-              <Card>
-                <CardContent>
-                  <FormItemLayout
-                    layout="flex-row-reverse"
-                    label="Project name"
-                    className="[&>div]:md:w-1/2 [&>div>div]:md:w-full"
-                  >
-                    <Input readOnly value={project.name ?? ''} />
-                  </FormItemLayout>
-                </CardContent>
-              </Card>
-            </Form>
-          )}
-          {isCli && (
-            <Admonition
-              type="default"
-              title="Local development with the Supabase CLI"
-              description={
-                <p>
-                  Project settings are configured in{' '}
-                  <code className="text-code-inline">supabase/config.toml</code> — applied on{' '}
-                  <code className="text-code-inline">supabase start</code>.
-                </p>
-              }
-              actions={<DocsButton href={`${DOCS_URL}/guides/local-development`} />}
-            />
-          )}
-          {isSelfHosted && (
-            <>
-              <Admonition
-                type="default"
-                title="Self-hosted Supabase"
-                description={
-                  <p>
-                    Project settings are configured via environment variables and your deployment
-                    platform. Update secrets in the deployment environment, then redeploy affected
-                    services.
-                  </p>
-                }
-                actions={<DocsButton href={`${DOCS_URL}/guides/self-hosting`} />}
-              />
-              <Card>
-                <CardContent className="space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium">Self-hosted runtime settings</h3>
-                      <p className="text-sm text-foreground-light">
-                        These values mirror the Cloud project settings surface while keeping the
-                        source of truth in your deployment environment.
-                      </p>
-                    </div>
-                    <Badge variant="default">Runtime read-only</Badge>
-                  </div>
-                  <div className="divide-y rounded border text-sm">
-                    {selfHostedRuntimeRows.map(({ label, value, description }) => (
-                      <div className="grid gap-3 px-4 py-3 md:grid-cols-[220px_1fr]" key={label}>
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-foreground-light">
-                            {label}
-                          </p>
-                          <PasswordInput copy readOnly size="small" value={value} />
-                        </div>
-                        <span className="self-center">{description}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid gap-3 text-sm md:grid-cols-3">
-                    <div className="rounded border bg-surface-100 p-4">
-                      <p className="font-medium">Domains</p>
-                      <p className="mt-1 text-foreground-light">
-                        Change public URLs in Coolify, reverse proxy, DNS, and Compose environment
-                        values.
-                      </p>
-                    </div>
-                    <div className="rounded border bg-surface-100 p-4">
-                      <p className="font-medium">Ownership</p>
-                      <p className="mt-1 text-foreground-light">
-                        Team access is controlled by your dashboard auth, Git repository, and host
-                        operator accounts.
-                      </p>
-                    </div>
-                    <div className="rounded border bg-surface-100 p-4">
-                      <p className="font-medium">Lifecycle</p>
-                      <p className="mt-1 text-foreground-light">
-                        Pause, restore, backup, and delete actions happen at container and volume
-                        level.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </PageSectionContent>
-      </PageSection>
     )
   }
 

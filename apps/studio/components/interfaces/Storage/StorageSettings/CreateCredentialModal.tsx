@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -47,7 +47,8 @@ export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentia
 
   const { data: config } = useProjectStorageConfigQuery({ projectRef })
   const isS3ConnectionEnabled = config?.features.s3Protocol.enabled
-  const disableCreation = !isProjectActive || !canCreateCredentials || !isS3ConnectionEnabled
+  const canCreateCredentialsSurface = IS_PLATFORM && canCreateCredentials
+  const disableCreation = !isProjectActive || !canCreateCredentialsSurface || !isS3ConnectionEnabled
 
   const FormSchema = z.object({
     description: z.string().min(3, {
@@ -103,8 +104,10 @@ export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentia
               ? 'Restore your project to create new access keys'
               : !isS3ConnectionEnabled
                 ? 'Connection via S3 protocol is currently disabled'
-                : !canCreateCredentials
-                  ? 'You need additional permissions to create new access keys'
+                : !canCreateCredentialsSurface
+                  ? IS_PLATFORM
+                    ? 'You need additional permissions to create new access keys'
+                    : 'Create or rotate S3 access keys in the self-hosted runtime environment'
                   : ''}
           </TooltipContent>
         )}

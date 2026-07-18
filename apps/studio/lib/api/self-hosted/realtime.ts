@@ -22,7 +22,7 @@ export type SelfHostedRealtimeConfig = {
   max_presence_events_per_second: number
   max_payload_size_in_kb: number
   suspend: boolean
-  read_only: true
+  read_only: boolean
   sources: Record<string, string>
 }
 

@@ -7,7 +7,6 @@ import {
   PageHeaderSummary,
   PageHeaderTitle,
 } from 'ui-patterns/PageHeader'
-import { PageSection, PageSectionContent } from 'ui-patterns/PageSection'
 
 import { useIsJitDbAccessEnabled } from '@/components/interfaces/App/FeaturePreview/FeaturePreviewContext'
 import { DiskManagementPanelForm } from '@/components/interfaces/DiskManagement/DiskManagementPanelForm'
@@ -20,13 +19,11 @@ import { DiskSizeConfiguration } from '@/components/interfaces/Settings/Database
 import { JitDbAccessConfiguration } from '@/components/interfaces/Settings/Database/JitDatabaseAccess/JitDbAccessConfiguration'
 import { NetworkRestrictions } from '@/components/interfaces/Settings/Database/NetworkRestrictions/NetworkRestrictions'
 import { PoolingModesModal } from '@/components/interfaces/Settings/Database/PoolingModesModal'
-import { SettingsDatabaseEmptyStateLocal } from '@/components/interfaces/Settings/Database/SettingsDatabaseEmptyStateLocal'
 import { SSLConfiguration } from '@/components/interfaces/Settings/Database/SSLConfiguration'
 import DatabaseLayout from '@/components/layouts/DatabaseLayout/DatabaseLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useIsAwsCloudProvider, useIsAwsK8sCloudProvider } from '@/hooks/misc/useSelectedProject'
-import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const DatabaseSettings: NextPageWithLayout = () => {
@@ -49,35 +46,23 @@ const DatabaseSettings: NextPageWithLayout = () => {
           </PageHeaderSummary>
         </PageHeaderMeta>
       </PageHeader>
-      {IS_PLATFORM ? (
-        <>
-          <PageContainer size="small" className="flex flex-col gap-8 pb-12">
-            <DatabaseReadOnlyAlert />
-            <ResetDbPassword />
-            {jitDbAccessEnabled && <JitDbAccessConfiguration />}
-            <ConnectionPooling />
-            <SSLConfiguration />
-            {showNewDiskManagementUI ? (
-              // This form is hidden if Disk and Compute form is enabled, new form is on ./settings/compute-and-disk
-              <DiskManagementPanelForm />
-            ) : (
-              <DiskSizeConfiguration />
-            )}
-            {databaseNetworkRestrictions && <NetworkRestrictions />}
-            {databaseLogsConfigurationEnabled && <ConnectionLogging />}
-            <BannedIPs />
-          </PageContainer>
-          <PoolingModesModal />
-        </>
-      ) : (
-        <PageContainer size="small" className="pb-12">
-          <PageSection>
-            <PageSectionContent className="space-y-4 md:space-y-8">
-              <SettingsDatabaseEmptyStateLocal />
-            </PageSectionContent>
-          </PageSection>
-        </PageContainer>
-      )}
+      <PageContainer size="small" className="flex flex-col gap-8 pb-12">
+        <DatabaseReadOnlyAlert />
+        <ResetDbPassword />
+        {jitDbAccessEnabled && <JitDbAccessConfiguration />}
+        <ConnectionPooling />
+        <SSLConfiguration />
+        {showNewDiskManagementUI ? (
+          // This form is hidden if Disk and Compute form is enabled, new form is on ./settings/compute-and-disk
+          <DiskManagementPanelForm />
+        ) : (
+          <DiskSizeConfiguration />
+        )}
+        {databaseNetworkRestrictions && <NetworkRestrictions />}
+        {databaseLogsConfigurationEnabled && <ConnectionLogging />}
+        <BannedIPs />
+      </PageContainer>
+      <PoolingModesModal />
     </>
   )
 }

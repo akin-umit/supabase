@@ -17,12 +17,10 @@ export const useGenerateSettingsMenu = () => {
   const platformWebhooksEnabled = useIsPlatformWebhooksEnabled()
 
   const {
-    projectSettingsLegacyJwtKeys: legacyJwtKeysEnabled,
     billingAll: billingEnabled,
     logsAll,
     projectSettingsLogDrains,
   } = useIsFeatureEnabled([
-    'project_settings:legacy_jwt_keys',
     'billing:all',
     'logs:all',
     'project_settings:log_drains',
@@ -44,32 +42,52 @@ export const useGenerateSettingsMenu = () => {
             key: 'general',
             url: `/project/${ref}/settings/general`,
             items: [],
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_GENERAL,
           },
           {
-            name: 'Dashboard Preferences',
-            key: 'dashboard',
-            url: '/account/me#dashboard',
+            name: 'Compute and Disk',
+            key: 'compute-and-disk',
+            url: `/project/${ref}/settings/compute-and-disk`,
             items: [],
+            disabled: !isProjectActive,
+            isLoading: isPending,
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_COMPUTE_AND_DISK,
           },
           {
-            name: 'API Keys',
-            key: 'api-keys',
-            url: `/project/${ref}/settings/api-keys`,
+            name: 'Infrastructure',
+            key: 'infrastructure',
+            url: `/project/${ref}/settings/infrastructure`,
             items: [],
-          },
-          {
-            name: 'JWT Keys',
-            key: 'jwt',
-            url: `/project/${ref}/settings/jwt`,
-            items: [],
-            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_JWT_KEYS,
+            disabled: !isProjectActive,
+            isLoading: isPending,
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_INFRASTRUCTURE,
           },
           {
             name: 'Integrations',
             key: 'integrations',
             url: `/project/${ref}/settings/integrations`,
             items: [],
+            disabled: !isProjectActive,
+            isLoading: isPending,
             shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_INTEGRATIONS,
+          },
+          {
+            name: 'API Keys',
+            key: 'api-keys',
+            url: `/project/${ref}/settings/api-keys`,
+            items: [],
+            disabled: !isProjectActive,
+            isLoading: isPending,
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_API_KEYS,
+          },
+          {
+            name: 'JWT Keys',
+            key: 'jwt',
+            url: `/project/${ref}/settings/jwt`,
+            items: [],
+            disabled: !isProjectActive,
+            isLoading: isPending,
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_JWT_KEYS,
           },
           ...(showLogDrains
             ? [
@@ -78,7 +96,27 @@ export const useGenerateSettingsMenu = () => {
                   key: `log-drains`,
                   url: `/project/${ref}/settings/log-drains`,
                   items: [],
+                  disabled: !isProjectActive,
+                  isLoading: isPending,
                   shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_LOG_DRAINS,
+                },
+              ]
+            : []),
+          {
+            name: 'Add-ons',
+            key: 'addons',
+            url: `/project/${ref}/settings/addons`,
+            items: [],
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_ADDONS,
+          },
+          ...(showDashboardPreferences
+            ? [
+                {
+                  name: 'Dashboard Preferences',
+                  key: 'dashboard',
+                  url: `/project/${ref}/settings/dashboard`,
+                  items: [],
+                  shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_DASHBOARD,
                 },
               ]
             : []),
@@ -93,6 +131,8 @@ export const useGenerateSettingsMenu = () => {
             url: `/project/${ref}/integrations/data_api/overview`,
             items: [],
             rightIcon: <ArrowUpRight strokeWidth={1} className="h-4 w-4" />,
+            disabled: !isProjectActive,
+            isLoading: isPending,
           },
           {
             name: 'Vault',
@@ -101,6 +141,27 @@ export const useGenerateSettingsMenu = () => {
             items: [],
             rightIcon: <ArrowUpRight strokeWidth={1} className="h-4 w-4" />,
             label: 'Beta',
+            disabled: !isProjectActive,
+            isLoading: isPending,
+          },
+        ],
+      },
+      {
+        title: 'Billing',
+        items: [
+          {
+            name: 'Subscription',
+            key: 'subscription',
+            url: `/org/${organization?.slug}/billing`,
+            items: [],
+            rightIcon: <ArrowUpRight strokeWidth={1} className="h-4 w-4" />,
+          },
+          {
+            name: 'Usage',
+            key: 'usage',
+            url: `/org/${organization?.slug}/usage?projectRef=${ref}`,
+            items: [],
+            rightIcon: <ArrowUpRight strokeWidth={1} className="h-4 w-4" />,
           },
         ],
       },
@@ -172,9 +233,7 @@ export const useGenerateSettingsMenu = () => {
         {
           name: 'JWT Keys',
           key: 'jwt',
-          url: legacyJwtKeysEnabled
-            ? `/project/${ref}/settings/jwt`
-            : `/project/${ref}/settings/jwt/signing-keys`,
+          url: `/project/${ref}/settings/jwt`,
           items: [],
           disabled: !isProjectActive,
           isLoading: isPending,
@@ -204,7 +263,7 @@ export const useGenerateSettingsMenu = () => {
         ...(showDashboardPreferences
           ? [
               {
-                name: 'Dashboard',
+                name: 'Dashboard Preferences',
                 key: 'dashboard',
                 url: `/project/${ref}/settings/dashboard`,
                 items: [],
