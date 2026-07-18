@@ -130,22 +130,18 @@ const EdgeFunctionDetailsLayout = ({
 
   const navigationItems = functionSlug
     ? [
-        ...(IS_PLATFORM
-          ? [
-              {
-                label: 'Overview',
-                href: `/project/${ref}/functions/${functionSlug}`,
-              },
-              {
-                label: 'Invocations',
-                href: `/project/${ref}/functions/${functionSlug}/invocations`,
-              },
-              {
-                label: 'Logs',
-                href: `/project/${ref}/functions/${functionSlug}/logs`,
-              },
-            ]
-          : []),
+        {
+          label: 'Overview',
+          href: `/project/${ref}/functions/${functionSlug}`,
+        },
+        {
+          label: 'Invocations',
+          href: `/project/${ref}/functions/${functionSlug}/invocations`,
+        },
+        {
+          label: 'Logs',
+          href: `/project/${ref}/functions/${functionSlug}/logs`,
+        },
         {
           label: 'Code',
           href: `/project/${ref}/functions/${functionSlug}/code`,
@@ -372,22 +368,18 @@ const EdgeFunctionDetailsLayout = ({
                     </PopoverTrigger>
                   </ShortcutTooltip>
                   <PopoverContent align="end" className="p-0">
-                    {IS_PLATFORM && (
-                      <>
-                        <div className="p-3 flex flex-col gap-y-2">
-                          <p className="text-xs text-foreground-light">Download via CLI</p>
-                          <Input
-                            copy
-                            showCopyOnHover
-                            readOnly
-                            containerClassName=""
-                            className="text-xs font-mono tracking-tighter"
-                            value={`supabase functions download ${functionSlug}`}
-                          />
-                        </div>
-                        <Separator className="bg-border-overlay!" />
-                      </>
-                    )}
+                    <div className="p-3 flex flex-col gap-y-2">
+                      <p className="text-xs text-foreground-light">Download via CLI</p>
+                      <Input
+                        copy
+                        showCopyOnHover
+                        readOnly
+                        containerClassName=""
+                        className="text-xs font-mono tracking-tighter"
+                        value={`supabase functions download ${functionSlug}`}
+                      />
+                    </div>
+                    <Separator className="bg-border-overlay!" />
                     <div className="py-2 px-1">
                       <Button
                         variant="text"

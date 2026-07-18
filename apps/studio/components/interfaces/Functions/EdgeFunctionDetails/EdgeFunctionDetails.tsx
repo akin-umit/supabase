@@ -76,7 +76,7 @@ export const EdgeFunctionDetails = () => {
     '*'
   )
 
-  const canUpdateEdgeFunction = IS_PLATFORM && canUpdateEdgeFunctionPermission
+  const canUpdateEdgeFunction = !IS_PLATFORM || canUpdateEdgeFunctionPermission
 
   const { can: canReadAPIKeys } = useAsyncCheckPermissions(PermissionAction.SECRETS_READ, '*')
   const { data: apiKeyData } = useAPIKeys({ projectRef }, { enabled: canReadAPIKeys })
@@ -170,66 +170,60 @@ export const EdgeFunctionDetails = () => {
                     )}
                   />
                 </CardContent>
-                {IS_PLATFORM && (
-                  <>
-                    <CardContent>
-                      <FormField
-                        control={form.control}
-                        name="verify_jwt"
-                        render={({ field }) => (
-                          <FormItemLayout
-                            label="Verify JWT with legacy secret"
-                            layout="flex-row-reverse"
-                            description={
-                              <>
-                                <p className="mb-2">
-                                  Requires a JWT signed{' '}
-                                  <em className="text-foreground not-italic">
-                                    only by the legacy secret
-                                  </em>{' '}
-                                  in the{' '}
-                                  <code className="text-code-inline break-keep!">
-                                    Authorization
-                                  </code>{' '}
-                                  header. The <code className="text-code-inline">anon</code> key
-                                  satisfies this.
-                                </p>
-                                <p>
-                                  Recommended: OFF with JWT and custom auth logic in your function
-                                  code.
-                                </p>
-                              </>
-                            }
-                          >
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={!canUpdateEdgeFunction}
-                              />
-                            </FormControl>
-                          </FormItemLayout>
-                        )}
-                      />
-                    </CardContent>
-
-                    <CardFooter className="flex justify-end space-x-2">
-                      {form.formState.isDirty && (
-                        <Button variant="default" onClick={() => form.reset()}>
-                          Cancel
-                        </Button>
-                      )}
-                      <Button
-                        variant="primary"
-                        type="submit"
-                        loading={isUpdating}
-                        disabled={!canUpdateEdgeFunction || !form.formState.isDirty}
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="verify_jwt"
+                    render={({ field }) => (
+                      <FormItemLayout
+                        label="Verify JWT with legacy secret"
+                        layout="flex-row-reverse"
+                        description={
+                          <>
+                            <p className="mb-2">
+                              Requires a JWT signed{' '}
+                              <em className="text-foreground not-italic">
+                                only by the legacy secret
+                              </em>{' '}
+                              in the{' '}
+                              <code className="text-code-inline break-keep!">Authorization</code>{' '}
+                              header. The <code className="text-code-inline">anon</code> key
+                              satisfies this.
+                            </p>
+                            <p>
+                              Recommended: OFF with JWT and custom auth logic in your function
+                              code.
+                            </p>
+                          </>
+                        }
                       >
-                        Save changes
-                      </Button>
-                    </CardFooter>
-                  </>
-                )}
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={!canUpdateEdgeFunction}
+                          />
+                        </FormControl>
+                      </FormItemLayout>
+                    )}
+                  />
+                </CardContent>
+
+                <CardFooter className="flex justify-end space-x-2">
+                  {form.formState.isDirty && (
+                    <Button variant="default" onClick={() => form.reset()}>
+                      Cancel
+                    </Button>
+                  )}
+                  <Button
+                    variant="primary"
+                    type="submit"
+                    loading={isUpdating}
+                    disabled={!canUpdateEdgeFunction || !form.formState.isDirty}
+                  >
+                    Save changes
+                  </Button>
+                </CardFooter>
               </Card>
             </form>
           </Form>
@@ -307,9 +301,8 @@ export const EdgeFunctionDetails = () => {
         </PageSectionContent>
       </PageSection>
 
-      {IS_PLATFORM && (
-        <>
-          <PageSection>
+      <>
+        <PageSection>
             <PageSectionMeta>
               <PageSectionSummary>
                 <PageSectionTitle>Develop locally</PageSectionTitle>
@@ -338,8 +331,8 @@ export const EdgeFunctionDetails = () => {
                 </div>
               </div>
             </PageSectionContent>
-          </PageSection>
-          <PageSection>
+        </PageSection>
+        <PageSection>
             <PageSectionMeta>
               <PageSectionSummary>
                 <PageSectionTitle>Delete function</PageSectionTitle>
@@ -364,25 +357,24 @@ export const EdgeFunctionDetails = () => {
                 </AlertDescription>
               </Alert>
             </PageSectionContent>
-          </PageSection>
-          <ConfirmationModal
-            visible={showDeleteModal}
-            loading={isDeleting}
-            variant="destructive"
-            confirmLabel="Delete"
-            confirmLabelLoading="Deleting"
-            title={`Confirm to delete ${selectedFunction?.name}`}
-            onCancel={() => setShowDeleteModal(false)}
-            onConfirm={onConfirmDelete}
-            alert={{
-              base: { variant: 'destructive' },
-              title: 'This action cannot be undone',
-              description:
-                'Ensure that you have made a backup if you want to restore your edge function',
-            }}
-          />
-        </>
-      )}
+        </PageSection>
+        <ConfirmationModal
+          visible={showDeleteModal}
+          loading={isDeleting}
+          variant="destructive"
+          confirmLabel="Delete"
+          confirmLabelLoading="Deleting"
+          title={`Confirm to delete ${selectedFunction?.name}`}
+          onCancel={() => setShowDeleteModal(false)}
+          onConfirm={onConfirmDelete}
+          alert={{
+            base: { variant: 'destructive' },
+            title: 'This action cannot be undone',
+            description:
+              'Ensure that you have made a backup if you want to restore your edge function',
+          }}
+        />
+      </>
     </PageContainer>
   )
 }

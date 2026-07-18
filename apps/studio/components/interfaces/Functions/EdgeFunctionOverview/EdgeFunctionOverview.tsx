@@ -1,8 +1,8 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { IS_PLATFORM, useParams } from 'common'
+import { useParams } from 'common'
 import { ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/router'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { EdgeFunctionInvocationsSection } from './EdgeFunctionInvocationsSection'
 import {
@@ -57,7 +57,7 @@ export const EdgeFunctionOverview = () => {
       interval: selectedInterval.key as FunctionsCombinedStatsVariables['interval'],
     },
     {
-      enabled: IS_PLATFORM,
+      enabled: Boolean(projectRef && id),
     }
   )
 
@@ -173,18 +173,8 @@ export const EdgeFunctionOverview = () => {
     functionSlug as string
   )
 
-  useEffect(() => {
-    if (!IS_PLATFORM && projectRef && functionSlug) {
-      router.replace(`/project/${projectRef}/functions/${functionSlug}/details`)
-    }
-  }, [functionSlug, projectRef, router])
-
   if (!canReadFunction && !permissionsLoading) {
     return <NoPermission isFullPage resourceText="access this edge function" />
-  }
-
-  if (!IS_PLATFORM) {
-    return null
   }
 
   return (

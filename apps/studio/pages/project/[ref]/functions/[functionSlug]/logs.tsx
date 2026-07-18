@@ -14,7 +14,19 @@ export const LogPage: NextPageWithLayout = () => {
     slug: functionSlug,
   })
 
-  if (selectedFunction === undefined || isLoading) return null
+  if (isLoading) {
+    return (
+      <div className="flex-1 p-6 text-sm text-foreground-light">Loading function logs...</div>
+    )
+  }
+
+  if (selectedFunction === undefined) {
+    return (
+      <div className="flex-1 p-6 text-sm text-foreground-light">
+        Function metadata could not be loaded. Logs can still be queried from Observability.
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1">

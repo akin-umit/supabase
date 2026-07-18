@@ -1,4 +1,4 @@
-import { IS_PLATFORM, useFlag } from 'common'
+import { useFlag } from 'common'
 import { useParams } from 'common/hooks'
 import dayjs from 'dayjs'
 import { Check, Copy } from 'lucide-react'
@@ -32,10 +32,7 @@ export const EdgeFunctionsListItem = ({ function: item }: EdgeFunctionsListItemP
   const { data: endpoint } = useProjectApiUrl({ projectRef: ref })
   const functionUrl = `${endpoint}/functions/v1/${item.slug}`
 
-  const handleNavigation = createNavigationHandler(
-    `/project/${ref}/functions/${item.slug}${IS_PLATFORM ? '' : `/code`}`,
-    router
-  )
+  const handleNavigation = createNavigationHandler(`/project/${ref}/functions/${item.slug}`, router)
 
   const { data: functions } = useEdgeFunctionsQuery({ projectRef: ref })
   const functionIds = useMemo(() => {

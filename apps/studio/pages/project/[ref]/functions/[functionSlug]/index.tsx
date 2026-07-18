@@ -133,7 +133,7 @@ const LegacyEdgeFunctionOverview = () => {
     <PageContainer size="full">
       <PageSection>
         <PageSectionContent>
-          {IS_PLATFORM && id && (
+          {id && (
             <div className="mb-8">
               <EdgeFunctionRecentInvocations
                 functionId={id}
@@ -433,7 +433,7 @@ const PageLayout: NextPageWithLayout = () => {
     return <LogoLoader />
   }
 
-  if (showNewOverview) {
+  if (showNewOverview || !IS_PLATFORM) {
     return <EdgeFunctionOverview />
   }
 
