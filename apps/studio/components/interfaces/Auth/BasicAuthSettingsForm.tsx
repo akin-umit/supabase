@@ -37,6 +37,7 @@ import { InlineLink } from '@/components/ui/InlineLink'
 import { NoPermission } from '@/components/ui/NoPermission'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
+import { SELF_HOSTED_AUTH_CONFIG_FALLBACK } from '@/data/auth/self-hosted-auth-config-fallback'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { DOCS_URL } from '@/lib/constants'
@@ -71,6 +72,13 @@ export const BasicAuthSettingsForm = () => {
     'custom_config_gotrue'
   )
   const canManageConfig = IS_PLATFORM && canUpdateConfig
+  const effectiveAuthConfig = !IS_PLATFORM
+    ? authConfig ?? SELF_HOSTED_AUTH_CONFIG_FALLBACK
+    : authConfig
+  const shouldShowError = IS_PLATFORM && isError
+  const shouldShowNoPermission = IS_PLATFORM && isPermissionsLoaded && !canReadConfig
+  const shouldShowLoading = IS_PLATFORM && isLoading
+  const shouldRenderForm = !!effectiveAuthConfig && (!IS_PLATFORM || isSuccess)
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -85,17 +93,17 @@ export const BasicAuthSettingsForm = () => {
   const { isDirty } = form.formState
 
   useEffect(() => {
-    if (authConfig) {
+    if (effectiveAuthConfig) {
       form.reset({
-        DISABLE_SIGNUP: !authConfig.DISABLE_SIGNUP,
-        EXTERNAL_ANONYMOUS_USERS_ENABLED: authConfig.EXTERNAL_ANONYMOUS_USERS_ENABLED,
-        SECURITY_MANUAL_LINKING_ENABLED: authConfig.SECURITY_MANUAL_LINKING_ENABLED,
+        DISABLE_SIGNUP: !effectiveAuthConfig.DISABLE_SIGNUP,
+        EXTERNAL_ANONYMOUS_USERS_ENABLED: effectiveAuthConfig.EXTERNAL_ANONYMOUS_USERS_ENABLED,
+        SECURITY_MANUAL_LINKING_ENABLED: effectiveAuthConfig.SECURITY_MANUAL_LINKING_ENABLED,
         // The backend uses false to represent that email confirmation is required
-        MAILER_AUTOCONFIRM: !authConfig.MAILER_AUTOCONFIRM,
-        SITE_URL: authConfig.SITE_URL,
+        MAILER_AUTOCONFIRM: !effectiveAuthConfig.MAILER_AUTOCONFIRM,
+        SITE_URL: effectiveAuthConfig.SITE_URL,
       })
     }
-  }, [authConfig])
+  }, [effectiveAuthConfig])
 
   const onSubmit = (values: any) => {
     const payload = { ...values }
@@ -139,20 +147,20 @@ export const BasicAuthSettingsForm = () => {
           </Alert>
         )}
 
-        {isError && (
+        {shouldShowError && (
           <AlertError
             error={authConfigError}
             subject="Failed to retrieve auth configuration for hooks"
           />
         )}
 
-        {isPermissionsLoaded && !canReadConfig && (
+        {shouldShowNoPermission && (
           <div className="mt-8">
             <NoPermission resourceText="view auth configuration settings" />
           </div>
         )}
 
-        {isLoading && (
+        {shouldShowLoading && (
           <Card>
             <CardContent className="py-6">
               <ShimmeringLoader />
@@ -170,7 +178,7 @@ export const BasicAuthSettingsForm = () => {
           </Card>
         )}
 
-        {isSuccess && (
+        {shouldRenderForm && (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <Card>
@@ -302,7 +310,7 @@ export const BasicAuthSettingsForm = () => {
                     </Alert>
                   )}
 
-                  {!authConfig?.SECURITY_CAPTCHA_ENABLED &&
+                  {!effectiveAuthConfig?.SECURITY_CAPTCHA_ENABLED &&
                     form.watch('EXTERNAL_ANONYMOUS_USERS_ENABLED') && (
                       <Alert className="mt-4">
                         <WarningIcon />

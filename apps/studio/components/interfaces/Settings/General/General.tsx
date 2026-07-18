@@ -1,6 +1,6 @@
 ﻿import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
@@ -46,6 +46,11 @@ export const General = () => {
   )
   const branch = branches?.find((x) => x.project_ref === ref)
   const projectName = isBranch ? branch?.name : project?.name
+  const selfHostedProjectName =
+    process.env.NEXT_PUBLIC_STUDIO_DEFAULT_PROJECT ?? 'Self-hosted Supabase'
+  const fallbackProjectName = projectName ?? selfHostedProjectName
+  const fallbackProjectRef = project?.ref ?? ref ?? 'default'
+  const fallbackProjectRegion = project?.region ?? 'local'
 
   const { can: canUpdateProject } = useAsyncCheckPermissions(PermissionAction.UPDATE, 'projects', {
     resource: {
@@ -59,7 +64,7 @@ export const General = () => {
     name: z.string().trim().min(3, 'Project name must be at least 3 characters long'),
   })
 
-  const defaultValues = { name: projectName ?? '' }
+  const defaultValues = { name: fallbackProjectName }
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues,
@@ -71,6 +76,8 @@ export const General = () => {
   const regionLabel = AVAILABLE_REPLICA_REGIONS.find((region) =>
     project?.region?.includes(region.region)
   )
+  const regionDescription =
+    regionLabel?.name ?? (fallbackProjectRegion === 'local' ? 'Self-hosted runtime' : undefined)
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!project?.ref) return console.error('Ref is required')
@@ -110,38 +117,45 @@ export const General = () => {
             </Admonition>
           )}
 
-          {project === undefined ? (
+          {project === undefined && IS_PLATFORM ? (
             <Card>
               <CardContent>
                 <GenericSkeletonLoader />
               </CardContent>
             </Card>
           ) : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
-                <Card>
-                  <CardContent>
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItemLayout
-                          layout="flex-row-reverse"
-                          label={`${entityLabel} name`}
-                          description="Displayed throughout the dashboard."
-                          className="[&>div]:md:w-1/2"
-                        >
-                          <FormControl>
-                            <Input
-                              {...field}
-                              readOnly={isBranch || !canUpdateProject}
-                              autoComplete="off"
-                            />
-                          </FormControl>
-                        </FormItemLayout>
-                      )}
-                    />
-                  </CardContent>
+            <>
+              {!IS_PLATFORM && project === undefined && (
+                <Admonition type="default" className="mb-4" title="Self-hosted project metadata">
+                  Project metadata is read from the runtime environment when the hosted project API
+                  is not available.
+                </Admonition>
+              )}
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                  <Card>
+                    <CardContent>
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItemLayout
+                            layout="flex-row-reverse"
+                            label={`${entityLabel} name`}
+                            description="Displayed throughout the dashboard."
+                            className="[&>div]:md:w-1/2"
+                          >
+                            <FormControl>
+                              <Input
+                                {...field}
+                                readOnly={isBranch || !canUpdateProject || !project}
+                                autoComplete="off"
+                              />
+                            </FormControl>
+                          </FormItemLayout>
+                        )}
+                      />
+                    </CardContent>
 
                   {isBranch && (
                     <CardContent>
@@ -166,7 +180,7 @@ export const General = () => {
                       className="[&>div]:md:w-1/2 [&>div>div]:md:w-full"
                     >
                       <FormControl>
-                        <PasswordInput copy readOnly size="small" value={project.ref} />
+                        <PasswordInput copy readOnly size="small" value={fallbackProjectRef} />
                       </FormControl>
                     </FormItemLayout>
                   </CardContent>
@@ -175,11 +189,11 @@ export const General = () => {
                     <FormItemLayout
                       layout="flex-row-reverse"
                       label={`${entityLabel} region`}
-                      description={regionLabel?.name}
+                      description={regionDescription}
                       className="[&>div]:md:w-1/2 [&>div>div]:md:w-full"
                     >
                       <FormControl>
-                        <PasswordInput copy readOnly size="small" value={project.region} />
+                        <PasswordInput copy readOnly size="small" value={fallbackProjectRegion} />
                       </FormControl>
                     </FormItemLayout>
                   </CardContent>
@@ -190,7 +204,7 @@ export const General = () => {
                         variant="default"
                         type="button"
                         disabled={isUpdating}
-                        onClick={() => form.reset({ name: project?.name ?? '' })}
+                        onClick={() => form.reset({ name: fallbackProjectName })}
                       >
                         Cancel
                       </Button>
@@ -199,7 +213,11 @@ export const General = () => {
                       variant="primary"
                       type="submit"
                       disabled={
-                        !form.formState.isDirty || isUpdating || !canUpdateProject || isBranch
+                        !form.formState.isDirty ||
+                        isUpdating ||
+                        !canUpdateProject ||
+                        isBranch ||
+                        !project
                       }
                       loading={isUpdating}
                     >
@@ -207,13 +225,14 @@ export const General = () => {
                     </Button>
                   </CardFooter>
                 </Card>
-              </form>
-            </Form>
+                </form>
+              </Form>
+            </>
           )}
         </PageSectionContent>
       </PageSection>
 
-      <ProjectAccessSection />
+      {IS_PLATFORM && project && <ProjectAccessSection />}
     </>
   )
 }

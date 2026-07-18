@@ -1,4 +1,4 @@
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { Alert, AlertDescription, AlertTitle, Button, WarningIcon } from 'ui'
@@ -18,6 +18,7 @@ import { AlertError } from '@/components/ui/AlertError'
 import { ResourceList } from '@/components/ui/Resource/ResourceList'
 import { HorizontalShimmerWithIcon } from '@/components/ui/Shimmers'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
+import { SELF_HOSTED_AUTH_CONFIG_FALLBACK } from '@/data/auth/self-hosted-auth-config-fallback'
 
 export const AuthProvidersForm = () => {
   const { ref: projectRef } = useParams()
@@ -28,6 +29,12 @@ export const AuthProvidersForm = () => {
     isError,
     isSuccess,
   } = useAuthConfigQuery({ projectRef })
+  const effectiveAuthConfig = !IS_PLATFORM
+    ? authConfig ?? SELF_HOSTED_AUTH_CONFIG_FALLBACK
+    : authConfig
+  const shouldShowError = IS_PLATFORM && isError
+  const shouldShowLoading = IS_PLATFORM && isLoading
+  const shouldRenderProviders = !!effectiveAuthConfig && (!IS_PLATFORM || isSuccess)
 
   return (
     <PageSection>
@@ -40,14 +47,15 @@ export const AuthProvidersForm = () => {
         </PageSectionSummary>
       </PageSectionMeta>
       <PageSectionContent>
-        {isError ? (
+        {shouldShowError ? (
           <AlertError
             error={authConfigError}
             subject="Failed to retrieve auth configuration for hooks"
           />
         ) : (
           <div className="-space-y-px">
-            {authConfig?.EXTERNAL_EMAIL_ENABLED && authConfig?.MAILER_OTP_EXP > 3600 && (
+            {effectiveAuthConfig?.EXTERNAL_EMAIL_ENABLED &&
+              effectiveAuthConfig?.MAILER_OTP_EXP > 3600 && (
               <Alert className="flex w-full items-center justify-between my-3" variant="warning">
                 <WarningIcon />
                 <div>
@@ -69,7 +77,7 @@ export const AuthProvidersForm = () => {
             )}
 
             <ResourceList>
-              {isLoading &&
+              {shouldShowLoading &&
                 PROVIDERS_SCHEMAS.map((provider) => (
                   <div
                     key={`provider_${provider.title}`}
@@ -78,37 +86,48 @@ export const AuthProvidersForm = () => {
                     <HorizontalShimmerWithIcon />
                   </div>
                 ))}
-              {isSuccess &&
+              {shouldRenderProviders &&
                 PROVIDERS_SCHEMAS.map((provider) => {
                   const providerSchema =
                     provider.title === 'Phone'
                       ? {
                           ...provider,
-                          validationSchema: getPhoneProviderValidationSchema(authConfig),
+                          validationSchema: getPhoneProviderValidationSchema(effectiveAuthConfig),
                         }
                       : provider
                   let isActive = false
                   if (providerSchema.title === 'SAML 2.0') {
-                    isActive = authConfig && (authConfig as any)['SAML_ENABLED']
+                    isActive = effectiveAuthConfig && (effectiveAuthConfig as any)['SAML_ENABLED']
                   } else if (providerSchema.title === 'LinkedIn (OIDC)') {
-                    isActive = authConfig && (authConfig as any)['EXTERNAL_LINKEDIN_OIDC_ENABLED']
+                    isActive =
+                      effectiveAuthConfig &&
+                      (effectiveAuthConfig as any)['EXTERNAL_LINKEDIN_OIDC_ENABLED']
                   } else if (providerSchema.title === 'Slack (OIDC)') {
-                    isActive = authConfig && (authConfig as any)['EXTERNAL_SLACK_OIDC_ENABLED']
+                    isActive =
+                      effectiveAuthConfig &&
+                      (effectiveAuthConfig as any)['EXTERNAL_SLACK_OIDC_ENABLED']
                   } else if (providerSchema.title.includes('Web3')) {
-                    isActive = authConfig && (authConfig as any)['EXTERNAL_WEB3_SOLANA_ENABLED']
+                    isActive =
+                      effectiveAuthConfig &&
+                      (effectiveAuthConfig as any)['EXTERNAL_WEB3_SOLANA_ENABLED']
                   } else if (providerSchema.title.includes('X / Twitter (OAuth 2.0)')) {
-                    isActive = authConfig && (authConfig as any)['EXTERNAL_X_ENABLED']
+                    isActive =
+                      effectiveAuthConfig && (effectiveAuthConfig as any)['EXTERNAL_X_ENABLED']
                   } else if (providerSchema.title === 'Twitter (Deprecated)') {
-                    isActive = authConfig && (authConfig as any)['EXTERNAL_TWITTER_ENABLED']
+                    isActive =
+                      effectiveAuthConfig &&
+                      (effectiveAuthConfig as any)['EXTERNAL_TWITTER_ENABLED']
                   } else {
                     isActive =
-                      authConfig &&
-                      (authConfig as any)[`EXTERNAL_${providerSchema.title.toUpperCase()}_ENABLED`]
+                      effectiveAuthConfig &&
+                      (effectiveAuthConfig as any)[
+                        `EXTERNAL_${providerSchema.title.toUpperCase()}_ENABLED`
+                      ]
                   }
                   return (
                     <ProviderForm
                       key={`provider_${providerSchema.title}`}
-                      config={authConfig!}
+                      config={effectiveAuthConfig}
                       provider={providerSchema as unknown as Provider}
                       isActive={isActive}
                     />

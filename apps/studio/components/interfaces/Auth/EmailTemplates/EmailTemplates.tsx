@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
@@ -31,6 +31,7 @@ import { AlertError } from '@/components/ui/AlertError'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
+import { SELF_HOSTED_AUTH_CONFIG_FALLBACK } from '@/data/auth/self-hosted-auth-config-fallback'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
@@ -79,26 +80,36 @@ export const EmailTemplates = () => {
     },
   })
 
-  const usingBuiltInEmailSender = !hasCustomEmailSender(authConfig)
+  const canManageConfig = IS_PLATFORM && canUpdateConfig
+  const effectiveAuthConfig = !IS_PLATFORM
+    ? authConfig ?? SELF_HOSTED_AUTH_CONFIG_FALLBACK
+    : authConfig
+  const shouldShowError = IS_PLATFORM && isError
+  const shouldShowLoading = IS_PLATFORM && isLoading
+  const shouldRenderTemplates = !!effectiveAuthConfig && (!IS_PLATFORM || isSuccess)
+
+  const usingBuiltInEmailSender = !hasCustomEmailSender(effectiveAuthConfig)
   const hasSendEmailHook = !!(
-    authConfig?.HOOK_SEND_EMAIL_ENABLED && authConfig?.HOOK_SEND_EMAIL_URI
+    effectiveAuthConfig?.HOOK_SEND_EMAIL_ENABLED && effectiveAuthConfig?.HOOK_SEND_EMAIL_URI
   )
   const isTemplateRestrictionStatusKnown = isCustomEmailTemplateRestrictionStatusKnown({
-    authConfig,
+    authConfig: effectiveAuthConfig,
     organization: selectedOrganization,
     projectInsertedAt: selectedProject?.inserted_at,
   })
   const isTemplateEditBlocked =
     isTemplateRestrictionStatusKnown &&
     isCustomEmailTemplateEditingRestricted({
-      authConfig,
+      authConfig: effectiveAuthConfig,
       organization: selectedOrganization,
       projectInsertedAt: selectedProject?.inserted_at,
     })
 
   const defaultValues = notificationEnabledKeys.reduce(
     (acc, key) => {
-      acc[key] = authConfig ? Boolean(authConfig[key as keyof typeof authConfig]) : false
+      acc[key] = effectiveAuthConfig
+        ? Boolean(effectiveAuthConfig[key as keyof typeof effectiveAuthConfig])
+        : false
       return acc
     },
     {} as Record<string, boolean>
@@ -115,29 +126,29 @@ export const EmailTemplates = () => {
   }
 
   useEffect(() => {
-    if (authConfig) {
+    if (effectiveAuthConfig) {
       notificationsForm.reset(defaultValues)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authConfig])
+  }, [effectiveAuthConfig])
 
   return (
     <>
-      {isError && (
+      {shouldShowError && (
         <PageSection>
           <PageSectionContent>
             <AlertError error={authConfigError} subject="Failed to retrieve auth configuration" />
           </PageSectionContent>
         </PageSection>
       )}
-      {isLoading && (
+      {shouldShowLoading && (
         <PageSection>
           <PageSectionContent>
             <GenericSkeletonLoader />
           </PageSectionContent>
         </PageSection>
       )}
-      {isSuccess && (
+      {shouldRenderTemplates && (
         <>
           {isTemplateEditBlocked && !hasSendEmailHook && (
             <PageSection>
@@ -228,8 +239,10 @@ export const EmailTemplates = () => {
                     {TEMPLATES_SCHEMAS.filter((t) => t.misc?.emailTemplateType === 'security').map(
                       (template) => {
                         const templateSlug = slugifyTitle(template.title)
-                        const templateEnabledKey =
-                          `MAILER_NOTIFICATIONS_${template.id?.replace('_NOTIFICATION', '')}_ENABLED` as keyof typeof authConfig
+                        const templateEnabledKey = `MAILER_NOTIFICATIONS_${template.id?.replace(
+                          '_NOTIFICATION',
+                          ''
+                        )}_ENABLED`
 
                         return (
                           <CardContent
@@ -255,9 +268,9 @@ export const EmailTemplates = () => {
                                 render={({ field }) => (
                                   <FormControl>
                                     <Switch
-                                      checked={field.value}
+                                      checked={Boolean(field.value)}
                                       onCheckedChange={field.onChange}
-                                      disabled={!canUpdateConfig}
+                                      disabled={!canManageConfig}
                                     />
                                   </FormControl>
                                 )}
@@ -284,7 +297,7 @@ export const EmailTemplates = () => {
                         variant="primary"
                         type="submit"
                         disabled={
-                          !canUpdateConfig ||
+                          !canManageConfig ||
                           isUpdatingConfig ||
                           !notificationsForm.formState.isDirty
                         }
