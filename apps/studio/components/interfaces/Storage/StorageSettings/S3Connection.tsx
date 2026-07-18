@@ -68,6 +68,7 @@ export const S3Connection = () => {
     PermissionAction.STORAGE_ADMIN_READ,
     '*'
   )
+  const isResolvingPermissions = IS_PLATFORM && isLoadingPermissions
   const { can: canUpdateStorageSettings } = useAsyncCheckPermissions(
     PermissionAction.STORAGE_ADMIN_WRITE,
     '*'
@@ -215,7 +216,7 @@ export const S3Connection = () => {
                       </FormItemLayout>
                     </CardContent>
 
-                    {!isLoadingPermissions && !canUpdateStorageSettingsSurface && (
+                    {!isResolvingPermissions && !canUpdateStorageSettingsSurface && (
                       <CardContent>
                         <p className="text-sm text-foreground-light">
                           S3 protocol changes are managed by the self-hosted runtime environment.
@@ -283,7 +284,7 @@ export const S3Connection = () => {
           </PageSectionMeta>
 
           <PageSectionContent>
-            {projectIsLoading || isLoadingPermissions ? (
+            {(IS_PLATFORM && projectIsLoading) || isResolvingPermissions ? (
               <GenericSkeletonLoader />
             ) : !canReadS3CredentialsSurface ? (
               <NoPermission resourceText="view this project's S3 access keys" />

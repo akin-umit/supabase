@@ -1,4 +1,4 @@
-import { LOCAL_STORAGE_KEYS, useFlag, useIsMFAEnabled, useParams } from 'common'
+import { IS_PLATFORM, LOCAL_STORAGE_KEYS, useFlag, useIsMFAEnabled, useParams } from 'common'
 import { AnimatePresence, motion, MotionProps } from 'framer-motion'
 import { Home } from 'icons'
 import { isUndefined } from 'lodash'
@@ -379,7 +379,8 @@ const OrganizationLinks = () => {
   const isUserMFAEnabled = useIsMFAEnabled()
   const disableAccessMfa = org?.organization_requires_mfa && !isUserMFAEnabled
 
-  const showBilling = useIsFeatureEnabled('billing:all')
+  const billingFeatureEnabled = useIsFeatureEnabled('billing:all')
+  const showBilling = IS_PLATFORM && billingFeatureEnabled
 
   const activeRoute = router.pathname.split('/')[3]
   const organizationSettingsRoutes = new Set([

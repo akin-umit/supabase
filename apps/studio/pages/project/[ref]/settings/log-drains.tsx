@@ -61,7 +61,7 @@ const LogDrainsSettings: NextPageWithLayout = () => {
 
   const { data: logDrains } = useLogDrainsQuery(
     { ref },
-    { enabled: !isLoadingEntitlement && hasLogDrainSurfaceAccess }
+    { enabled: !IS_PLATFORM || (!isLoadingEntitlement && hasLogDrainSurfaceAccess) }
   )
 
   const { mutate: createLogDrain, isPending: createLoading } = useCreateLogDrainMutation({
@@ -153,7 +153,7 @@ const LogDrainsSettings: NextPageWithLayout = () => {
           }}
         />
 
-        {isLoadingPermissions ? (
+        {IS_PLATFORM && isLoadingPermissions ? (
           <GenericSkeletonLoader />
         ) : !canManageLogDrainSurface ? (
           <Alert variant="default">You do not have permission to manage log drains</Alert>
@@ -197,7 +197,7 @@ const LogDrainsSettings: NextPageWithLayout = () => {
   )
 
   // [kemal]: Ordinarily <PageLayout /> would be bundled with the getLayout function below, however in this case we need access to some bits for the "Add destination" button to render as part of the in-built page header in <PageLayout />.
-  if (!isLoadingEntitlement && hasLogDrainSurfaceAccess) {
+  if (!IS_PLATFORM || (!isLoadingEntitlement && hasLogDrainSurfaceAccess)) {
     return (
       <PageLayout
         title="Log Drains"

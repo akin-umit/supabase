@@ -10,6 +10,7 @@ import { NoPermission } from '@/components/ui/NoPermission'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const ThirdPartyPage: NextPageWithLayout = () => {
@@ -19,7 +20,7 @@ const ThirdPartyPage: NextPageWithLayout = () => {
     'custom_config_gotrue'
   )
 
-  const showThirdPartyAuth = useIsFeatureEnabled('authentication:third_party_auth')
+  const showThirdPartyAuth = !IS_PLATFORM || useIsFeatureEnabled('authentication:third_party_auth')
 
   if (!showThirdPartyAuth) {
     return (
@@ -31,7 +32,7 @@ const ThirdPartyPage: NextPageWithLayout = () => {
 
   return (
     <AuthProvidersLayout>
-      {isPermissionsLoaded && !canReadAuthSettings ? (
+      {IS_PLATFORM && isPermissionsLoaded && !canReadAuthSettings ? (
         <NoPermission isFullPage resourceText="access your project's auth provider settings" />
       ) : (
         <PageContainer size="default" className="pb-16">

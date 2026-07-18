@@ -1,4 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
+import { IS_PLATFORM } from 'common'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import { PageSection, PageSectionContent } from 'ui-patterns/PageSection'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
@@ -16,13 +17,13 @@ const SmtpPage: NextPageWithLayout = () => {
     'custom_config_gotrue'
   )
 
-  if (isPermissionsLoaded && !canReadAuthSettings) {
+  if (IS_PLATFORM && isPermissionsLoaded && !canReadAuthSettings) {
     return <NoPermission isFullPage resourceText="access your project's email settings" />
   }
 
   return (
     <PageContainer size="default">
-      {!isPermissionsLoaded ? (
+      {IS_PLATFORM && !isPermissionsLoaded ? (
         <PageSection>
           <PageSectionContent>
             <GenericSkeletonLoader />

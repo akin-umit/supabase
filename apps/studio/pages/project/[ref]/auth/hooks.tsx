@@ -17,7 +17,7 @@ import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { DocsButton } from '@/components/ui/DocsButton'
 import { NoPermission } from '@/components/ui/NoPermission'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const Hooks: NextPageWithLayout = () => {
@@ -26,7 +26,7 @@ const Hooks: NextPageWithLayout = () => {
     'custom_config_gotrue'
   )
 
-  if (isPermissionsLoaded && !canReadAuthSettings) {
+  if (IS_PLATFORM && isPermissionsLoaded && !canReadAuthSettings) {
     return <NoPermission isFullPage resourceText="access your project's auth hooks" />
   }
 
@@ -44,7 +44,7 @@ const Hooks: NextPageWithLayout = () => {
         </PageHeaderMeta>
       </PageHeader>
       <PageContainer size="default">
-        {!isPermissionsLoaded ? (
+        {IS_PLATFORM && !isPermissionsLoaded ? (
           <PageSection>
             <PageSectionContent>
               <GenericSkeletonLoader />

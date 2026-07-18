@@ -34,7 +34,7 @@ const PerformancePage: NextPageWithLayout = () => {
     return <UnknownInterface urlBack={`/project/${ref}/auth/providers`} />
   }
 
-  if (isPermissionsLoaded && !canReadAuthSettings) {
+  if (IS_PLATFORM && isPermissionsLoaded && !canReadAuthSettings) {
     return <NoPermission isFullPage resourceText="access your project's authentication settings" />
   }
 
@@ -51,7 +51,7 @@ const PerformancePage: NextPageWithLayout = () => {
         </PageHeaderMeta>
       </PageHeader>
       <PageContainer size="default">
-        {!isPermissionsLoaded ? (
+        {IS_PLATFORM && !isPermissionsLoaded ? (
           <PageSection>
             <PageSectionContent>
               <GenericSkeletonLoader />

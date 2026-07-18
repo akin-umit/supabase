@@ -1,5 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { isEqual } from 'lodash'
 import { ExternalLink, Loader2, Megaphone } from 'lucide-react'
 import Link from 'next/link'
@@ -40,6 +40,8 @@ const NoResultAlert = ({
     PermissionAction.READ,
     'service_api_keys'
   )
+  const canUseRealtimeInspector = !IS_PLATFORM || canReadAPIKeys
+  const isResolvingPermissions = IS_PLATFORM && isLoadingPermissions
 
   const broadcastButton = (
     <Button variant="default" onClick={showSendMessage}>
@@ -49,9 +51,9 @@ const NoResultAlert = ({
 
   return (
     <div className="w-full max-w-md flex items-center flex-col">
-      {isLoadingPermissions ? (
+      {isResolvingPermissions ? (
         <GenericSkeletonLoader className="w-80" />
-      ) : !canReadAPIKeys ? (
+      ) : !canUseRealtimeInspector ? (
         <NoPermission isFullPage resourceText="use the realtime inspector" />
       ) : !hasChannelSet ? (
         <NoChannelEmptyState />

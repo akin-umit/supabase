@@ -1,4 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
+import { IS_PLATFORM } from 'common'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
 import { JWTSecretKeysTable } from '@/components/interfaces/JwtSecrets/jwt-secret-keys-table'
@@ -17,7 +18,9 @@ const JWTSigningKeysPage: NextPageWithLayout = () => {
 
   return (
     <>
-      {!isPermissionsLoaded ? (
+      {!IS_PLATFORM ? (
+        <JWTSecretKeysTable />
+      ) : !isPermissionsLoaded ? (
         <GenericSkeletonLoader />
       ) : !canReadAPIKeys ? (
         <NoPermission isFullPage resourceText="access your project's API keys" />

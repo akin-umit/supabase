@@ -1,4 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
+import { IS_PLATFORM } from 'common'
 import { ExternalLink } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
@@ -154,7 +155,15 @@ export const VercelSection = ({ isProjectScoped }: { isProjectScoped: boolean })
         </div>
       </PageSectionMeta>
       <PageSectionContent>
-        {isLoadingPermissions ? (
+        {!IS_PLATFORM ? (
+          <div className="rounded border px-4 py-3 text-sm text-foreground-light">
+            <p className="text-foreground">Vercel previews are managed by the self-hosted operator.</p>
+            <p className="mt-1">
+              Configure frontend environment variables, preview URLs, and deploy hooks in your
+              frontend host. Studio will not call Supabase Cloud Vercel APIs in self-hosted mode.
+            </p>
+          </div>
+        ) : isLoadingPermissions ? (
           <GenericSkeletonLoader />
         ) : !canReadVercelConnection ? (
           <NoPermission resourceText="view this organization's Vercel connections" />

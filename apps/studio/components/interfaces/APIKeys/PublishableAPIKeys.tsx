@@ -31,6 +31,8 @@ export const PublishableAPIKeys = () => {
     PermissionAction.SECRETS_READ,
     '*'
   )
+  const canReadAPIKeysSurface = !IS_PLATFORM || canReadAPIKeys
+  const isResolvingPermissions = IS_PLATFORM && isLoadingPermissions
 
   const {
     data: apiKeysData = [],
@@ -38,7 +40,7 @@ export const PublishableAPIKeys = () => {
     isSuccess: isSuccessApiKeys,
     isPending: isLoadingApiKeys,
     isError: isErrorApiKeys,
-  } = useAPIKeysQuery({ projectRef, reveal: false }, { enabled: canReadAPIKeys })
+  } = useAPIKeysQuery({ projectRef, reveal: false }, { enabled: canReadAPIKeysSurface })
 
   const newApiKeys = useMemo(
     () => apiKeysData.filter(({ type }) => type === 'publishable' || type === 'secret') ?? [],
@@ -56,7 +58,7 @@ export const PublishableAPIKeys = () => {
   )
 
   const showSelfHostedEmptyState =
-    !IS_PLATFORM && publishableApiKeys.length === 0 && !isLoadingApiKeys && !isLoadingPermissions
+    !IS_PLATFORM && publishableApiKeys.length === 0 && !isLoadingApiKeys && !isResolvingPermissions
 
   const [deleteId, setDeleteId] = useQueryState('deletePublishableKey', parseAsString)
   const apiKeyToDelete = publishableApiKeys?.find((key) => key.id === deleteId)
@@ -93,9 +95,9 @@ export const PublishableAPIKeys = () => {
         actions={IS_PLATFORM ? <CreatePublishableAPIKeyDialog /> : null}
       />
 
-      {!canReadAPIKeys && !isLoadingPermissions ? (
+      {!canReadAPIKeysSurface && !isResolvingPermissions ? (
         <NoPermission resourceText="view API keys" />
-      ) : isLoadingApiKeys || isLoadingPermissions ? (
+      ) : isLoadingApiKeys || isResolvingPermissions ? (
         <GenericSkeletonLoader />
       ) : isErrorApiKeys ? (
         <AlertError error={error} subject="Failed to load API keys" />

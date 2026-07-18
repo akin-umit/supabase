@@ -1,6 +1,6 @@
 'use client'
 
-import { useIsMFAEnabled, useParams } from 'common'
+import { IS_PLATFORM, useIsMFAEnabled, useParams } from 'common'
 import { Blocks, Boxes, ChartArea, ChevronLeft, Receipt, Settings, Users } from 'lucide-react'
 import { useRouter } from 'next/router'
 import React, { useMemo } from 'react'
@@ -34,7 +34,8 @@ export function OrgMenuContent({ onCloseSheet }: OrgMenuContentProps) {
   const isUserMFAEnabled = useIsMFAEnabled()
   const disableAccessMfa = org?.organization_requires_mfa && !isUserMFAEnabled
 
-  const showBilling = useIsFeatureEnabled('billing:all')
+  const billingFeatureEnabled = useIsFeatureEnabled('billing:all')
+  const showBilling = IS_PLATFORM && billingFeatureEnabled
 
   const pathname = getPathnameWithoutQuery(router.asPath, router.pathname)
   const activeRoute = getOrgActiveRoute(pathname)

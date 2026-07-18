@@ -1,5 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { AnimatePresence } from 'framer-motion'
 import { AlertCircle, RotateCw, Timer } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -24,6 +24,7 @@ import {
   DialogTitle,
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -52,6 +53,82 @@ import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 
 type DialogType = 'legacy' | 'create' | 'rotate' | 'key-details' | 'revoke' | 'delete'
 
+const selfHostedJwtRows = [
+  {
+    name: 'JWT Signing Keys',
+    source: 'SUPABASE_JWKS',
+    status: 'Runtime env',
+    action: 'Rotate in your deployment secrets, then redeploy Auth, Kong, REST, and Studio.',
+  },
+  {
+    name: 'Legacy JWT Secret',
+    source: 'JWT_SECRET / AUTH_JWT_SECRET',
+    status: 'Legacy',
+    action: 'Keep only for existing anon and service-role JWT compatibility.',
+  },
+  {
+    name: 'Publishable / anon key',
+    source: 'SUPABASE_ANON_KEY',
+    status: 'Client key',
+    action: 'Regenerate through the deployment secrets and publish only with Row Level Security.',
+  },
+  {
+    name: 'Secret / service-role key',
+    source: 'SUPABASE_SERVICE_ROLE_KEY / SUPABASE_SECRET_KEY',
+    status: 'Server only',
+    action: 'Never expose to browser clients or public repositories.',
+  },
+]
+
+const SelfHostedJWTSigningKeys = () => {
+  return (
+    <div className="space-y-4">
+      <Card className="w-full overflow-hidden bg-surface-100 border rounded-md">
+        <CardContent className="p-0">
+          <div className="border-b px-5 py-4">
+            <h3 className="text-sm font-medium">JWT signing keys</h3>
+            <p className="text-sm text-foreground-light">
+              Self-hosted projects use runtime-provided signing material. Studio mirrors the Cloud
+              key management surface, while rotation happens in your secret manager or deployment
+              environment.
+            </p>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left font-mono uppercase text-xs text-foreground-muted">
+                  Cloud control
+                </TableHead>
+                <TableHead className="text-left font-mono uppercase text-xs text-foreground-muted">
+                  Self-hosted source
+                </TableHead>
+                <TableHead className="text-left font-mono uppercase text-xs text-foreground-muted">
+                  Status
+                </TableHead>
+                <TableHead className="text-left font-mono uppercase text-xs text-foreground-muted">
+                  Operator action
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {selfHostedJwtRows.map((row) => (
+                <TableRow key={row.name}>
+                  <TableCell className="font-medium">{row.name}</TableCell>
+                  <TableCell className="font-mono text-xs text-foreground-light">
+                    {row.source}
+                  </TableCell>
+                  <TableCell className="text-foreground-light">{row.status}</TableCell>
+                  <TableCell className="text-foreground-light">{row.action}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 export const JWTSecretKeysTable = () => {
   const { ref: projectRef } = useParams()
   const { data: project, isPending: isProjectLoading } = useSelectedProjectQuery()
@@ -68,16 +145,16 @@ export const JWTSecretKeysTable = () => {
     {
       projectRef,
     },
-    { enabled: canReadAPIKeys }
+    { enabled: IS_PLATFORM && canReadAPIKeys }
   )
   const { data: legacyKey, isPending: isLoadingLegacyKey } = useLegacyJWTSigningKeyQuery(
     {
       projectRef,
     },
-    { enabled: canReadAPIKeys }
+    { enabled: IS_PLATFORM && canReadAPIKeys }
   )
   const { data: legacyAPIKeysStatus, isPending: isLoadingLegacyAPIKeysStatus } =
-    useLegacyAPIKeysStatusQuery({ projectRef }, { enabled: canReadAPIKeys })
+    useLegacyAPIKeysStatusQuery({ projectRef }, { enabled: IS_PLATFORM && canReadAPIKeys })
 
   const { mutate: migrateJWTSecret, isPending: isMigrating } = useLegacyJWTSigningKeyCreateMutation(
     {
@@ -100,7 +177,8 @@ export const JWTSecretKeysTable = () => {
 
   const isPendingMutation = isUpdatingJWTSigningKey || isDeletingJWTSigningKey || isMigrating
   const isLoading =
-    isProjectLoading || isLoadingSigningKeys || isLoadingLegacyKey || isLoadingLegacyAPIKeysStatus
+    IS_PLATFORM &&
+    (isProjectLoading || isLoadingSigningKeys || isLoadingLegacyKey || isLoadingLegacyAPIKeysStatus)
 
   const sortedKeys = useMemo(() => {
     if (!signingKeys || !Array.isArray(signingKeys.keys)) return []
@@ -163,6 +241,10 @@ export const JWTSecretKeysTable = () => {
       { projectRef: projectRef!, keyId },
       { onSuccess: () => toast.success('Successfully deleted key') }
     )
+  }
+
+  if (!IS_PLATFORM) {
+    return <SelfHostedJWTSigningKeys />
   }
 
   if (!canReadAPIKeys && !isLoadingCanReadAPIKeys) {

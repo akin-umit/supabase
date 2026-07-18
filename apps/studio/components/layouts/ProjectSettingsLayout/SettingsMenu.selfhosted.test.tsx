@@ -120,10 +120,10 @@ describe('useGenerateSettingsMenu (self-hosted)', () => {
     expect(configGroup?.items.some((item) => item.key === 'addons')).toBe(true)
   })
 
-  it('includes billing links in self-hosted mode', () => {
+  it('omits billing links in self-hosted mode', () => {
     const { result } = renderHook(() => useGenerateSettingsMenu())
     const billingGroup = result.current.find((group) => group.title === 'Billing')
 
-    expect(billingGroup?.items.map((item) => item.key)).toEqual(['subscription', 'usage'])
+    expect(billingGroup).toBeUndefined()
   })
 })

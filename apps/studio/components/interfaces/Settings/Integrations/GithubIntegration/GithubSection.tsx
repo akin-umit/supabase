@@ -1,5 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { useRouter } from 'next/router'
 import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
@@ -94,7 +94,7 @@ export const GitHubSection = ({ isProjectScoped }: { isProjectScoped: boolean })
   }, [router])
 
   useShortcut(SHORTCUT_IDS.ORG_INTEGRATIONS_ADD_CONNECTION, onAddGitHubConnection, {
-    enabled: !isProjectScoped && canCreateGitHubConnection,
+    enabled: IS_PLATFORM && !isProjectScoped && canCreateGitHubConnection,
   })
 
   const description = isProjectScoped
@@ -128,7 +128,15 @@ export const GitHubSection = ({ isProjectScoped }: { isProjectScoped: boolean })
         </div>
       </PageSectionMeta>
       <PageSectionContent>
-        {isLoadingPermissions ? (
+        {!IS_PLATFORM ? (
+          <div className="rounded border px-4 py-3 text-sm text-foreground-light">
+            <p className="text-foreground">GitHub deploys are managed by the self-hosted operator.</p>
+            <p className="mt-1">
+              Connect repository webhooks, branch rules, and preview workflows in your hosting
+              platform. Studio will not call Supabase Cloud GitHub APIs in self-hosted mode.
+            </p>
+          </div>
+        ) : isLoadingPermissions ? (
           <GenericSkeletonLoader />
         ) : !canReadGitHubConnection ? (
           <NoPermission resourceText="view GitHub connections" />

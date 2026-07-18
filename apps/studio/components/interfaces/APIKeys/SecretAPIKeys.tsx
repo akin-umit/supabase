@@ -73,6 +73,8 @@ export const SecretAPIKeys = () => {
     PermissionAction.SECRETS_READ,
     '*'
   )
+  const canReadAPIKeysSurface = !IS_PLATFORM || canReadAPIKeys
+  const isResolvingPermissions = IS_PLATFORM && isLoadingPermissions
 
   const {
     data: apiKeysData,
@@ -80,7 +82,7 @@ export const SecretAPIKeys = () => {
     isSuccess: isSuccessApiKeys,
     isPending: isLoadingApiKeys,
     isError: isErrorApiKeys,
-  } = useAPIKeysQuery({ projectRef, reveal: false }, { enabled: canReadAPIKeys })
+  } = useAPIKeysQuery({ projectRef, reveal: false }, { enabled: canReadAPIKeysSurface })
 
   const showApiKeysLastUsed = useFlag('showApiKeysLastUsed')
   const { data: lastSeen, isLoading: isLoadingLastSeen } = useLastSeen({
@@ -96,7 +98,7 @@ export const SecretAPIKeys = () => {
     [apiKeysData]
   )
 
-  const empty = secretApiKeys?.length === 0 && !isLoadingApiKeys && !isLoadingPermissions
+  const empty = secretApiKeys?.length === 0 && !isLoadingApiKeys && !isResolvingPermissions
 
   const [deleteId, setDeleteId] = useQueryState('deleteSecretKey', parseAsString)
   const apiKeyToDelete = secretApiKeys?.find((key) => key.id === deleteId)
@@ -133,9 +135,9 @@ export const SecretAPIKeys = () => {
         actions={IS_PLATFORM ? <CreateSecretAPIKeyDialog /> : null}
       />
 
-      {!canReadAPIKeys && !isLoadingPermissions ? (
+      {!canReadAPIKeysSurface && !isResolvingPermissions ? (
         <NoPermission resourceText="view API keys" />
-      ) : isLoadingApiKeys || isLoadingPermissions ? (
+      ) : isLoadingApiKeys || isResolvingPermissions ? (
         <GenericSkeletonLoader />
       ) : isErrorApiKeys ? (
         <AlertError error={error} subject="Failed to load secret API keys" />

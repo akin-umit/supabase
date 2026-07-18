@@ -1,4 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
+import { IS_PLATFORM } from 'common'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import {
   PageHeader,
@@ -23,7 +24,7 @@ const SessionsPage: NextPageWithLayout = () => {
     'custom_config_gotrue'
   )
 
-  if (isPermissionsLoaded && !canReadAuthSettings) {
+  if (IS_PLATFORM && isPermissionsLoaded && !canReadAuthSettings) {
     return <NoPermission isFullPage resourceText="access your project's authentication settings" />
   }
 
@@ -40,7 +41,7 @@ const SessionsPage: NextPageWithLayout = () => {
         </PageHeaderMeta>
       </PageHeader>
       <PageContainer size="default">
-        {!isPermissionsLoaded ? (
+        {IS_PLATFORM && !isPermissionsLoaded ? (
           <PageSection>
             <PageSectionContent>
               <GenericSkeletonLoader />

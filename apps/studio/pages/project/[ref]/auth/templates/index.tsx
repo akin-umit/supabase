@@ -8,6 +8,7 @@ import { AuthEmailsLayout } from '@/components/layouts/AuthLayout/AuthEmailsLayo
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { NoPermission } from '@/components/ui/NoPermission'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const TemplatesPage: NextPageWithLayout = () => {
@@ -16,13 +17,13 @@ const TemplatesPage: NextPageWithLayout = () => {
     'custom_config_gotrue'
   )
 
-  if (isPermissionsLoaded && !canReadAuthSettings) {
+  if (IS_PLATFORM && isPermissionsLoaded && !canReadAuthSettings) {
     return <NoPermission isFullPage resourceText="access your project's email settings" />
   }
 
   return (
     <PageContainer size="default" className="pb-16">
-      {!isPermissionsLoaded ? (
+      {IS_PLATFORM && !isPermissionsLoaded ? (
         <PageSection>
           <PageSectionContent>
             <GenericSkeletonLoader />

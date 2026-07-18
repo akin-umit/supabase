@@ -36,7 +36,7 @@ const RateLimitsPage: NextPageWithLayout = () => {
     return <UnknownInterface urlBack={`/project/${ref}/auth/users`} />
   }
 
-  if (isPermissionsLoaded && !canReadAuthSettings) {
+  if (IS_PLATFORM && isPermissionsLoaded && !canReadAuthSettings) {
     return <NoPermission isFullPage resourceText="access your project's auth rate limit settings" />
   }
 
@@ -58,7 +58,7 @@ const RateLimitsPage: NextPageWithLayout = () => {
         </PageHeaderMeta>
       </PageHeader>
       <PageContainer size="default">
-        {!isPermissionsLoaded ? (
+        {IS_PLATFORM && !isPermissionsLoaded ? (
           <PageSection>
             <PageSectionContent>
               <GenericSkeletonLoader />

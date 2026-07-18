@@ -1,5 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useFlag, useParams } from 'common'
+import { IS_PLATFORM, useFlag, useParams } from 'common'
 import Link from 'next/link'
 import { PropsWithChildren } from 'react'
 import { Button } from 'ui'
@@ -65,6 +65,24 @@ export const UpgradePlanButton = ({
 
   const isRequestingToDisableSpendCap = addon === 'spendCap'
   const isOnPaidPlanAndRequestingToPurchaseAddon = !isFreePlan && !!addon
+
+  if (!IS_PLATFORM) {
+    return (
+      <ButtonTooltip
+        disabled
+        variant={variant}
+        className={className}
+        tooltip={{
+          content: {
+            side: 'bottom',
+            text: 'Self-hosted deployments manage plans, add-ons, quotas, and billing in the operator environment.',
+          },
+        }}
+      >
+        {children ?? 'Self-host operator managed'}
+      </ButtonTooltip>
+    )
+  }
 
   // [Joshen] URL for button based on the "upgrade request" and the org's plan. Falls back to URL for opening subscription plan
   const href = isRequestingToDisableSpendCap

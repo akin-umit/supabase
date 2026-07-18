@@ -62,7 +62,7 @@ import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-muta
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const TemplatePage: NextPageWithLayout = () => {
@@ -87,11 +87,13 @@ const RedirectToTemplates = () => {
   const { data: authConfig, isPending: isLoadingConfig } = useAuthConfigQuery({ projectRef })
   const { data: selectedOrganization } = useSelectedOrganizationQuery()
   const { data: selectedProject } = useSelectedProjectQuery()
-  const isTemplateRestrictionStatusKnown = isCustomEmailTemplateRestrictionStatusKnown({
+  const isTemplateRestrictionStatusKnown =
+    !IS_PLATFORM ||
+    isCustomEmailTemplateRestrictionStatusKnown({
     authConfig,
     organization: selectedOrganization,
     projectInsertedAt: selectedProject?.inserted_at,
-  })
+    })
   const isTemplateEditBlocked =
     isTemplateRestrictionStatusKnown &&
     isCustomEmailTemplateEditingRestricted({
@@ -163,7 +165,7 @@ const RedirectToTemplates = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authConfig, templateEnabledKey])
 
-  if (isPermissionsLoaded && !canReadAuthSettings) {
+  if (IS_PLATFORM && isPermissionsLoaded && !canReadAuthSettings) {
     return <NoPermission isFullPage resourceText="access your project's email settings" />
   }
 
@@ -218,7 +220,7 @@ const RedirectToTemplates = () => {
         </PageHeaderMeta>
       </PageHeader>
       <PageContainer size="default" className="pb-16">
-        {!isPermissionsLoaded || isLoadingConfig ? (
+        {IS_PLATFORM && (!isPermissionsLoaded || isLoadingConfig) ? (
           <PageSection>
             <PageSectionContent>
               <GenericSkeletonLoader />
