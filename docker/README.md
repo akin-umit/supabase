@@ -38,6 +38,29 @@ This Docker Compose configuration includes the following services:
 - **[Vector](https://github.com/vectordotdev/vector)** - High-performance observability data pipeline for logs
 - **[Supavisor](https://github.com/supabase/supavisor)** - Supabase's Postgres connection pooler
 
+## Supabase Turkiye Studio build
+
+This community package builds the `studio` container from this repository's
+`apps/studio/Dockerfile` instead of running the prebuilt upstream
+`supabase/studio` image. This is intentional: the self-hosted Studio UI,
+runtime routes, and community patches only appear in production when the
+container is rebuilt from this source tree.
+
+If a deployment still shows the upstream/self-hosted fallback screens after a
+code update, verify the deployed Compose file first. The `studio` service must
+contain a `build:` block that points to `../apps/studio/Dockerfile`; otherwise
+Coolify or Docker will keep serving the pinned upstream image and none of the
+local Studio changes will be visible.
+
+For Coolify deployments, after pulling this update:
+
+1. Open the application in Coolify.
+2. Use **Reload Compose File** or save the application source settings so the
+   new `build:` block is loaded.
+3. Run a clean redeploy / rebuild. Do not only restart the existing container.
+4. Confirm the deployed commit matches the repository commit that contains the
+   Studio changes.
+
 ## Documentation
 
 - **[Self-Hosting with Docker](https://supabase.com/docs/guides/self-hosting/docker)** - Setup and configuration guides
@@ -53,7 +76,8 @@ To update your self-hosted Supabase instance:
 1. Review [CHANGELOG.md](./CHANGELOG.md) for breaking changes
 2. Check [versions.md](./versions.md) for new image versions
 3. Update `docker-compose.yml` if there are configuration changes
-4. Pull the latest images: `docker compose pull`
+4. Pull upstream service images and rebuild Studio from this repository:
+   `docker compose pull && docker compose build --no-cache studio`
 5. Stop services: `docker compose down`
 6. Start services with new configuration: `docker compose up -d`
 

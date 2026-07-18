@@ -14,7 +14,13 @@ services:
 
   studio:
     container_name: supabase-studio
-    image: supabase/studio:2026.07.07-sha-a6a04f2
+    build:
+      context: ..
+      dockerfile: apps/studio/Dockerfile
+      target: production
+      args:
+        NEXT_PUBLIC_STUDIO_AUTH_MODE: supabase
+    image: supabase-turkiye/studio:${STUDIO_IMAGE_TAG:-local}
     restart: unless-stopped
     healthcheck:
       test:

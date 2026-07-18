@@ -47,11 +47,11 @@ A few caveats:
 
 ## Upstream repositories
 
-The image tags below are pinned in `docker-compose.yml` at the time of this document; check that file for the current versions.
+The image tags below are pinned in `docker-compose.yml` at the time of this document; check that file for the current versions. The Studio row is different in the Supabase Turkiye community deployment: Studio is built from this repository's `apps/studio/Dockerfile` so local dashboard changes are actually included in the deployed container.
 
 | Service | Image | Source repo |
 |---|---|---|
-| Studio (Dashboard) | `supabase/studio` | [supabase/supabase/apps/studio](https://github.com/supabase/supabase/tree/master/apps/studio) |
+| Studio (Dashboard) | Built locally as `supabase-turkiye/studio:${STUDIO_IMAGE_TAG:-local}` | [supabase/supabase/apps/studio](https://github.com/supabase/supabase/tree/master/apps/studio) |
 | Auth | `supabase/gotrue` | [supabase/auth](https://github.com/supabase/auth) |
 | PostgREST | `postgrest/postgrest` | [PostgREST/postgrest](https://github.com/PostgREST/postgrest) |
 | Realtime | `supabase/realtime` | [supabase/realtime](https://github.com/supabase/realtime) |
