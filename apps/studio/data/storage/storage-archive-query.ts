@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { storageKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 type StorageArchiveVariables = { projectRef?: string }
@@ -14,7 +15,7 @@ async function fetchStorageArchive({ projectRef }: StorageArchiveVariables, sign
     signal,
   })
   if (error) {
-    if ((error as ResponseError)?.message?.includes('Storage archive not found')) {
+    if (!IS_PLATFORM || (error as ResponseError)?.message?.includes('Storage archive not found')) {
       return { fileUrl: undefined }
     } else {
       handleError(error)

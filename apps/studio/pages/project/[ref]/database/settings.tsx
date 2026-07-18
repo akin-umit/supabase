@@ -1,4 +1,4 @@
-import { useFlag } from 'common'
+import { IS_PLATFORM, useFlag } from 'common'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import {
   PageHeader,
@@ -19,6 +19,7 @@ import { DiskSizeConfiguration } from '@/components/interfaces/Settings/Database
 import { JitDbAccessConfiguration } from '@/components/interfaces/Settings/Database/JitDatabaseAccess/JitDbAccessConfiguration'
 import { NetworkRestrictions } from '@/components/interfaces/Settings/Database/NetworkRestrictions/NetworkRestrictions'
 import { PoolingModesModal } from '@/components/interfaces/Settings/Database/PoolingModesModal'
+import { SettingsDatabaseEmptyStateLocal } from '@/components/interfaces/Settings/Database/SettingsDatabaseEmptyStateLocal'
 import { SSLConfiguration } from '@/components/interfaces/Settings/Database/SSLConfiguration'
 import DatabaseLayout from '@/components/layouts/DatabaseLayout/DatabaseLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
@@ -47,22 +48,28 @@ const DatabaseSettings: NextPageWithLayout = () => {
         </PageHeaderMeta>
       </PageHeader>
       <PageContainer size="small" className="flex flex-col gap-8 pb-12">
-        <DatabaseReadOnlyAlert />
-        <ResetDbPassword />
-        {jitDbAccessEnabled && <JitDbAccessConfiguration />}
-        <ConnectionPooling />
-        <SSLConfiguration />
-        {showNewDiskManagementUI ? (
-          // This form is hidden if Disk and Compute form is enabled, new form is on ./settings/compute-and-disk
-          <DiskManagementPanelForm />
+        {!IS_PLATFORM ? (
+          <SettingsDatabaseEmptyStateLocal />
         ) : (
-          <DiskSizeConfiguration />
+          <>
+            <DatabaseReadOnlyAlert />
+            <ResetDbPassword />
+            {jitDbAccessEnabled && <JitDbAccessConfiguration />}
+            <ConnectionPooling />
+            <SSLConfiguration />
+            {showNewDiskManagementUI ? (
+              // This form is hidden if Disk and Compute form is enabled, new form is on ./settings/compute-and-disk
+              <DiskManagementPanelForm />
+            ) : (
+              <DiskSizeConfiguration />
+            )}
+            {databaseNetworkRestrictions && <NetworkRestrictions />}
+            {databaseLogsConfigurationEnabled && <ConnectionLogging />}
+            <BannedIPs />
+          </>
         )}
-        {databaseNetworkRestrictions && <NetworkRestrictions />}
-        {databaseLogsConfigurationEnabled && <ConnectionLogging />}
-        <BannedIPs />
       </PageContainer>
-      <PoolingModesModal />
+      {IS_PLATFORM && <PoolingModesModal />}
     </>
   )
 }

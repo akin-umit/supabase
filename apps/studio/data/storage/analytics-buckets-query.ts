@@ -5,7 +5,7 @@ import { storageKeys } from './keys'
 import { useIsAnalyticsBucketsEnabled } from '@/data/config/project-storage-config-query'
 import { get, handleError } from '@/data/fetchers'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { PROJECT_STATUS } from '@/lib/constants'
+import { IS_PLATFORM, PROJECT_STATUS } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type AnalyticsBucketsVariables = { projectRef?: string }
@@ -23,6 +23,7 @@ export async function getAnalyticsBuckets(
     signal,
   })
 
+  if (error && !IS_PLATFORM) return []
   if (error) handleError(error)
   return data.data
 }
@@ -44,7 +45,11 @@ export const useAnalyticsBucketsQuery = <TData = AnalyticsBucketsData>(
   return useQuery<AnalyticsBucketsData, AnalyticsBucketsError, TData>({
     queryKey: storageKeys.analyticsBuckets(projectRef),
     queryFn: ({ signal }) => getAnalyticsBuckets({ projectRef }, signal),
-    enabled: enabled && typeof projectRef !== 'undefined' && isActive && hasIcebergEnabled,
+    enabled:
+      enabled &&
+      typeof projectRef !== 'undefined' &&
+      isActive &&
+      (!IS_PLATFORM || hasIcebergEnabled),
     ...options,
   })
 }

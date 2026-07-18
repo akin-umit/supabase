@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 
 import { configKeys } from './keys'
 import { handleError, patch } from '@/data/fetchers'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
 type StorageConfigUpdatePayload = components['schemas']['UpdateStorageConfigBody']
@@ -17,6 +18,12 @@ export async function updateProjectStorageConfigUpdate({
   fileSizeLimit,
   features,
 }: ProjectStorageConfigUpdateUpdateVariables) {
+  if (!IS_PLATFORM) {
+    throw new Error(
+      'Self-hosted Storage settings are managed by the Storage service environment and docker-compose runtime. Update the deployment configuration, then redeploy Storage and Studio.'
+    )
+  }
+
   const { data, error } = await patch('/platform/projects/{ref}/config/storage', {
     params: { path: { ref: projectRef } },
     body: { fileSizeLimit, features },

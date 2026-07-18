@@ -3,6 +3,7 @@ import { components } from 'api-types'
 
 import { storageCredentialsKeys } from './s3-access-key-keys'
 import { get, handleError } from '@/data/fetchers'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 type StorageCredentialsVariables = { projectRef?: string }
@@ -22,6 +23,7 @@ async function fetchStorageCredentials(
     signal,
   })
 
+  if (error && !IS_PLATFORM) return { data: [] as S3AccessKey[] }
   if (error) handleError(error)
   return data as { data: S3AccessKey[] }
 }

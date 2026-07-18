@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { storageKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 type GetNamespaceTablesVariables = {
@@ -26,7 +27,10 @@ async function getNamespaceTables(
     }
   )
 
-  if (error) handleError(error)
+  if (error) {
+    if (!IS_PLATFORM) return []
+    handleError(error)
+  }
   return data.data.map((x) => x.name)
 }
 

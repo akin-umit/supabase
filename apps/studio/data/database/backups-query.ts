@@ -4,7 +4,7 @@ import { databaseKeys } from './keys'
 import type { components } from '@/data/api'
 import { get, handleError } from '@/data/fetchers'
 import { useIsOrioleDbInAws } from '@/hooks/misc/useSelectedProject'
-import { PROJECT_STATUS } from '@/lib/constants'
+import { IS_PLATFORM, PROJECT_STATUS } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type BackupsVariables = {
@@ -14,6 +14,12 @@ export type BackupsVariables = {
 
 export type DatabaseBackup = components['schemas']['BackupsResponse']['backups'][number]
 
+const SELF_HOSTED_BACKUPS_FALLBACK = {
+  backups: [],
+  pitr_enabled: false,
+  physicalBackupData: {},
+} as unknown as components['schemas']['BackupsResponse']
+
 export async function getBackups({ projectRef }: BackupsVariables, signal?: AbortSignal) {
   if (!projectRef) throw new Error('Project ref is required')
 
@@ -22,6 +28,7 @@ export async function getBackups({ projectRef }: BackupsVariables, signal?: Abor
     signal,
   })
 
+  if (error && !IS_PLATFORM) return SELF_HOSTED_BACKUPS_FALLBACK
   if (error) handleError(error)
   return data
 }

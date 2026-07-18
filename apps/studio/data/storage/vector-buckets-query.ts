@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { storageKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { PROJECT_STATUS } from '@/lib/constants'
+import { IS_PLATFORM, PROJECT_STATUS } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type VectorBucketsVariables = { projectRef?: string }
@@ -19,6 +19,7 @@ export async function getVectorBuckets(
     signal,
   })
 
+  if (error && !IS_PLATFORM) return { vectorBuckets: [] }
   if (error) handleError(error)
 
   // [Joshen] JFYI typed incorrectly in API, to fix by adding creationTime to API

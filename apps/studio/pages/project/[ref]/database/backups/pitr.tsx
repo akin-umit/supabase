@@ -29,7 +29,7 @@ import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useHighAvailability } from '@/hooks/misc/useHighAvailability'
 import { useIsOrioleDbInAws, useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL, PROJECT_STATUS } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM, PROJECT_STATUS } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const DatabasePhysicalBackups: NextPageWithLayout = () => {
@@ -125,21 +125,35 @@ const PITR = () => {
       {isSuccess && (
         <>
           {!isEnabled ? (
-            <UpgradeToPro
-              addon={hasAccessToPitr ? 'pitr' : undefined}
-              source="pitr"
-              featureProposition="enable Point-in-Time Recovery"
-              primaryText={
-                hasAccessToPitr
-                  ? 'Point in Time Recovery is available as an add-on'
-                  : 'Point in Time Recovery is a Pro Plan add-on'
-              }
-              secondaryText={
-                !hasAccessToPitr
-                  ? 'Roll back your database to a specific second. Starts at $100/month. Pro Plan already includes daily backups at no extra cost.'
-                  : 'Enable the add-on to add point-in-time recovery to your project.'
-              }
-            />
+            !IS_PLATFORM ? (
+              <Admonition
+                type="default"
+                title="Point-in-Time Recovery is managed by the self-hosted operator"
+                description="Self-hosted projects can use WAL archiving, base backups, and restore tooling from the deployment environment. Studio will show PITR restore controls when a self-hosted control plane publishes verified recovery evidence."
+              >
+                <DocsButton
+                  abbrev={false}
+                  className="mt-2"
+                  href={`${DOCS_URL}/guides/platform/backups`}
+                />
+              </Admonition>
+            ) : (
+              <UpgradeToPro
+                addon={hasAccessToPitr ? 'pitr' : undefined}
+                source="pitr"
+                featureProposition="enable Point-in-Time Recovery"
+                primaryText={
+                  hasAccessToPitr
+                    ? 'Point in Time Recovery is available as an add-on'
+                    : 'Point in Time Recovery is a Pro Plan add-on'
+                }
+                secondaryText={
+                  !hasAccessToPitr
+                    ? 'Roll back your database to a specific second. Starts at $100/month. Pro Plan already includes daily backups at no extra cost.'
+                    : 'Enable the add-on to add point-in-time recovery to your project.'
+                }
+              />
+            )
           ) : !isActiveHealthy ? (
             <Alert>
               <AlertCircle />
