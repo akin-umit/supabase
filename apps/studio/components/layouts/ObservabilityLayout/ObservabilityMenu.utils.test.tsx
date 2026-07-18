@@ -39,7 +39,7 @@ describe('generateObservabilityMenuItems - PRODUCT section', () => {
     ])
   })
 
-  it('includes self-hosted PRODUCT section in self-hosted mode', () => {
+  it('includes PRODUCT section in self-hosted mode', () => {
     const menu = generateObservabilityMenuItems({
       ref: REF,
       preservedQueryParams: QUERY_PARAMS,
@@ -49,9 +49,9 @@ describe('generateObservabilityMenuItems - PRODUCT section', () => {
       isPlatform: false,
     })
 
-    expect(sectionTitles(menu)).toContain('PRODUCT / SELF-HOSTED')
+    expect(sectionTitles(menu)).toContain('PRODUCT')
     expect(menu.length).toBe(2)
-    expect(itemKeys(findSection(menu, 'PRODUCT / SELF-HOSTED'))).toEqual([
+    expect(itemKeys(findSection(menu, 'PRODUCT'))).toEqual([
       'database',
       'postgrest',
       'auth',
@@ -236,7 +236,7 @@ describe('generateObservabilityMenuItems - URL construction', () => {
 })
 
 describe('generateObservabilityMenuItems - complete structure', () => {
-  it('returns GENERAL and self-hosted PRODUCT with all standard items', () => {
+  it('returns GENERAL and PRODUCT with all standard items in self-hosted mode', () => {
     const menu = generateObservabilityMenuItems({
       ref: REF,
       preservedQueryParams: QUERY_PARAMS,
@@ -253,7 +253,7 @@ describe('generateObservabilityMenuItems - complete structure', () => {
       'query-performance',
       'api-overview',
     ])
-    expect(menu[1].title).toBe('PRODUCT / SELF-HOSTED')
+    expect(menu[1].title).toBe('PRODUCT')
     expect(itemKeys(menu[1])).toEqual([
       'database',
       'postgrest',

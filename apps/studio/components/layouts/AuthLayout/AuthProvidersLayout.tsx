@@ -1,4 +1,4 @@
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { PropsWithChildren } from 'react'
 
 import AuthLayout from './AuthLayout'
@@ -13,12 +13,15 @@ export const AuthProvidersLayout = ({ children }: PropsWithChildren<{}>) => {
     'authentication:third_party_auth',
   ])
 
+  const showSignInProviders = !IS_PLATFORM || authenticationSignInProviders
+  const showThirdPartyAuth = !IS_PLATFORM || authenticationThirdPartyAuth
+
   const navItems = [
     {
       label: 'Supabase Auth',
       href: `/project/${ref}/auth/providers`,
     },
-    ...(authenticationThirdPartyAuth
+    ...(showThirdPartyAuth
       ? [
           {
             label: 'Third-Party Auth',
@@ -30,7 +33,7 @@ export const AuthProvidersLayout = ({ children }: PropsWithChildren<{}>) => {
 
   return (
     <AuthLayout title="Sign In / Providers">
-      {authenticationSignInProviders ? (
+      {showSignInProviders ? (
         <PageLayout
           title="Sign In / Providers"
           subtitle="Configure authentication providers and login methods for your users"

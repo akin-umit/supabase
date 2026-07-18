@@ -52,16 +52,12 @@ const ProjectSettings: NextPageWithLayout = () => {
       </PageHeader>
       <PageContainer size="small">
         <General />
-        {IS_PLATFORM && (
-          <>
-            <Project />
-            {/* this is only settable on compliance orgs, currently that means HIPAA orgs */}
-            {!isBranch && hasHipaaAddon && <ComplianceConfig />}
-            {projectSettingsCustomDomains && <CustomDomainConfig />}
-            {!isBranch && projectTransferEnabled && <TransferProjectPanel />}
-            {isBranch ? <DeleteBranchPanel /> : <DeleteProjectPanel />}
-          </>
-        )}
+        <Project />
+        {/* this is only settable on compliance orgs, currently that means HIPAA orgs */}
+        {!isBranch && hasHipaaAddon && <ComplianceConfig />}
+        {(!IS_PLATFORM || projectSettingsCustomDomains) && <CustomDomainConfig />}
+        {!isBranch && (!IS_PLATFORM || projectTransferEnabled) && <TransferProjectPanel />}
+        {isBranch ? <DeleteBranchPanel /> : <DeleteProjectPanel />}
       </PageContainer>
     </>
   )

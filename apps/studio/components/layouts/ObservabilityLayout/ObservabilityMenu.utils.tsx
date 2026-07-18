@@ -1,4 +1,3 @@
-import { IS_PLATFORM } from '@/lib/constants'
 import { SHORTCUT_IDS, type ShortcutId } from '@/state/shortcuts/registry'
 
 interface ObservabilityMenuItem {
@@ -32,7 +31,6 @@ export function generateObservabilityMenuItems(
     showOverview,
     isSupamonitorEnabled,
     storageSupported,
-    isPlatform = IS_PLATFORM,
   } = options
 
   const generalItems: ObservabilityMenuItem[] = [
@@ -123,7 +121,7 @@ export function generateObservabilityMenuItems(
   ]
 
   sections.push({
-    title: isPlatform ? 'PRODUCT' : 'PRODUCT / SELF-HOSTED',
+    title: 'PRODUCT',
     key: 'product-section',
     items: productItems,
   })

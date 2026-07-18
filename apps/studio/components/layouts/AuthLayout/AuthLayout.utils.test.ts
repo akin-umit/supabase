@@ -89,7 +89,7 @@ describe('generateAuthMenu', () => {
     expect(names).not.toContain('Performance')
   })
 
-  it('self-hosted hides platform-only items but keeps local auth configuration', () => {
+  it('self-hosted keeps Cloud-like auth management and configuration routes visible', () => {
     const menu = generateAuthMenu({
       ...allFeaturesEnabled,
       isPlatform: false,
@@ -97,9 +97,9 @@ describe('generateAuthMenu', () => {
     const names = flatItemNames(menu)
     const groupTitles = menu.map((g) => g.title)
 
-    expect(names).not.toContain('OAuth Apps')
-    expect(names).not.toContain('OAuth Server')
-    expect(names).not.toContain('Audit Logs')
+    expect(names).toContain('OAuth Apps')
+    expect(names).toContain('OAuth Server')
+    expect(names).toContain('Audit Logs')
     expect(groupTitles).toContain('Notifications')
     expect(names).toContain('Emails')
 
@@ -108,11 +108,14 @@ describe('generateAuthMenu', () => {
       'Policies',
       'Sign In / Providers',
       'Passkeys',
+      'OAuth Server',
       'Sessions',
       'Rate Limits',
       'Multi-Factor',
       'URL Configuration',
       'Attack Protection',
+      'Auth Hooks',
+      'Audit Logs',
       'Performance',
     ])
   })
