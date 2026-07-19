@@ -429,6 +429,10 @@ const PageLayout: NextPageWithLayout = () => {
   const { hasLoaded: flagsLoaded } = useFeatureFlags()
   const showNewOverview = useFlag('edgeFunctionsOverview') === true
 
+  if (!IS_PLATFORM) {
+    return <EdgeFunctionOverview />
+  }
+
   if (IS_PLATFORM && !flagsLoaded) {
     return <LogoLoader />
   }

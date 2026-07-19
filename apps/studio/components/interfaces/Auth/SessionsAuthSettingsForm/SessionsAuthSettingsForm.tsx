@@ -29,6 +29,7 @@ import {
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { AlertError } from '@/components/ui/AlertError'
 import { NoPermission } from '@/components/ui/NoPermission'
 import { UpgradeToPro } from '@/components/ui/UpgradeToPro'
@@ -188,7 +189,19 @@ export const SessionsAuthSettingsForm = () => {
     return (
       <PageSection>
         <PageSectionContent>
-          <GenericSkeletonLoader />
+          {IS_PLATFORM ? (
+            <GenericSkeletonLoader />
+          ) : (
+            <SelfHostedAuthConfigNotice
+              settings={[
+                'GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED',
+                'GOTRUE_SECURITY_REFRESH_TOKEN_REUSE_INTERVAL',
+                'GOTRUE_SESSIONS_TIMEBOX',
+                'GOTRUE_SESSIONS_INACTIVITY_TIMEOUT',
+                'GOTRUE_SESSIONS_SINGLE_PER_USER',
+              ]}
+            />
+          )}
         </PageSectionContent>
       </PageSection>
     )

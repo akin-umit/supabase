@@ -29,6 +29,7 @@ import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import { TimestampInfo } from 'ui-patterns/TimestampInfo'
 
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { CreateOrUpdateOAuthAppSheet } from './CreateOrUpdateOAuthAppSheet'
 import { DeleteOAuthAppModal } from './DeleteOAuthAppModal'
 import { NewOAuthAppBanner } from './NewOAuthAppBanner'
@@ -46,6 +47,7 @@ import { useProjectApiUrl } from '@/data/config/project-endpoint-query'
 import { useOAuthServerAppDeleteMutation } from '@/data/oauth-server-apps/oauth-server-app-delete-mutation'
 import { useOAuthServerAppRegenerateSecretMutation } from '@/data/oauth-server-apps/oauth-server-app-regenerate-secret-mutation'
 import { useOAuthServerAppsQuery } from '@/data/oauth-server-apps/oauth-server-apps-query'
+import { IS_PLATFORM } from '@/lib/constants'
 import { onSearchInputEscape } from '@/lib/keyboard'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import { useShortcut } from '@/state/shortcuts/useShortcut'
@@ -220,6 +222,17 @@ export const OAuthAppsList = () => {
   }, [appToDelete, isSuccess, isSuccessDelete, selectedAppToDelete, setSelectedAppToDelete])
 
   if (isAuthConfigLoading || (isOAuthServerEnabled && isLoading)) {
+    if (!IS_PLATFORM && isAuthConfigLoading) {
+      return (
+        <SelfHostedAuthConfigNotice
+          settings={[
+            'GOTRUE_OAUTH_SERVER_ENABLED',
+            'GOTRUE_OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION',
+          ]}
+        />
+      )
+    }
+
     return <GenericSkeletonLoader />
   }
 

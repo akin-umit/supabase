@@ -1,5 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { Info } from 'lucide-react'
 import { Admonition } from 'ui-patterns/admonition'
 import { PageContainer } from 'ui-patterns/PageContainer'
@@ -36,7 +36,7 @@ const DatabaseScheduledBackups: NextPageWithLayout = () => {
     isPending: isLoading,
     isError,
     isSuccess,
-  } = useBackupsQuery({ projectRef })
+  } = useBackupsQuery({ projectRef }, { enabled: IS_PLATFORM })
 
   const isOrioleDbInAws = useIsOrioleDbInAws()
   const isPitrEnabled = backups?.pitr_enabled
@@ -68,6 +68,17 @@ const DatabaseScheduledBackups: NextPageWithLayout = () => {
                 description="OrioleDB is currently in public alpha and projects created are strictly ephemeral with no database backups"
               >
                 <DocsButton abbrev={false} className="mt-2" href={`${DOCS_URL}`} />
+              </Admonition>
+            ) : !IS_PLATFORM ? (
+              <Admonition type="default" title="Manage backups from your self-hosted database">
+                <div className="space-y-3 text-sm text-foreground-light">
+                  <p>
+                    Supabase Cloud backup inventory and restore APIs are not available in
+                    self-hosted Studio. Use your Postgres backup tooling, volume snapshots, or
+                    managed database backup system to create, verify, and restore backups.
+                  </p>
+                  <DocsButton href={`${DOCS_URL}/guides/self-hosting`} />
+                </div>
               </Admonition>
             ) : (
               <div className="flex flex-col gap-y-4">

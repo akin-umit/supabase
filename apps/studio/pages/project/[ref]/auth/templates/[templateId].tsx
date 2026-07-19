@@ -53,6 +53,7 @@ import {
 } from '@/components/interfaces/Auth/EmailTemplates/EmailTemplates.utils'
 import { SendEmailHookActiveAdmonition } from '@/components/interfaces/Auth/EmailTemplates/SendEmailHookActiveAdmonition'
 import { TemplateEditor } from '@/components/interfaces/Auth/EmailTemplates/TemplateEditor'
+import { SelfHostedAuthConfigNotice } from '@/components/interfaces/Auth/SelfHostedAuthConfigNotice'
 import AuthLayout from '@/components/layouts/AuthLayout/AuthLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { DocsButton } from '@/components/ui/DocsButton'
@@ -223,7 +224,17 @@ const RedirectToTemplates = () => {
         {IS_PLATFORM && (!isPermissionsLoaded || isLoadingConfig) ? (
           <PageSection>
             <PageSectionContent>
-              <GenericSkeletonLoader />
+              {IS_PLATFORM || !isPermissionsLoaded ? (
+                <GenericSkeletonLoader />
+              ) : (
+                <SelfHostedAuthConfigNotice
+                  settings={[
+                    'GOTRUE_MAILER_TEMPLATES_*',
+                    'GOTRUE_MAILER_SUBJECTS_*',
+                    'GOTRUE_MAILER_NOTIFICATIONS_*_ENABLED',
+                  ]}
+                />
+              )}
             </PageSectionContent>
           </PageSection>
         ) : (

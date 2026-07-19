@@ -29,6 +29,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from 'ui'
+import { Admonition } from 'ui-patterns/admonition'
 import * as z from 'zod'
 
 import { EDGE_FUNCTION_TEMPLATES } from '@/components/interfaces/Functions/Functions.templates'
@@ -37,14 +38,16 @@ import EdgeFunctionsLayout from '@/components/layouts/EdgeFunctionsLayout/EdgeFu
 import { PageLayout } from '@/components/layouts/PageLayout/PageLayout'
 import { SIDEBAR_KEYS } from '@/components/layouts/ProjectLayout/LayoutSidebar/LayoutSidebarProvider'
 import { DiscardChangesConfirmationDialog } from '@/components/ui-patterns/Dialogs/DiscardChangesConfirmationDialog'
+import { DocsButton } from '@/components/ui/DocsButton'
 import { FileExplorerAndEditor } from '@/components/ui/FileExplorerAndEditor'
 import { FileData } from '@/components/ui/FileExplorerAndEditor/FileExplorerAndEditor.types'
 import { useEdgeFunctionDeployMutation } from '@/data/edge-functions/edge-functions-deploy-mutation'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { usePreventNavigationOnUnsavedChanges } from '@/hooks/ui/usePreventNavigationOnUnsavedChanges'
-import { BASE_PATH } from '@/lib/constants'
+import { BASE_PATH, DOCS_URL } from '@/lib/constants'
 import { useTrack } from '@/lib/telemetry/track'
 import { useAiAssistantStateSnapshot } from '@/state/ai-assistant-state'
 import { useSidebarManagerSnapshot } from '@/state/sidebar-manager-state'
@@ -114,6 +117,7 @@ const INITIAL_FILES: FileData[] = [
 const NewFunctionPage = () => {
   const router = useRouter()
   const { ref, template } = useParams()
+  const { isSelfHosted } = useDeploymentMode()
   const { data: project } = useSelectedProjectQuery()
   const { data: org } = useSelectedOrganizationQuery()
   const snap = useAiAssistantStateSnapshot()
@@ -281,6 +285,44 @@ const NewFunctionPage = () => {
     usePreventNavigationOnUnsavedChanges({
       hasChanges: hasUnsavedChanges && !hasDeployed,
     })
+
+  if (isSelfHosted) {
+    return (
+      <PageLayout
+        size="default"
+        title="Create new edge function"
+        breadcrumbs={[
+          {
+            label: 'Edge Functions',
+            href: `/project/${ref}/functions`,
+          },
+        ]}
+      >
+        <Admonition type="default" title="Create functions in your self-hosted runtime">
+          <div className="space-y-3 text-sm text-foreground-light">
+            <p>
+              Browser deploy uses the Supabase Cloud Functions API. In self-hosted Studio, create
+              the function on the host that runs your Functions service, then restart or redeploy
+              the service.
+            </p>
+            <ol className="list-decimal space-y-1 pl-5">
+              <li>
+                Create <code className="text-code-inline">volumes/functions/my-function</code>.
+              </li>
+              <li>
+                Add <code className="text-code-inline">index.ts</code> and any supporting files.
+              </li>
+              <li>
+                Restart the <code className="text-code-inline">functions</code> service and refresh
+                this page.
+              </li>
+            </ol>
+            <DocsButton href={`${DOCS_URL}/guides/self-hosting/self-hosted-functions`} />
+          </div>
+        </Admonition>
+      </PageLayout>
+    )
+  }
 
   return (
     <PageLayout

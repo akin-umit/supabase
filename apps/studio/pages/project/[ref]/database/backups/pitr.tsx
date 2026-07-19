@@ -1,5 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { AlertCircle, DatabaseBackup } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from 'ui'
 import { Admonition } from 'ui-patterns/admonition'
@@ -77,7 +77,7 @@ const PITR = () => {
     isPending: isLoadingBackups,
     isError,
     isSuccess,
-  } = useBackupsQuery({ projectRef })
+  } = useBackupsQuery({ projectRef }, { enabled: IS_PLATFORM })
 
   const isLoading = isLoadingBackups || isLoadingEntitlements || isProjectPending
   const isEnabled = backups?.pitr_enabled
@@ -100,6 +100,21 @@ const PITR = () => {
         description="OrioleDB is currently in public alpha and projects created are strictly ephemeral with no database backups"
       >
         <DocsButton abbrev={false} className="mt-2" href={DOCS_URL} />
+      </Admonition>
+    )
+  }
+
+  if (!IS_PLATFORM) {
+    return (
+      <Admonition type="default" title="Configure PITR in your self-hosted backup system">
+        <div className="space-y-3 text-sm text-foreground-light">
+          <p>
+            Supabase Cloud PITR add-ons and restore APIs are not available in self-hosted Studio.
+            Configure WAL archiving, point-in-time restore, and retention in your Postgres backup
+            tooling or managed database provider.
+          </p>
+          <DocsButton href={`${DOCS_URL}/guides/self-hosting`} />
+        </div>
       </Admonition>
     )
   }

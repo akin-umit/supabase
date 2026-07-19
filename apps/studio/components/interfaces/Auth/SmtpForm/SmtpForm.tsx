@@ -28,6 +28,7 @@ import * as z from 'zod'
 import { urlRegex } from '../Auth.constants'
 import { AUTH_TEMPLATE_RESET_TYPES } from '../EmailTemplates/EmailTemplates.constants'
 import { isBeforeFreeTierTemplateBlockCutoff } from '../EmailTemplates/EmailTemplates.utils'
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { SmtpDisableConfirmationDialog } from './SmtpDisableConfirmationDialog'
 import { defaultDisabledSmtpFormValues } from './SmtpForm.constants'
 import { generateFormValues, isSmtpEnabled } from './SmtpForm.utils'
@@ -39,6 +40,7 @@ import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-muta
 import { useAuthTemplateResetMutation } from '@/data/auth/auth-template-reset-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { IS_PLATFORM } from '@/lib/constants'
 
 const smtpEnabledSchema = z.object({
   ENABLE_SMTP: z.literal(true),
@@ -100,7 +102,12 @@ type SmtpFormValues = z.infer<typeof smtpSchema>
 
 export const SmtpForm = () => {
   const { ref: projectRef } = useParams()
-  const { data: authConfig, error: authConfigError, isError } = useAuthConfigQuery({ projectRef })
+  const {
+    data: authConfig,
+    error: authConfigError,
+    isError,
+    isPending: isLoading,
+  } = useAuthConfigQuery({ projectRef })
   const { data: selectedProject } = useSelectedProjectQuery()
 
   const { mutate: updateAuthConfig, isPending: isUpdatingConfig } = useAuthConfigUpdateMutation()
@@ -272,6 +279,25 @@ export const SmtpForm = () => {
       <PageSection>
         <PageSectionContent>
           <NoPermission resourceText="view SMTP settings" />
+        </PageSectionContent>
+      </PageSection>
+    )
+  }
+
+  if (isLoading && !IS_PLATFORM) {
+    return (
+      <PageSection>
+        <PageSectionContent>
+          <SelfHostedAuthConfigNotice
+            settings={[
+              'GOTRUE_SMTP_ADMIN_EMAIL',
+              'GOTRUE_SMTP_HOST',
+              'GOTRUE_SMTP_PORT',
+              'GOTRUE_SMTP_USER',
+              'GOTRUE_SMTP_PASS',
+              'GOTRUE_SMTP_MAX_FREQUENCY',
+            ]}
+          />
         </PageSectionContent>
       </PageSection>
     )

@@ -23,6 +23,7 @@ import { PageSection, PageSectionContent } from 'ui-patterns/PageSection'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { OAuthEndpointsTable } from './OAuthEndpointsTable'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { NoPermission } from '@/components/ui/NoPermission'
@@ -30,7 +31,7 @@ import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useOAuthServerAppsQuery } from '@/data/oauth-server-apps/oauth-server-apps-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 const configUrlSchema = z.object({
   id: z.string(),
@@ -195,12 +196,24 @@ export const OAuthServerSettingsForm = () => {
     return (
       <PageSection>
         <PageSectionContent>
-          <Card>
-            <CardContent>
-              <GenericSkeletonLoader />
-            </CardContent>
-          </Card>
-          <OAuthEndpointsTable isLoading />
+          {IS_PLATFORM ? (
+            <>
+              <Card>
+                <CardContent>
+                  <GenericSkeletonLoader />
+                </CardContent>
+              </Card>
+              <OAuthEndpointsTable isLoading />
+            </>
+          ) : (
+            <SelfHostedAuthConfigNotice
+              settings={[
+                'GOTRUE_OAUTH_SERVER_ENABLED',
+                'GOTRUE_OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION',
+                'GOTRUE_OAUTH_SERVER_AUTHORIZATION_PATH',
+              ]}
+            />
+          )}
         </PageSectionContent>
       </PageSection>
     )

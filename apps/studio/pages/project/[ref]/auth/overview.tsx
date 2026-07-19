@@ -1,6 +1,7 @@
 import { FeatureFlagContext, useFlag, useParams } from 'common'
 import { useRouter } from 'next/router'
 import { useContext, useEffect } from 'react'
+import { Admonition } from 'ui-patterns/admonition'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import {
   PageHeader,
@@ -16,7 +17,7 @@ import AuthLayout from '@/components/layouts/AuthLayout/AuthLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { DocsButton } from '@/components/ui/DocsButton'
 import { useAuthOverviewQuery } from '@/data/auth/auth-overview-query'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import { NextPageWithLayout } from '@/types'
 
 const AuthOverview: NextPageWithLayout = () => {
@@ -29,16 +30,16 @@ const AuthOverview: NextPageWithLayout = () => {
     data: metrics,
     isPending: isLoading,
     error,
-  } = useAuthOverviewQuery({ projectRef: ref }, { enabled: !!ref })
+  } = useAuthOverviewQuery({ projectRef: ref }, { enabled: IS_PLATFORM && !!ref })
 
   useEffect(() => {
-    if (hasLoaded && !authOverviewPageEnabled) {
+    if (IS_PLATFORM && hasLoaded && !authOverviewPageEnabled) {
       router.replace(`/project/${ref}/auth/users`)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authOverviewPageEnabled, router, ref])
 
-  if (!authOverviewPageEnabled) {
+  if (IS_PLATFORM && !authOverviewPageEnabled) {
     return null
   }
 
@@ -60,8 +61,22 @@ const AuthOverview: NextPageWithLayout = () => {
         </PageHeaderMeta>
       </PageHeader>
       <PageContainer size="large">
-        <OverviewMetrics metrics={metrics} isLoading={isLoading} error={error} />
-        <OverviewLearnMore />
+        {IS_PLATFORM ? (
+          <>
+            <OverviewMetrics metrics={metrics} isLoading={isLoading} error={error} />
+            <OverviewLearnMore />
+          </>
+        ) : (
+          <Admonition type="default" title="Auth overview metrics are managed outside Studio">
+            <div className="space-y-3 text-sm text-foreground-light">
+              <p>
+                This self-hosted Studio does not have the Supabase Cloud Auth analytics endpoint.
+                Inspect Auth activity through your logging stack or the Auth service logs.
+              </p>
+              <DocsButton href={`${DOCS_URL}/guides/self-hosting/auth/config`} />
+            </div>
+          </Admonition>
+        )}
       </PageContainer>
     </>
   )

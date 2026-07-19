@@ -26,6 +26,7 @@ import { GenericSkeletonLoader, ShimmeringLoader } from 'ui-patterns/ShimmeringL
 import * as z from 'zod'
 
 import { convertPoolSize, isAllocationUnit } from './PerformanceSettingsForm.utils'
+import { SelfHostedAuthConfigNotice } from './SelfHostedAuthConfigNotice'
 import { ScaffoldSection, ScaffoldSectionTitle } from '@/components/layouts/Scaffold'
 import { AlertError } from '@/components/ui/AlertError'
 import { NoPermission } from '@/components/ui/NoPermission'
@@ -199,7 +200,17 @@ export const PerformanceSettingsForm = () => {
   if (isLoadingAuthConfig || isLoadingEntitlement) {
     return (
       <ScaffoldSection isFullWidth>
-        <GenericSkeletonLoader />
+        {IS_PLATFORM ? (
+          <GenericSkeletonLoader />
+        ) : (
+          <SelfHostedAuthConfigNotice
+            settings={[
+              'GOTRUE_API_MAX_REQUEST_DURATION',
+              'GOTRUE_DB_MAX_POOL_SIZE',
+              'GOTRUE_DB_MAX_POOL_SIZE_UNIT',
+            ]}
+          />
+        )}
       </ScaffoldSection>
     )
   }

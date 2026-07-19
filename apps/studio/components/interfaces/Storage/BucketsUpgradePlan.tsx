@@ -1,5 +1,6 @@
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { AnalyticsBucket as AnalyticsBucketIcon, VectorBucket as VectorBucketIcon } from 'icons'
+import { Admonition } from 'ui-patterns/admonition'
 import { EmptyStatePresentational } from 'ui-patterns/EmptyStatePresentational'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import { PageSection, PageSectionContent } from 'ui-patterns/PageSection'
@@ -17,6 +18,37 @@ export const BucketsUpgradePlan = ({ type }: { type: 'analytics' | 'vector' }) =
   const { isLoading: isLoadingStorageConfig } = useProjectStorageConfigQuery({ projectRef })
   const { data: organization, isLoading: isLoadingOrganization } = useSelectedOrganizationQuery()
   const { data: project, isLoading: isLoadingProject } = useSelectedProjectQuery()
+
+  if (!IS_PLATFORM) {
+    return (
+      <PageContainer>
+        <PageSection>
+          <PageSectionContent className="flex flex-col gap-y-8">
+            <AlphaNotice
+              entity={type === 'analytics' ? 'Analytics buckets' : 'Vector buckets'}
+              feedbackUrl={
+                type === 'analytics'
+                  ? 'https://github.com/orgs/supabase/discussions/40116'
+                  : 'https://github.com/orgs/supabase/discussions/40815'
+              }
+            />
+            <Admonition
+              type="default"
+              title={`Configure ${type} buckets in your self-hosted Storage runtime`}
+            >
+              <div className="space-y-3 text-sm text-foreground-light">
+                <p>
+                  This bucket type depends on Supabase Cloud Storage APIs in Studio. In self-hosted
+                  deployments, manage the backing object storage, extensions, wrappers, and service
+                  configuration directly in your runtime.
+                </p>
+              </div>
+            </Admonition>
+          </PageSectionContent>
+        </PageSection>
+      </PageContainer>
+    )
+  }
 
   const isLoading =
     isLoadingStorageConfig || isLoadingOrganization || isLoadingProject || !organization || !project

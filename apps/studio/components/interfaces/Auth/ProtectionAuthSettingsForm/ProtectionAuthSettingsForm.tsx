@@ -34,13 +34,14 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
 import { NO_REQUIRED_CHARACTERS } from '../Auth.constants'
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { AlertError } from '@/components/ui/AlertError'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { NoPermission } from '@/components/ui/NoPermission'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 const CAPTCHA_PROVIDERS = [
   { key: 'hcaptcha', label: 'hCaptcha' },
@@ -236,7 +237,20 @@ export const ProtectionAuthSettingsForm = () => {
     return (
       <PageSection>
         <PageSectionContent>
-          <GenericSkeletonLoader />
+          {IS_PLATFORM ? (
+            <GenericSkeletonLoader />
+          ) : (
+            <SelfHostedAuthConfigNotice
+              settings={[
+                'GOTRUE_SECURITY_CAPTCHA_ENABLED',
+                'GOTRUE_SECURITY_CAPTCHA_PROVIDER',
+                'GOTRUE_SECURITY_CAPTCHA_SECRET',
+                'GOTRUE_PASSWORD_MIN_LENGTH',
+                'GOTRUE_PASSWORD_REQUIRED_CHARACTERS',
+                'GOTRUE_PASSWORD_HIBP_ENABLED',
+              ]}
+            />
+          )}
         </PageSectionContent>
       </PageSection>
     )

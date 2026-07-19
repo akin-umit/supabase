@@ -24,6 +24,7 @@ import {
 } from 'ui-patterns/PageSection'
 
 import { parseRedirectUrls } from '../Auth.constants'
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { AddNewURLModal } from './AddNewURLModal'
 import { RedirectUrlList } from './RedirectUrlList'
 import { ValueContainer } from './ValueContainer'
@@ -32,7 +33,7 @@ import { DocsButton } from '@/components/ui/DocsButton'
 import { HorizontalShimmerWithIcon } from '@/components/ui/Shimmers'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 export const RedirectUrls = () => {
   const { ref: projectRef } = useParams()
@@ -89,7 +90,7 @@ export const RedirectUrls = () => {
         </PageSectionAside>
       </PageSectionMeta>
       <PageSectionContent>
-        {isLoading && (
+        {isLoading && IS_PLATFORM && (
           <>
             <ValueContainer>
               <HorizontalShimmerWithIcon />
@@ -98,6 +99,10 @@ export const RedirectUrls = () => {
               <HorizontalShimmerWithIcon />
             </ValueContainer>
           </>
+        )}
+
+        {isLoading && !IS_PLATFORM && (
+          <SelfHostedAuthConfigNotice settings={['GOTRUE_URI_ALLOW_LIST']} />
         )}
 
         {isError && (

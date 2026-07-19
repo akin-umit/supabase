@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Admonition } from 'ui-patterns/admonition'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
 import { Policies } from '@/components/interfaces/Database/Policies/Policies'
@@ -8,10 +9,12 @@ import type { Policy } from '@/components/interfaces/Database/Policies/PolicyTab
 import { AlertError } from '@/components/ui/AlertError'
 import { useDatabasePoliciesQuery } from '@/data/database-policies/database-policies-query'
 import { useTablesQuery } from '@/data/tables/tables-query'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 
 export const RealtimePolicies = () => {
   const { data: project } = useSelectedProjectQuery()
+  const { isSelfHosted } = useDeploymentMode()
 
   const [showPolicyEditor, setShowPolicyEditor] = useState(false)
   const [selectedPolicyToEdit, setSelectedPolicyToEdit] = useState<Policy>()
@@ -52,7 +55,25 @@ export const RealtimePolicies = () => {
     <>
       {isLoading && <GenericSkeletonLoader />}
 
-      {isError && <AlertError error={error} subject="Failed to retrieve tables" />}
+      {isError &&
+        (isSelfHosted ? (
+          <Admonition type="warning" title="Could not inspect realtime.messages policies">
+            <div className="space-y-2 text-sm text-foreground-light">
+              <p>
+                Studio could not read the <code className="text-code-inline">realtime</code> schema
+                from this self-hosted database connection. Confirm that Studio can reach Postgres
+                and that the <code className="text-code-inline">realtime.messages</code> table
+                exists before creating policies.
+              </p>
+              <p>
+                You can still manage policies directly with SQL against the{' '}
+                <code className="text-code-inline">realtime.messages</code> table.
+              </p>
+            </div>
+          </Admonition>
+        ) : (
+          <AlertError error={error} subject="Failed to retrieve tables" />
+        ))}
 
       {isSuccess && (
         <PoliciesDataProvider
