@@ -36,13 +36,16 @@ import {
   useRealtimeConfigurationQuery,
 } from '@/data/realtime/realtime-config-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { DOCS_URL } from '@/lib/constants'
 
 const formId = 'realtime-configuration-form'
 
 export const RealtimeSettings = () => {
   const { ref: projectRef } = useParams()
+  const { isSelfHosted } = useDeploymentMode()
   const { data: project } = useSelectedProjectQuery()
   const { data: organization, isSuccess: isSuccessOrganization } = useSelectedOrganizationQuery()
   const { can: canUpdateConfig, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
@@ -179,6 +182,43 @@ export const RealtimeSettings = () => {
       ),
       suspend: values.suspend,
     })
+  }
+
+  if (isSelfHosted) {
+    return (
+      <Admonition type="default" title="Manage Realtime settings from your self-hosted runtime">
+        <div className="space-y-3 text-sm text-foreground-light">
+          <p>
+            This Studio build does not have the Supabase Cloud Realtime configuration API. Update
+            the Realtime service environment variables in your compose, Kubernetes, or service
+            manager configuration, then restart the Realtime service.
+          </p>
+          <div>
+            <p className="mb-2 text-foreground">Common settings for this page:</p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>
+                <code className="text-code-inline">TENANT_MAX_CONCURRENT_USERS</code>
+              </li>
+              <li>
+                <code className="text-code-inline">TENANT_MAX_EVENTS_PER_SECOND</code>
+              </li>
+              <li>
+                <code className="text-code-inline">TENANT_MAX_BYTES_PER_SECOND</code>
+              </li>
+              <li>
+                <code className="text-code-inline">TENANT_MAX_CHANNELS_PER_CLIENT</code>
+              </li>
+              <li>
+                <code className="text-code-inline">DB_POOL_SIZE</code>
+              </li>
+            </ul>
+          </div>
+          <Button asChild variant="default">
+            <Link href={`${DOCS_URL}/guides/self-hosting/realtime/config`}>View Realtime docs</Link>
+          </Button>
+        </div>
+      </Admonition>
+    )
   }
 
   return (

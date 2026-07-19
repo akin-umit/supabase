@@ -18,6 +18,7 @@ import {
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { TEMPLATES_SCHEMAS } from './AuthTemplatesValidation'
 import { CustomEmailTemplateRestrictionAdmonition } from './CustomEmailTemplateRestrictionAdmonition'
 import {
@@ -34,7 +35,7 @@ import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-muta
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 const notificationEnabledKeys = TEMPLATES_SCHEMAS.filter(
   (t) => t.misc?.emailTemplateType === 'security'
@@ -133,7 +134,19 @@ export const EmailTemplates = () => {
       {isLoading && (
         <PageSection>
           <PageSectionContent>
-            <GenericSkeletonLoader />
+            {IS_PLATFORM ? (
+              <GenericSkeletonLoader />
+            ) : (
+              <SelfHostedAuthConfigNotice
+                settings={[
+                  'GOTRUE_MAILER_TEMPLATES_*',
+                  'GOTRUE_MAILER_SUBJECTS_*',
+                  'GOTRUE_MAILER_NOTIFICATIONS_*_ENABLED',
+                  'GOTRUE_HOOK_SEND_EMAIL_ENABLED',
+                  'GOTRUE_HOOK_SEND_EMAIL_URI',
+                ]}
+              />
+            )}
           </PageSectionContent>
         </PageSection>
       )}

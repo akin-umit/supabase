@@ -34,6 +34,7 @@ import {
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { isSmtpEnabled } from '../SmtpForm/SmtpForm.utils'
 import { AlertError } from '@/components/ui/AlertError'
 import { InlineLink } from '@/components/ui/InlineLink'
@@ -41,7 +42,7 @@ import { NoPermission } from '@/components/ui/NoPermission'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 export const RateLimits = () => {
   const { ref: projectRef } = useParams()
@@ -213,7 +214,21 @@ export const RateLimits = () => {
     return (
       <PageSection>
         <PageSectionContent>
-          <GenericSkeletonLoader />
+          {IS_PLATFORM ? (
+            <GenericSkeletonLoader />
+          ) : (
+            <SelfHostedAuthConfigNotice
+              settings={[
+                'GOTRUE_RATE_LIMIT_TOKEN_REFRESH',
+                'GOTRUE_RATE_LIMIT_VERIFY',
+                'GOTRUE_RATE_LIMIT_EMAIL_SENT',
+                'GOTRUE_RATE_LIMIT_SMS_SENT',
+                'GOTRUE_RATE_LIMIT_ANONYMOUS_USERS',
+                'GOTRUE_RATE_LIMIT_OTP',
+                'GOTRUE_RATE_LIMIT_WEB3',
+              ]}
+            />
+          )}
         </PageSectionContent>
       </PageSection>
     )

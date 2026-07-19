@@ -1,6 +1,6 @@
 import { JwtSecretUpdateError, JwtSecretUpdateStatus } from '@supabase/shared-types/out/events'
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 
@@ -22,7 +22,7 @@ const JWTKeysLegacyPage: NextPageWithLayout = () => {
 
   const { data } = useJwtSecretUpdatingStatusQuery(
     { projectRef },
-    { enabled: projectSettingsLegacyJwtKeys }
+    { enabled: IS_PLATFORM && projectSettingsLegacyJwtKeys }
   )
   const jwtSecretUpdateStatus = data?.jwtSecretUpdateStatus
   const jwtSecretUpdateError = data?.jwtSecretUpdateError
@@ -48,7 +48,15 @@ const JWTKeysLegacyPage: NextPageWithLayout = () => {
     }
 
     previousJwtSecretUpdateStatus.current = jwtSecretUpdateStatus
-  }, [jwtSecretUpdateStatus])
+  }, [
+    Failed,
+    Updated,
+    Updating,
+    client,
+    jwtSecretUpdateErrorMessage,
+    jwtSecretUpdateStatus,
+    projectRef,
+  ])
 
   if (!projectSettingsLegacyJwtKeys) {
     return <UnknownInterface urlBack={`/project/${projectRef}/settings/jwt/signing-keys`} />

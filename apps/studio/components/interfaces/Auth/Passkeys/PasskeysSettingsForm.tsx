@@ -19,6 +19,7 @@ import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { validateRpId, validateWebAuthnOrigins } from './PasskeysSettingsForm.utils'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { NoPermission } from '@/components/ui/NoPermission'
@@ -27,7 +28,7 @@ import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 type GoTrueConfig = components['schemas']['GoTrueConfigResponse']
 
@@ -205,6 +206,19 @@ export const PasskeysSettingsForm = () => {
   }
 
   if (isAuthConfigLoading || isLoadingPermissions || !authConfig) {
+    if (!IS_PLATFORM && !isLoadingPermissions) {
+      return (
+        <SelfHostedAuthConfigNotice
+          settings={[
+            'GOTRUE_PASSKEY_ENABLED',
+            'GOTRUE_WEBAUTHN_RP_ID',
+            'GOTRUE_WEBAUTHN_RP_DISPLAY_NAME',
+            'GOTRUE_WEBAUTHN_RP_ORIGINS',
+          ]}
+        />
+      )
+    }
+
     return <GenericSkeletonLoader />
   }
 

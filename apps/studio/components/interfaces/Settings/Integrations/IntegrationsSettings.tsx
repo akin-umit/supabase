@@ -8,7 +8,7 @@ import { SidePanelVercelProjectLinker } from '@/components/interfaces/Organizati
 import { InlineLink } from '@/components/ui/InlineLink'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { BASE_PATH } from '@/lib/constants'
+import { BASE_PATH, DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 export const IntegrationImageHandler = ({ title }: { title: 'vercel' | 'github' | 'aws' }) => {
   return (
@@ -62,6 +62,23 @@ export const IntegrationSettings = () => {
   // PrivateLink is not available in eu-central-2 (Zurich) until Feb 2026
   const isPrivateLinkUnsupportedRegion = project?.region === 'eu-central-2'
   const showAWSPrivateLink = showAWSPrivateLinkFeature && !isPrivateLinkUnsupportedRegion
+
+  if (!IS_PLATFORM) {
+    return (
+      <Admonition type="default" title="Manage integrations outside self-hosted Studio">
+        <div className="space-y-3 text-sm text-foreground-light">
+          <p>
+            GitHub, Vercel, and AWS PrivateLink integrations use Supabase Cloud backend services. In
+            self-hosted deployments, configure CI/CD, deployment hooks, private networking, and
+            repository automation in your own infrastructure.
+          </p>
+          <InlineLink href={`${DOCS_URL}/guides/self-hosting`}>
+            View self-hosting documentation
+          </InlineLink>
+        </div>
+      </Admonition>
+    )
+  }
 
   return (
     <>

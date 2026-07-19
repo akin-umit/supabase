@@ -39,6 +39,7 @@ import {
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { TaxDisclaimer } from '@/components/interfaces/Billing/TaxDisclaimer'
 import { AlertError } from '@/components/ui/AlertError'
 import { NoPermission } from '@/components/ui/NoPermission'
@@ -323,7 +324,20 @@ export const MfaAuthSettingsForm = () => {
     return (
       <PageSection>
         <PageSectionContent>
-          <GenericSkeletonLoader />
+          {IS_PLATFORM ? (
+            <GenericSkeletonLoader />
+          ) : (
+            <SelfHostedAuthConfigNotice
+              settings={[
+                'GOTRUE_MFA_TOTP_ENROLL_ENABLED',
+                'GOTRUE_MFA_TOTP_VERIFY_ENABLED',
+                'GOTRUE_MFA_MAX_ENROLLED_FACTORS',
+                'GOTRUE_MFA_PHONE_ENROLL_ENABLED',
+                'GOTRUE_MFA_PHONE_VERIFY_ENABLED',
+                'GOTRUE_MFA_ALLOW_LOW_AAL',
+              ]}
+            />
+          )}
         </PageSectionContent>
       </PageSection>
     )

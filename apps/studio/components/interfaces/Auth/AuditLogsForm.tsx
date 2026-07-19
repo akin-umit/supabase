@@ -17,6 +17,7 @@ import {
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
+import { SelfHostedAuthConfigNotice } from './SelfHostedAuthConfigNotice'
 import { AlertError } from '@/components/ui/AlertError'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
@@ -24,6 +25,7 @@ import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-muta
 import { useTablesQuery } from '@/data/tables/tables-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { IS_PLATFORM } from '@/lib/constants'
 
 const schema = z.object({
   AUDIT_LOG_DISABLE_POSTGRES: z.boolean(),
@@ -101,7 +103,11 @@ export const AuditLogsForm = () => {
     return (
       <PageSection>
         <PageSectionContent>
-          <GenericSkeletonLoader />
+          {IS_PLATFORM ? (
+            <GenericSkeletonLoader />
+          ) : (
+            <SelfHostedAuthConfigNotice settings={['GOTRUE_AUDIT_LOG_DISABLE_POSTGRES']} />
+          )}
         </PageSectionContent>
       </PageSection>
     )

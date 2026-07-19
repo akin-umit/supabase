@@ -1,4 +1,5 @@
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
+import { Admonition } from 'ui-patterns/admonition'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import {
   PageHeader,
@@ -21,7 +22,7 @@ const RestoreToNewProjectPage: NextPageWithLayout = () => {
   const { ref } = useParams()
   const { databaseRestoreToNewProject } = useIsFeatureEnabled(['database:restore_to_new_project'])
 
-  if (!databaseRestoreToNewProject) {
+  if (IS_PLATFORM && !databaseRestoreToNewProject) {
     return <UnknownInterface urlBack={`/project/${ref}/database/backups/scheduled`} />
   }
 
@@ -41,7 +42,22 @@ const RestoreToNewProjectPage: NextPageWithLayout = () => {
         <PageSection>
           <PageSectionContent>
             <div className="space-y-8">
-              <RestoreToNewProject />
+              {IS_PLATFORM ? (
+                <RestoreToNewProject />
+              ) : (
+                <Admonition
+                  type="default"
+                  title="Restore to a new project is a Supabase Cloud workflow"
+                >
+                  <div className="space-y-3 text-sm text-foreground-light">
+                    <p>
+                      In self-hosted deployments, create a new Postgres instance or project stack,
+                      restore your dump or snapshot there, then point services at the restored
+                      database.
+                    </p>
+                  </div>
+                </Admonition>
+              )}
             </div>
           </PageSectionContent>
         </PageSection>

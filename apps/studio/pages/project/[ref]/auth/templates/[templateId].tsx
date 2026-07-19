@@ -53,6 +53,7 @@ import {
 } from '@/components/interfaces/Auth/EmailTemplates/EmailTemplates.utils'
 import { SendEmailHookActiveAdmonition } from '@/components/interfaces/Auth/EmailTemplates/SendEmailHookActiveAdmonition'
 import { TemplateEditor } from '@/components/interfaces/Auth/EmailTemplates/TemplateEditor'
+import { SelfHostedAuthConfigNotice } from '@/components/interfaces/Auth/SelfHostedAuthConfigNotice'
 import AuthLayout from '@/components/layouts/AuthLayout/AuthLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { DocsButton } from '@/components/ui/DocsButton'
@@ -62,7 +63,7 @@ import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-muta
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const TemplatePage: NextPageWithLayout = () => {
@@ -221,7 +222,17 @@ const RedirectToTemplates = () => {
         {!isPermissionsLoaded || isLoadingConfig ? (
           <PageSection>
             <PageSectionContent>
-              <GenericSkeletonLoader />
+              {IS_PLATFORM || !isPermissionsLoaded ? (
+                <GenericSkeletonLoader />
+              ) : (
+                <SelfHostedAuthConfigNotice
+                  settings={[
+                    'GOTRUE_MAILER_TEMPLATES_*',
+                    'GOTRUE_MAILER_SUBJECTS_*',
+                    'GOTRUE_MAILER_NOTIFICATIONS_*_ENABLED',
+                  ]}
+                />
+              )}
             </PageSectionContent>
           </PageSection>
         ) : (

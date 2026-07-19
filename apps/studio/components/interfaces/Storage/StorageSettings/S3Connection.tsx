@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { AlertTitle } from '@ui/components/shadcn/ui/alert'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
@@ -25,6 +25,7 @@ import {
   TableRow,
   WarningIcon,
 } from 'ui'
+import { Admonition } from 'ui-patterns/admonition'
 import { Input } from 'ui-patterns/DataInputs/Input'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import { PageContainer } from 'ui-patterns/PageContainer'
@@ -141,7 +142,26 @@ export const S3Connection = () => {
           </PageSectionMeta>
 
           <PageSectionContent>
-            {isErrorStorageConfig && (
+            {!IS_PLATFORM && (
+              <Admonition type="default" title="Configure S3 protocol in your Storage service">
+                <div className="space-y-3 text-sm text-foreground-light">
+                  <p>
+                    Supabase Cloud storage configuration APIs are not available in self-hosted
+                    Studio. Enable or disable S3 protocol support through your Storage service
+                    environment and restart the service.
+                  </p>
+                  <p>
+                    Common settings include{' '}
+                    <code className="text-code-inline">STORAGE_BACKEND</code>,{' '}
+                    <code className="text-code-inline">STORAGE_S3_*</code>, and your public Storage
+                    endpoint.
+                  </p>
+                  <DocsButton href={`${DOCS_URL}/guides/self-hosting/storage/config`} />
+                </div>
+              </Admonition>
+            )}
+
+            {IS_PLATFORM && isErrorStorageConfig && (
               <AlertError
                 className="mb-4"
                 subject="Failed to retrieve storage configuration"
@@ -151,7 +171,7 @@ export const S3Connection = () => {
 
             <Form {...form}>
               <form id="s3-connection-form" onSubmit={form.handleSubmit(onSubmit)}>
-                {projectIsLoading ? (
+                {!IS_PLATFORM ? null : projectIsLoading ? (
                   <GenericSkeletonLoader />
                 ) : isProjectActive ? (
                   <Card>
@@ -275,7 +295,17 @@ export const S3Connection = () => {
           </PageSectionMeta>
 
           <PageSectionContent>
-            {projectIsLoading || isLoadingPermissions ? (
+            {!IS_PLATFORM ? (
+              <Admonition type="default" title="Manage S3 access keys in your self-hosted runtime">
+                <div className="space-y-3 text-sm text-foreground-light">
+                  <p>
+                    Cloud-managed S3 credential creation is not available in self-hosted Studio.
+                    Provision access keys through your object storage provider or secret manager,
+                    then inject them into the Storage service environment.
+                  </p>
+                </div>
+              </Admonition>
+            ) : projectIsLoading || isLoadingPermissions ? (
               <GenericSkeletonLoader />
             ) : !canReadS3Credentials ? (
               <NoPermission resourceText="view this project's S3 access keys" />

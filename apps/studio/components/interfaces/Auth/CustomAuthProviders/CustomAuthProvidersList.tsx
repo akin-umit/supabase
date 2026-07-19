@@ -29,6 +29,7 @@ import {
 import { Admonition } from 'ui-patterns/admonition'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { CreateOrUpdateCustomProviderSheet } from './CreateOrUpdateCustomProviderSheet'
 import {
   CUSTOM_PROVIDER_ENABLED_OPTIONS,
@@ -48,6 +49,7 @@ import { useProjectApiUrl } from '@/data/config/project-endpoint-query'
 import { useOAuthCustomProviderUpdateMutation } from '@/data/oauth-custom-providers/oauth-custom-provider-update-mutation'
 import { useOAuthCustomProvidersQuery } from '@/data/oauth-custom-providers/oauth-custom-providers-query'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
+import { IS_PLATFORM } from '@/lib/constants'
 import { onSearchInputEscape } from '@/lib/keyboard'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import { useShortcut } from '@/state/shortcuts/useShortcut'
@@ -253,6 +255,20 @@ export const CustomAuthProvidersList = () => {
   const canCreateProvider = isCustomProvidersEnabled && !atProviderLimit
 
   if (isAuthConfigLoading || (isCustomProvidersEnabled && isPending)) {
+    if (!IS_PLATFORM && isAuthConfigLoading) {
+      return (
+        <SelfHostedAuthConfigNotice
+          settings={[
+            'GOTRUE_CUSTOM_OAUTH_ENABLED',
+            'GOTRUE_CUSTOM_OAUTH_MAX_PROVIDERS',
+            'GOTRUE_EXTERNAL_*_ENABLED',
+            'GOTRUE_EXTERNAL_*_CLIENT_ID',
+            'GOTRUE_EXTERNAL_*_SECRET',
+          ]}
+        />
+      )
+    }
+
     return <GenericSkeletonLoader />
   }
 

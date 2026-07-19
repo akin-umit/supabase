@@ -1,6 +1,6 @@
 import { SupportCategories } from '@supabase/shared-types/out/constants'
 import { Search } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import {
   Button,
   Card,
@@ -24,10 +24,11 @@ import { TimestampInfo } from 'ui-patterns/TimestampInfo'
 import { MigrationsEmptyState } from './MigrationsEmptyState'
 import { SupportLink } from '@/components/interfaces/Support/SupportLink'
 import { CodeEditor } from '@/components/ui/CodeEditor/CodeEditor'
+import { DocsButton } from '@/components/ui/DocsButton'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { DatabaseMigration, useMigrationsQuery } from '@/data/database/migrations-query'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import { formatMigrationVersionLabel, parseMigrationVersion } from '@/lib/migration-utils'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import { useShortcut } from '@/state/shortcuts/useShortcut'
@@ -80,28 +81,48 @@ const Migrations = () => {
         {isError && (
           <Admonition
             type="warning"
-            title="Failed to retrieve migration history for database"
+            title={
+              IS_PLATFORM
+                ? 'Failed to retrieve migration history for database'
+                : 'Unable to read migration history from this self-hosted database'
+            }
             description={
-              <>
-                <p className="mb-1">
-                  Try refreshing your browser, but if the issue persists for more than a few
-                  minutes, please reach out to us via support.
-                </p>
-                <p className="mb-4">Error: {error?.message ?? 'Unknown'}</p>
-              </>
+              IS_PLATFORM ? (
+                <>
+                  <p className="mb-1">
+                    Try refreshing your browser, but if the issue persists for more than a few
+                    minutes, please reach out to us via support.
+                  </p>
+                  <p className="mb-4">Error: {error?.message ?? 'Unknown'}</p>
+                </>
+              ) : (
+                <>
+                  <p className="mb-1">
+                    Studio reads migration history from the connected Postgres database. Check that
+                    the database connection string is configured and that the{' '}
+                    <code className="text-code-inline">supabase_migrations.schema_migrations</code>{' '}
+                    table exists.
+                  </p>
+                  <p className="mb-4">Error: {error?.message ?? 'Unknown'}</p>
+                </>
+              )
             }
           >
-            <Button key="contact-support" asChild variant="default">
-              <SupportLink
-                queryParams={{
-                  projectRef: project?.ref,
-                  category: SupportCategories.DASHBOARD_BUG,
-                  subject: 'Unable to view database migrations',
-                }}
-              >
-                Contact support
-              </SupportLink>
-            </Button>
+            {IS_PLATFORM ? (
+              <Button key="contact-support" asChild variant="default">
+                <SupportLink
+                  queryParams={{
+                    projectRef: project?.ref,
+                    category: SupportCategories.DASHBOARD_BUG,
+                    subject: 'Unable to view database migrations',
+                  }}
+                >
+                  Contact support
+                </SupportLink>
+              </Button>
+            ) : (
+              <DocsButton href={`${DOCS_URL}/guides/deployment/database-migrations`} />
+            )}
           </Admonition>
         )}
         {isSuccess && (
@@ -116,7 +137,7 @@ const Migrations = () => {
                   placeholder="Search for a migration"
                   value={search}
                   className="w-full lg:w-52"
-                  onChange={(e: any) => setSearch(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                   icon={<Search />}
                 />
                 <Card>

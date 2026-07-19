@@ -13,6 +13,7 @@ import {
 } from 'ui-patterns/PageSection'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { AddHookDropdown } from './AddHookDropdown'
 import { CreateHookSheet } from './CreateHookSheet'
 import { DeleteHookConfirmationDialog } from './DeleteHookConfirmationDialog'
@@ -21,6 +22,7 @@ import { Hook, HOOKS_DEFINITIONS } from './hooks.constants'
 import { extractMethod, isValidHook } from './hooks.utils'
 import { AlertError } from '@/components/ui/AlertError'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
+import { IS_PLATFORM } from '@/lib/constants'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import { useShortcut } from '@/state/shortcuts/useShortcut'
 
@@ -86,7 +88,13 @@ export const HooksListing = () => {
     return (
       <PageSection>
         <PageSectionContent>
-          <GenericSkeletonLoader />
+          {IS_PLATFORM ? (
+            <GenericSkeletonLoader />
+          ) : (
+            <SelfHostedAuthConfigNotice
+              settings={['GOTRUE_HOOK_*_ENABLED', 'GOTRUE_HOOK_*_URI', 'GOTRUE_HOOK_*_SECRETS']}
+            />
+          )}
         </PageSectionContent>
       </PageSection>
     )

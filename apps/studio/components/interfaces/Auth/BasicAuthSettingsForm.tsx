@@ -32,6 +32,7 @@ import { ShimmeringLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
 import { NO_REQUIRED_CHARACTERS } from './Auth.constants'
+import { SelfHostedAuthConfigNotice } from './SelfHostedAuthConfigNotice'
 import { AlertError } from '@/components/ui/AlertError'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { NoPermission } from '@/components/ui/NoPermission'
@@ -39,7 +40,7 @@ import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 const schema = z.object({
   DISABLE_SIGNUP: z.boolean(),
@@ -141,7 +142,7 @@ export const BasicAuthSettingsForm = () => {
           </div>
         )}
 
-        {isLoading && (
+        {isLoading && IS_PLATFORM && (
           <Card>
             <CardContent className="py-6">
               <ShimmeringLoader />
@@ -157,6 +158,17 @@ export const BasicAuthSettingsForm = () => {
             </CardContent>
             <CardContent className="py-7"></CardContent>
           </Card>
+        )}
+
+        {isLoading && !IS_PLATFORM && (
+          <SelfHostedAuthConfigNotice
+            settings={[
+              'GOTRUE_DISABLE_SIGNUP',
+              'GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED',
+              'GOTRUE_MAILER_AUTOCONFIRM',
+              'API_EXTERNAL_URL',
+            ]}
+          />
         )}
 
         {isSuccess && (

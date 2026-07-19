@@ -33,6 +33,8 @@ jobs:
           target: production
           push: true
           tags: ghcr.io/akin-umit/supabase-studio:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_STUDIO_AUTH_MODE=supabase
           cache-from: type=gha,scope=community-studio
           cache-to: type=gha,mode=max,scope=community-studio
           provenance: true

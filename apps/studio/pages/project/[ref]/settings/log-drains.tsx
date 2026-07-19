@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from 'ui'
+import { Admonition } from 'ui-patterns/admonition'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
@@ -38,6 +39,8 @@ import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import type { NextPageWithLayout } from '@/types'
 
 const LogDrainsSettings: NextPageWithLayout = () => {
+  const { ref } = useParams() as { ref: string }
+
   const { can: canManageLogDrains, isLoading: isLoadingPermissions } = useAsyncCheckPermissions(
     PermissionAction.ANALYTICS_ADMIN_WRITE,
     'logflare'
@@ -45,7 +48,6 @@ const LogDrainsSettings: NextPageWithLayout = () => {
 
   const track = useTrack()
   const [open, setOpen] = useState(false)
-  const { ref } = useParams() as { ref: string }
   const [selectedLogDrain, setSelectedLogDrain] = useState<Partial<LogDrainData> | null>(null)
   const [isCreateConfirmModalOpen, setIsCreateConfirmModalOpen] = useState(false)
   const [pendingLogDrainValues, setPendingLogDrainValues] =
@@ -59,7 +61,7 @@ const LogDrainsSettings: NextPageWithLayout = () => {
 
   const { data: logDrains } = useLogDrainsQuery(
     { ref },
-    { enabled: !isLoadingEntitlement && hasAccessToLogDrains }
+    { enabled: IS_PLATFORM && !isLoadingEntitlement && hasAccessToLogDrains }
   )
 
   const { mutate: createLogDrain, isPending: createLoading } = useCreateLogDrainMutation({
@@ -87,6 +89,34 @@ const LogDrainsSettings: NextPageWithLayout = () => {
   })
 
   const isLoading = createLoading || updateLoading
+
+  if (!IS_PLATFORM) {
+    return (
+      <PageLayout
+        title="Log Drains"
+        subtitle="Send your project logs to third party destinations"
+        secondaryActions={<DocsButton href={`${DOCS_URL}/guides/self-hosting/analytics`} />}
+      >
+        <ScaffoldSection isFullWidth id="log-drains" className="gap-6">
+          <ScaffoldContainer className="flex flex-col gap-10" bottomPadding>
+            <Admonition type="default" title="Configure log drains in your logging pipeline">
+              <div className="space-y-3 text-sm text-foreground-light">
+                <p>
+                  Supabase Cloud log drains are not available in self-hosted Studio. Forward logs
+                  from your Docker, Kubernetes, or log collector setup to your preferred destination
+                  such as syslog, HTTP, Datadog, or another observability backend.
+                </p>
+                <p>
+                  Studio can still display logs where your self-hosted analytics/logging service is
+                  configured, but destination management happens in your runtime configuration.
+                </p>
+              </div>
+            </Admonition>
+          </ScaffoldContainer>
+        </ScaffoldSection>
+      </PageLayout>
+    )
+  }
 
   function handleUpdateClick(drain: LogDrainData) {
     setSelectedLogDrain(drain)

@@ -12,12 +12,14 @@ import {
 } from 'ui-patterns/PageSection'
 
 import { getPhoneProviderValidationSchema, PROVIDERS_SCHEMAS } from '../AuthProvidersFormValidation'
+import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import type { Provider } from './AuthProvidersForm.types'
 import { ProviderForm } from './ProviderForm'
 import { AlertError } from '@/components/ui/AlertError'
 import { ResourceList } from '@/components/ui/Resource/ResourceList'
 import { HorizontalShimmerWithIcon } from '@/components/ui/Shimmers'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
+import { IS_PLATFORM } from '@/lib/constants'
 
 export const AuthProvidersForm = () => {
   const { ref: projectRef } = useParams()
@@ -69,7 +71,19 @@ export const AuthProvidersForm = () => {
             )}
 
             <ResourceList>
+              {isLoading && !IS_PLATFORM && (
+                <SelfHostedAuthConfigNotice
+                  settings={[
+                    'GOTRUE_EXTERNAL_EMAIL_ENABLED',
+                    'GOTRUE_EXTERNAL_PHONE_ENABLED',
+                    'GOTRUE_EXTERNAL_*_ENABLED',
+                    'GOTRUE_EXTERNAL_*_CLIENT_ID',
+                    'GOTRUE_EXTERNAL_*_SECRET',
+                  ]}
+                />
+              )}
               {isLoading &&
+                IS_PLATFORM &&
                 PROVIDERS_SCHEMAS.map((provider) => (
                   <div
                     key={`provider_${provider.title}`}
