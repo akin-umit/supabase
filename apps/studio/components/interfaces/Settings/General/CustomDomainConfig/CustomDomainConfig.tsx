@@ -1,7 +1,7 @@
 import { SupportCategories } from '@supabase/shared-types/out/constants'
 import { useFlag, useParams } from 'common'
-import { AlertCircle } from 'lucide-react'
-import { Card, CardContent } from 'ui'
+import { AlertCircle, Globe2 } from 'lucide-react'
+import { Badge, Card, CardContent } from 'ui'
 import {
   PageSection,
   PageSectionContent,
@@ -17,7 +17,7 @@ import { CustomDomainsConfigureHostname } from './CustomDomainsConfigureHostname
 import { CustomDomainsShimmerLoader } from './CustomDomainsShimmerLoader'
 import { CustomDomainVerify } from './CustomDomainVerify'
 import { SupportLink } from '@/components/interfaces/Support/SupportLink'
-import { InlineLinkClassName } from '@/components/ui/InlineLink'
+import { InlineLink, InlineLinkClassName } from '@/components/ui/InlineLink'
 import { UpgradeToPro } from '@/components/ui/UpgradeToPro'
 import {
   useCustomDomainsQuery,
@@ -26,8 +26,81 @@ import {
 import { useProjectAddonsQuery } from '@/data/subscriptions/project-addons-query'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 export const CustomDomainConfig = () => {
+  if (!IS_PLATFORM) {
+    return <SelfHostedCustomDomainConfig />
+  }
+
+  return <PlatformCustomDomainConfig />
+}
+
+const SelfHostedCustomDomainConfig = () => (
+  <PageSection id="custom-domains">
+    <PageSectionMeta>
+      <PageSectionSummary>
+        <PageSectionTitle>Custom domains</PageSectionTitle>
+        <PageSectionDescription>Present a branded experience to your users</PageSectionDescription>
+      </PageSectionSummary>
+    </PageSectionMeta>
+    <PageSectionContent>
+      <Card>
+        <CardContent className="space-y-6">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-surface-100 text-foreground-light">
+              <Globe2 size={18} strokeWidth={1.5} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="m-0 text-base">Self-hosted custom domains</h4>
+                <Badge variant="default">Operator managed</Badge>
+              </div>
+              <p className="m-0 text-sm text-foreground-light">
+                Custom domains are configured in DNS, your reverse proxy, Coolify, and the
+                Supabase runtime environment. Studio shows the required shape here instead of
+                opening Supabase Cloud billing.
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-md border p-4">
+              <p className="m-0 text-sm font-medium">Public project URL</p>
+              <p className="m-0 mt-1 text-sm text-foreground-light">
+                Set SUPABASE_PUBLIC_URL and SITE_URL to the HTTPS domain users copy from Studio.
+              </p>
+            </div>
+            <div className="rounded-md border p-4">
+              <p className="m-0 text-sm font-medium">API and Auth callbacks</p>
+              <p className="m-0 mt-1 text-sm text-foreground-light">
+                Keep API_EXTERNAL_URL, Auth redirects, and OAuth callback URLs aligned with the same
+                public host.
+              </p>
+            </div>
+            <div className="rounded-md border p-4">
+              <p className="m-0 text-sm font-medium">TLS and reverse proxy</p>
+              <p className="m-0 mt-1 text-sm text-foreground-light">
+                Terminate TLS in Coolify, Traefik, Nginx, Caddy, or your provider load balancer.
+              </p>
+            </div>
+            <div className="rounded-md border p-4">
+              <p className="m-0 text-sm font-medium">Redeploy scope</p>
+              <p className="m-0 mt-1 text-sm text-foreground-light">
+                After changing domains, redeploy Studio, Kong, Auth, REST, Storage, Realtime, and
+                Functions.
+              </p>
+            </div>
+          </div>
+          <InlineLink className="text-foreground-light" href={`${DOCS_URL}/guides/self-hosting`}>
+            Self-hosting docs
+          </InlineLink>
+        </CardContent>
+      </Card>
+    </PageSectionContent>
+  </PageSection>
+)
+
+const PlatformCustomDomainConfig = () => {
   const { ref } = useParams()
   const { data: project } = useSelectedProjectQuery()
   const { data: organization } = useSelectedOrganizationQuery()

@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import type { LogData } from './Messages.types'
 import { useProjectSettingsV2Query } from '@/data/config/project-settings-v2-query'
+import { IS_PLATFORM } from '@/lib/constants'
 import { uuidv4 } from '@/lib/helpers'
 import { EMPTY_ARR } from '@/lib/void'
 import { useRoleImpersonationStateSnapshot } from '@/state/role-impersonation-state'
@@ -78,10 +79,15 @@ export const useRealtimeMessages = (
 
   const protocol = settings?.app_config?.protocol ?? 'https'
   const endpoint = settings?.app_config?.endpoint
-  // the default host is prod until the correct one comes through an API call.
-  const host = settings ? `${protocol}://${endpoint}` : `https://${projectRef}.supabase.co`
+  const browserOrigin = typeof window === 'undefined' ? undefined : window.location.origin
+  const host =
+    endpoint !== undefined && endpoint !== ''
+      ? `${protocol}://${endpoint}`
+      : IS_PLATFORM
+        ? `https://${projectRef}.supabase.co`
+        : browserOrigin
 
-  const realtimeUrl = `${host}/realtime/v1`.replace(/^http/i, 'ws')
+  const realtimeUrl = host ? `${host}/realtime/v1`.replace(/^http/i, 'ws') : undefined
 
   const [logData, dispatch] = useReducer(reducer, [] as LogData[])
   const pushMessage = (messageType: string, metadata: any) => {
@@ -95,7 +101,7 @@ export const useRealtimeMessages = (
   const roleImpersonationState = useRoleImpersonationStateSnapshot()
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !realtimeUrl) {
       return
     }
 
@@ -115,7 +121,7 @@ export const useRealtimeMessages = (
       realtimeClient.disconnect()
       setClient(undefined)
     }
-  }, [enabled, bearer, host, logLevel, token])
+  }, [enabled, bearer, logLevel, realtimeUrl, token])
 
   useEffect(() => {
     if (!client) {
@@ -212,7 +218,7 @@ export const useRealtimeMessages = (
     enableDbChanges,
     enablePresence,
     filter,
-    host,
+    realtimeUrl,
     schema,
     table,
   ])

@@ -24,7 +24,6 @@ import {
 import { Admonition } from 'ui-patterns/admonition'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
-import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
 import { AlertError } from '@/components/ui/AlertError'
@@ -100,9 +99,11 @@ export const RealtimeSettings = () => {
   const isFreePlan = organization?.plan.id === 'free'
   const isUsageBillingEnabled = organization?.usage_billing_enabled
   const canUpdateRealtimeSettings = !isSelfHosted && canUpdateConfig
-  const realtimeConfig = isSelfHosted ? selfHostedConfig : data
+  const realtimeConfig = isSelfHosted ? (selfHostedConfig ?? REALTIME_DEFAULT_CONFIG) : data
   const realtimeConfigError = isSelfHosted ? selfHostedError : error
-  const hasRealtimeConfigError = isSelfHosted ? isSelfHostedConfigError : isError
+  const hasSelfHostedRuntimeFallback =
+    isSelfHosted && (isLoadingSelfHostedConfig || isSelfHostedConfigError || !selfHostedConfig)
+  const hasRealtimeConfigError = !isSelfHosted && isError
   const isRealtimeDisabled = realtimeConfig?.suspend ?? REALTIME_DEFAULT_CONFIG.suspend
   // Check if RLS policies exist for realtime.messages table
   const realtimeMessagesPolicies = policies?.filter(
@@ -190,26 +191,28 @@ export const RealtimeSettings = () => {
       ref: projectRef,
       private_only: !values.allow_public,
       connection_pool: Number(
-        values.connection_pool ?? data?.connection_pool ?? REALTIME_DEFAULT_CONFIG.connection_pool
+        values.connection_pool ??
+          realtimeConfig?.connection_pool ??
+          REALTIME_DEFAULT_CONFIG.connection_pool
       ),
       max_concurrent_users: Number(
         values.max_concurrent_users ??
-          data?.max_concurrent_users ??
+          realtimeConfig?.max_concurrent_users ??
           REALTIME_DEFAULT_CONFIG.max_concurrent_users
       ),
       max_events_per_second: Number(
         values.max_events_per_second ??
-          data?.max_events_per_second ??
+          realtimeConfig?.max_events_per_second ??
           REALTIME_DEFAULT_CONFIG.max_events_per_second
       ),
       max_presence_events_per_second: Number(
         values.max_presence_events_per_second ??
-          data?.max_presence_events_per_second ??
+          realtimeConfig?.max_presence_events_per_second ??
           REALTIME_DEFAULT_CONFIG.max_presence_events_per_second
       ),
       max_payload_size_in_kb: Number(
         values.max_payload_size_in_kb ??
-          data?.max_payload_size_in_kb ??
+          realtimeConfig?.max_payload_size_in_kb ??
           REALTIME_DEFAULT_CONFIG.max_payload_size_in_kb
       ),
       suspend: values.suspend,
@@ -225,11 +228,19 @@ export const RealtimeSettings = () => {
               error={realtimeConfigError}
               subject="Failed to retrieve realtime settings"
             />
-          ) : isSelfHosted && isLoadingSelfHostedConfig ? (
-            <GenericSkeletonLoader />
           ) : (
             <Card>
               <CardContent className="space-y-4">
+                {hasSelfHostedRuntimeFallback && (
+                  <Admonition
+                    type="default"
+                    title="Self-hosted Realtime settings are managed in the runtime"
+                  >
+                    Studio is showing safe defaults because it cannot read the runtime
+                    configuration from the self-hosted management API. Update Realtime environment
+                    variables in your deployment platform, then redeploy Realtime and Kong.
+                  </Admonition>
+                )}
                 <FormField
                   control={form.control}
                   name="suspend"

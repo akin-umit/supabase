@@ -1,6 +1,6 @@
 import { SupportCategories } from '@supabase/shared-types/out/constants'
 import { useFlag, useParams } from 'common'
-import { Lock } from 'lucide-react'
+import { Clock3, GitBranch, Lock, Network, Server, ShieldCheck } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import {
@@ -48,11 +48,108 @@ import {
   useIsProjectActive,
   useSelectedProjectQuery,
 } from '@/hooks/misc/useSelectedProject'
-import { BASE_PATH, DOCS_URL } from '@/lib/constants'
+import { BASE_PATH, DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import { getDatabaseMajorVersion, getSemanticVersion } from '@/lib/helpers'
 import { useAddonsPagePanel } from '@/state/addons-page'
 
 export const Addons = () => {
+  if (!IS_PLATFORM) {
+    return <SelfHostedAddons />
+  }
+
+  return <PlatformAddons />
+}
+
+const SelfHostedAddons = () => {
+  const resourceItemClassName =
+    'min-h-[128px] border-b! last:border-b-0! [&>div:first-child]:hidden @lg:[&>div:first-child]:flex'
+  const iconBoxClassName =
+    'bg rounded-lg border flex h-24 w-40 items-center justify-center text-foreground-light'
+
+  const addons = [
+    {
+      title: 'Backups and point-in-time recovery',
+      description:
+        'Run scheduled dumps, WAL archiving, restore drills, and recovery evidence from your deployment automation.',
+      badge: 'Operator',
+      href: `${DOCS_URL}/guides/platform/backups`,
+      linkLabel: 'Backup and PITR guidance',
+      icon: <ShieldCheck size={28} strokeWidth={1.5} />,
+    },
+    {
+      title: 'Custom domains and TLS',
+      description:
+        'Configure DNS, certificates, and reverse proxy routing in Coolify or your host, then expose the public URL to Studio.',
+      badge: 'Runtime env',
+      href: `${DOCS_URL}/guides/platform/custom-domains`,
+      linkLabel: 'Custom domain guidance',
+      icon: <Network size={28} strokeWidth={1.5} />,
+    },
+    {
+      title: 'Dedicated IPv4 and private networking',
+      description:
+        'Use host firewall rules, private Docker networks, and provider networking instead of Supabase Cloud billing add-ons.',
+      badge: 'Host managed',
+      href: `${DOCS_URL}/guides/self-hosting`,
+      linkLabel: 'Self-hosting docs',
+      icon: <Server size={28} strokeWidth={1.5} />,
+    },
+    {
+      title: 'Log drains and observability',
+      description:
+        'Send Logflare, Postgres, Kong, and function logs to your selected logging backend through environment variables.',
+      badge: 'Runtime env',
+      href: `${DOCS_URL}/guides/platform/log-drains`,
+      linkLabel: 'Log drain guidance',
+      icon: <Clock3 size={28} strokeWidth={1.5} />,
+    },
+    {
+      title: 'GitHub and deployment automation',
+      description:
+        'Keep Compose files, image pins, acceptance tests, and changelog evidence in Git so Coolify can deploy repeatably.',
+      badge: 'Source of truth',
+      href: `${DOCS_URL}/guides/deployment/managing-environments`,
+      linkLabel: 'Deployment guidance',
+      icon: <GitBranch size={28} strokeWidth={1.5} />,
+    },
+  ]
+
+  return (
+    <PageContainer size="default">
+      <PageSection className="last:pb-0 gap-0">
+        <Admonition
+          type="default"
+          className="mb-4"
+          title="Self-hosted add-ons are managed in your deployment runtime"
+        >
+          Supabase Cloud add-ons are billed and provisioned by the hosted control plane. In this
+          self-hosted Studio, the same operational capabilities are enabled through Docker, Coolify,
+          environment variables, backup jobs, DNS, and your secret manager.
+        </Admonition>
+        <ResourceList>
+          {addons.map((addon) => (
+            <ResourceItem
+              key={addon.title}
+              className={resourceItemClassName}
+              media={<div className={iconBoxClassName}>{addon.icon}</div>}
+              meta={<Badge variant="default">{addon.badge}</Badge>}
+            >
+              <div className="space-y-1">
+                <div>{addon.title}</div>
+                <p className="m-0 text-foreground-light text-sm">{addon.description}</p>
+                <InlineLink className="text-foreground-light" href={addon.href}>
+                  {addon.linkLabel}
+                </InlineLink>
+              </div>
+            </ResourceItem>
+          ))}
+        </ResourceList>
+      </PageSection>
+    </PageContainer>
+  )
+}
+
+const PlatformAddons = () => {
   const { resolvedTheme } = useTheme()
   const { ref: projectRef } = useParams()
   const { setPanel } = useAddonsPagePanel()
