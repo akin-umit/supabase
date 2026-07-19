@@ -1,11 +1,9 @@
 import { useParams } from 'common'
 import {
   Activity,
-  Archive,
   CheckCircle2,
   Cpu,
   Database,
-  GitCommitHorizontal,
   HardDrive,
   MemoryStick,
   Server,
@@ -222,20 +220,13 @@ function SelfHostedStatusStat({ data }: { data?: ProjectOperations }) {
 export function SelfHostedActivityStats() {
   const { ref: projectRef } = useParams()
   const { data, isPending } = useProjectOperationsQuery({ projectRef })
-
-  const backupLabel = data?.backup.lastVerifiedAt
-    ? formatTimestamp(data.backup.lastVerifiedAt)
-    : data?.backup.status === 'verified'
-      ? 'Verified'
-      : 'Awaiting evidence'
-  const migrationLabel =
-    data?.migration.lastApplied ??
-    formatTimestamp(data?.migration.appliedAt) ??
-    (data?.migration.status === 'applied' ? 'Applied' : 'Awaiting evidence')
-  const deployedCommit =
-    data?.deployment.commit && data.deployment.commit !== 'unknown'
-      ? data.deployment.commit
-      : 'Unknown'
+  const services = getServiceRows(data)
+  const healthyCount = services.filter((service) => service.state === 'healthy').length
+  const serviceSummary =
+    services.length > 0 ? `${healthyCount}/${services.length}` : 'Awaiting evidence'
+  const telemetryUpdatedAt = data?.infrastructure?.runtime?.updatedAt
+    ? formatTimestamp(data.infrastructure.runtime.updatedAt)
+    : 'Telemetry pending'
 
   return (
     <div className="@container">
@@ -253,45 +244,27 @@ export function SelfHostedActivityStats() {
           }
         />
         <SingleStat
-          icon={<GitCommitHorizontal size={18} strokeWidth={1.5} className="text-foreground" />}
-          label={<span>Deployed commit</span>}
+          icon={<Server size={18} strokeWidth={1.5} className="text-foreground" />}
+          label={<span>Services</span>}
           value={
             isPending ? (
               <Skeleton className="h-6 w-24" />
             ) : (
-              <p
-                className={cn(
-                  'truncate font-mono',
-                  deployedCommit === 'Unknown' && 'text-foreground-lighter'
-                )}
-              >
-                {deployedCommit}
+              <p className="truncate font-mono text-foreground" title={serviceSummary}>
+                {serviceSummary}
               </p>
             )
           }
         />
         <SingleStat
-          icon={<Workflow size={18} strokeWidth={1.5} className="text-foreground" />}
-          label={<span>Applied migration</span>}
+          icon={<Activity size={18} strokeWidth={1.5} className="text-foreground" />}
+          label={<span>Telemetry</span>}
           value={
             isPending ? (
               <Skeleton className="h-6 w-24" />
             ) : (
-              <p className="truncate text-foreground-lighter" title={migrationLabel}>
-                {migrationLabel}
-              </p>
-            )
-          }
-        />
-        <SingleStat
-          icon={<Archive size={18} strokeWidth={1.5} className="text-foreground" />}
-          label={<span>Verified backup</span>}
-          value={
-            isPending ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <p className="truncate text-foreground-lighter" title={backupLabel}>
-                {backupLabel}
+              <p className="truncate text-foreground-lighter" title={telemetryUpdatedAt}>
+                {telemetryUpdatedAt}
               </p>
             )
           }

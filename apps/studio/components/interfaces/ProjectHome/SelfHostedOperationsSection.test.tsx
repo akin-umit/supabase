@@ -19,12 +19,12 @@ describe('SelfHostedOperationsSection', () => {
     mockUseProjectOperationsQuery.mockReturnValue({ isPending: true, isError: false })
     render(<SelfHostedOperationsSection />)
 
-    expect(screen.getByRole('heading', { name: 'Operations' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Operational evidence' })).toBeInTheDocument()
     expect(screen.getByRole('generic', { busy: true })).toBeInTheDocument()
     expect(screen.queryByText('Service health')).not.toBeInTheDocument()
   })
 
-  it('renders service and infrastructure evidence without cloud-only claims', () => {
+  it('renders compact operational evidence without repeating infrastructure details', () => {
     mockUseProjectOperationsQuery.mockReturnValue({
       isPending: false,
       isError: false,
@@ -47,21 +47,18 @@ describe('SelfHostedOperationsSection', () => {
 
     render(<SelfHostedOperationsSection />)
 
-    expect(screen.getByText('Service / Infrastructure')).toBeInTheDocument()
     expect(
-      screen.getByText('Self-hosted evidence from management services and operator checks.')
+      screen.getByText(
+        'Deployment, backup and migration proof. Live service health is summarized above.'
+      )
     ).toBeInTheDocument()
     expect(screen.getByText('a1b2c3d')).toBeInTheDocument()
     expect(screen.getByText('Needs attention: Storage')).toBeInTheDocument()
     expect(screen.getByText('Version 1.2.3')).toBeInTheDocument()
-    expect(screen.getByText('db:5432')).toBeInTheDocument()
-    expect(screen.getByText('1/2')).toBeInTheDocument()
-    expect(screen.getByText('1 service needs operator attention.')).toBeInTheDocument()
-    expect(screen.getByText('200 max pooler connections')).toBeInTheDocument()
-    expect(screen.getAllByText('Database')).toHaveLength(2)
-    expect(screen.getByText('Storage')).toBeInTheDocument()
-    expect(screen.getAllByText('Healthy')).toHaveLength(4)
-    expect(screen.getAllByText('Unavailable')).toHaveLength(3)
+    expect(screen.queryByText('db:5432')).not.toBeInTheDocument()
+    expect(screen.queryByText('200 max pooler connections')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Healthy')).toHaveLength(3)
+    expect(screen.getAllByText('Unavailable')).toHaveLength(2)
     expect(screen.getAllByText('Awaiting evidence')).toHaveLength(2)
   })
 
@@ -92,11 +89,11 @@ describe('SelfHostedOperationsSection', () => {
     expect(screen.getByText('Needs attention: Database')).toBeInTheDocument()
     expect(screen.getByText('202607120900_add_index')).toBeInTheDocument()
     expect(screen.getByText(/^Applied \d/)).toBeInTheDocument()
-    expect(screen.getAllByText('Healthy')).toHaveLength(3)
-    expect(screen.getAllByText('Degraded')).toHaveLength(3)
+    expect(screen.getAllByText('Healthy')).toHaveLength(2)
+    expect(screen.getAllByText('Degraded')).toHaveLength(2)
   })
 
-  it('strips credential-shaped database hosts before rendering', () => {
+  it('does not render database host details in the compact operations section', () => {
     mockUseProjectOperationsQuery.mockReturnValue({
       isPending: false,
       isError: false,
@@ -118,7 +115,7 @@ describe('SelfHostedOperationsSection', () => {
 
     render(<SelfHostedOperationsSection />)
 
-    expect(screen.getByText('db.internal:5432')).toBeInTheDocument()
+    expect(screen.queryByText('db.internal:5432')).not.toBeInTheDocument()
     expect(screen.queryByText(/admin:secret/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/postgres:\/\//i)).not.toBeInTheDocument()
   })
