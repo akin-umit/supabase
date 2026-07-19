@@ -5,6 +5,8 @@ import { cloneElement, useState, type ReactElement } from 'react'
 import { toast } from 'sonner'
 import {
   Alert,
+  AlertDescription,
+  AlertTitle,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -32,12 +34,15 @@ import { LogDrainData, useLogDrainsQuery } from '@/data/log-drains/log-drains-qu
 import { useUpdateLogDrainMutation } from '@/data/log-drains/update-log-drain-mutation'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { DOCS_URL } from '@/lib/constants'
+import { getSelfHostedCapability } from '@/lib/self-hosted-capabilities'
 import { useTrack } from '@/lib/telemetry/track'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import type { NextPageWithLayout } from '@/types'
 
 const LogDrainsSettings: NextPageWithLayout = () => {
+  const { isSelfHosted } = useDeploymentMode()
   const { can: canManageLogDrains, isLoading: isLoadingPermissions } = useAsyncCheckPermissions(
     PermissionAction.ANALYTICS_ADMIN_WRITE,
     'logflare'
@@ -61,7 +66,10 @@ const LogDrainsSettings: NextPageWithLayout = () => {
 
   const { data: logDrains } = useLogDrainsQuery(
     { ref },
-    { enabled: !IS_PLATFORM || (!isLoadingEntitlement && hasLogDrainSurfaceAccess) }
+    {
+      enabled:
+        !isSelfHosted && (!IS_PLATFORM || (!isLoadingEntitlement && hasLogDrainSurfaceAccess)),
+    }
   )
 
   const { mutate: createLogDrain, isPending: createLoading } = useCreateLogDrainMutation({
@@ -89,6 +97,7 @@ const LogDrainsSettings: NextPageWithLayout = () => {
   })
 
   const isLoading = createLoading || updateLoading
+  const selfHostedCapability = getSelfHostedCapability('log-drains')
 
   function handleUpdateClick(drain: LogDrainData) {
     setSelectedLogDrain(drain)
@@ -111,49 +120,59 @@ const LogDrainsSettings: NextPageWithLayout = () => {
   const content = (
     <ScaffoldSection isFullWidth id="log-drains" className="gap-6">
       <ScaffoldContainer className="flex flex-col gap-10" bottomPadding>
-        <LogDrainDestinationSheetForm
-          mode={mode}
-          open={open}
-          onOpenChange={(v) => {
-            if (!v) {
-              setSelectedLogDrain(null)
-            }
-            setOpen(v)
-          }}
-          defaultValues={{
-            ...selectedLogDrain,
-            type: selectedLogDrain?.type ? selectedLogDrain.type : 'webhook',
-          }}
-          isLoading={isLoading}
-          existingDrainNames={(logDrains ?? []).map((drain) => drain.name)}
-          onSaveClick={(type) => {
-            track('log_drain_save_button_clicked', { destination: type })
-          }}
-          onSubmit={({ name, description, type, ...values }) => {
-            const logDrainValues = {
-              name,
-              description: description || '',
-              type,
-              config: values as any, // TODO: fix generated API types from backend
-              id: selectedLogDrain?.id,
-              projectRef: ref,
-              token: selectedLogDrain?.token,
-            }
-
-            if (mode === 'create') {
-              setPendingLogDrainValues(logDrainValues)
-              setIsCreateConfirmModalOpen(true)
-            } else {
-              if (!logDrainValues.id || !selectedLogDrain?.token) {
-                toast.error('Unable to update log drain: missing ID or token')
-                return
+        {!isSelfHosted && (
+          <LogDrainDestinationSheetForm
+            mode={mode}
+            open={open}
+            onOpenChange={(v) => {
+              if (!v) {
+                setSelectedLogDrain(null)
               }
-              updateLogDrain(logDrainValues)
-            }
-          }}
-        />
+              setOpen(v)
+            }}
+            defaultValues={{
+              ...selectedLogDrain,
+              type: selectedLogDrain?.type ? selectedLogDrain.type : 'webhook',
+            }}
+            isLoading={isLoading}
+            existingDrainNames={(logDrains ?? []).map((drain) => drain.name)}
+            onSaveClick={(type) => {
+              track('log_drain_save_button_clicked', { destination: type })
+            }}
+            onSubmit={({ name, description, type, ...values }) => {
+              const logDrainValues = {
+                name,
+                description: description || '',
+                type,
+                config: values as any, // TODO: fix generated API types from backend
+                id: selectedLogDrain?.id,
+                projectRef: ref,
+                token: selectedLogDrain?.token,
+              }
 
-        {IS_PLATFORM && isLoadingPermissions ? (
+              if (mode === 'create') {
+                setPendingLogDrainValues(logDrainValues)
+                setIsCreateConfirmModalOpen(true)
+              } else {
+                if (!logDrainValues.id || !selectedLogDrain?.token) {
+                  toast.error('Unable to update log drain: missing ID or token')
+                  return
+                }
+                updateLogDrain(logDrainValues)
+              }
+            }}
+          />
+        )}
+
+        {isSelfHosted ? (
+          <Alert variant="default">
+            <AlertTitle>{selfHostedCapability.title}</AlertTitle>
+            <AlertDescription className="space-y-2">
+              <p>{selfHostedCapability.description}</p>
+              <p>Required backend: {selfHostedCapability.backend}.</p>
+            </AlertDescription>
+          </Alert>
+        ) : IS_PLATFORM && isLoadingPermissions ? (
           <GenericSkeletonLoader />
         ) : !canManageLogDrainSurface ? (
           <Alert variant="default">You do not have permission to manage log drains</Alert>
@@ -197,14 +216,18 @@ const LogDrainsSettings: NextPageWithLayout = () => {
   )
 
   // [kemal]: Ordinarily <PageLayout /> would be bundled with the getLayout function below, however in this case we need access to some bits for the "Add destination" button to render as part of the in-built page header in <PageLayout />.
-  if (!IS_PLATFORM || (!isLoadingEntitlement && hasLogDrainSurfaceAccess)) {
+  if (isSelfHosted || !IS_PLATFORM || (!isLoadingEntitlement && hasLogDrainSurfaceAccess)) {
     return (
       <PageLayout
         title="Log Drains"
-        subtitle="Send your project logs to third party destinations"
+        subtitle={
+          isSelfHosted
+            ? 'Plan self-hosted log export destinations through your operator backend'
+            : 'Send your project logs to third party destinations'
+        }
         primaryActions={
           <>
-            {!(logDrains?.length === 0) && (
+            {!isSelfHosted && !(logDrains?.length === 0) && (
               <div className="flex items-center">
                 <Shortcut
                   id={SHORTCUT_IDS.LOG_DRAINS_ADD_DESTINATION}
