@@ -32,7 +32,13 @@ export function useDeploymentMode(): DeploymentMode {
   // defaults lands on a valid (if not preferred) choice — whereas a CLI user
   // briefly seeing self-hosted defaults gets `connectionMethod` pinned to
   // `'session'`, which isn't a valid CLI method.
+  const hasRuntimeMode = typeof data?.is_cli_mode === 'boolean'
   const isCli = !IS_PLATFORM && (data?.is_cli_mode ?? true)
-  const isSelfHosted = !IS_PLATFORM && !isCli
-  return useMemo(() => ({ isPlatform: IS_PLATFORM, isCli, isSelfHosted }), [isCli, isSelfHosted])
+  const isSelfHosted = hasRuntimeMode ? !data.is_cli_mode : !IS_PLATFORM && !isCli
+  const isPlatform = IS_PLATFORM && !isSelfHosted
+
+  return useMemo(
+    () => ({ isPlatform, isCli, isSelfHosted }),
+    [isCli, isPlatform, isSelfHosted]
+  )
 }

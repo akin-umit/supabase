@@ -25,6 +25,7 @@ import {
 import { useEdgeFunctionQuery } from '@/data/edge-functions/edge-function-query'
 import { useFillTimeseriesSorted } from '@/hooks/analytics/useFillTimeseriesSorted'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import type { ChartIntervals, NextPageWithLayout } from '@/types'
 
 const CHART_INTERVALS: ChartIntervals[] = [
@@ -427,13 +428,15 @@ const LegacyEdgeFunctionOverview = () => {
 
 const PageLayout: NextPageWithLayout = () => {
   const { hasLoaded: flagsLoaded } = useFeatureFlags()
+  const { isSelfHosted } = useDeploymentMode()
   const showNewOverview = useFlag('edgeFunctionsOverview') === true
+  const isSelfHostedLike = !IS_PLATFORM || isSelfHosted
 
-  if (!IS_PLATFORM) {
+  if (isSelfHostedLike) {
     return <EdgeFunctionOverview />
   }
 
-  if (IS_PLATFORM && !flagsLoaded) {
+  if (!isSelfHostedLike && !flagsLoaded) {
     return <LogoLoader />
   }
 

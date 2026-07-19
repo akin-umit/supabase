@@ -39,7 +39,7 @@ const ApiKeysNewPage: NextPageWithLayout = () => {
   )
   const hasNewApiKeys = newApiKeys.length > 0
 
-  if (!IS_PLATFORM) {
+  if (!IS_PLATFORM || isSelfHosted) {
     return (
       <div className="flex flex-col gap-8">
         {isCli && (

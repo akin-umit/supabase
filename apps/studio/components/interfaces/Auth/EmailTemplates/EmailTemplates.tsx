@@ -36,7 +36,7 @@ import { SELF_HOSTED_AUTH_CONFIG_FALLBACK } from '@/data/auth/self-hosted-auth-c
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
+import { DOCS_URL } from '@/lib/constants'
 
 const notificationEnabledKeys = TEMPLATES_SCHEMAS.filter(
   (t) => t.misc?.emailTemplateType === 'security'

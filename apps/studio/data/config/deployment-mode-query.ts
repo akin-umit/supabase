@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { configKeys } from './keys'
 import { handleError } from '@/data/fetchers'
-import { API_URL, IS_PLATFORM } from '@/lib/constants'
+import { API_URL } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type DeploymentModeResponse = {
@@ -31,8 +31,10 @@ export const useDeploymentModeQuery = <TData = DeploymentModeData>(
   return useQuery<DeploymentModeData, DeploymentModeError, TData>({
     queryKey: configKeys.deploymentMode(),
     queryFn: ({ signal }) => getDeploymentMode(signal),
-    // Only fetch in non-platform mode (CLI or self-hosted)
-    enabled: enabled && !IS_PLATFORM,
+    // Platform-built Studio images can still run in a self-hosted stack.
+    // Keep this query enabled so runtime mode can override build-time defaults.
+    enabled,
+    retry: false,
     // Deployment mode is fixed for a session
     staleTime: Infinity,
     ...rest,

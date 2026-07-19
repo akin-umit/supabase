@@ -29,7 +29,7 @@ import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useHighAvailability } from '@/hooks/misc/useHighAvailability'
 import { useIsOrioleDbInAws, useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL, IS_PLATFORM, PROJECT_STATUS } from '@/lib/constants'
+import { DOCS_URL, PROJECT_STATUS } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const DatabasePhysicalBackups: NextPageWithLayout = () => {

@@ -28,7 +28,7 @@ import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
+import { DOCS_URL } from '@/lib/constants'
 
 type GoTrueConfig = components['schemas']['GoTrueConfigResponse']
 
