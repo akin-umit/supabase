@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
+  Badge,
   Button,
   Card,
   CardContent,
@@ -41,6 +42,7 @@ import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganizati
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import type { SelfHostedRealtimeConfig } from '@/lib/api/self-hosted/realtime'
 import { IS_PLATFORM } from '@/lib/constants'
+import { getSelfHostedCapability } from '@/lib/self-hosted-capabilities'
 
 const formId = 'realtime-configuration-form'
 
@@ -60,6 +62,7 @@ async function fetchSelfHostedRealtimeConfig(projectRef?: string) {
 export const RealtimeSettings = () => {
   const { ref: projectRef } = useParams()
   const isSelfHosted = !IS_PLATFORM
+  const selfHostedCapability = getSelfHostedCapability('realtime-config')
   const { data: project } = useSelectedProjectQuery()
   const { data: organization, isSuccess: isSuccessOrganization } = useSelectedOrganizationQuery()
   const { can: canUpdateConfig, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
@@ -178,11 +181,20 @@ export const RealtimeSettings = () => {
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = (_data) => {
     if (!projectRef) return console.error('Project ref is required')
+    if (isSelfHosted) {
+      toast.error('Realtime changes require a self-hosted config apply job')
+      return
+    }
     setIsConfirmNextModalOpen(true)
   }
 
   const onConfirmSave = () => {
     if (!projectRef) return console.error('Project ref is required')
+    if (isSelfHosted) {
+      toast.error('Realtime changes require a self-hosted config apply job')
+      setIsConfirmNextModalOpen(false)
+      return
+    }
     const values = form.getValues()
 
     // [Joshen] Casting to `Number` here as the values are being set as string when edited in the form
@@ -231,14 +243,44 @@ export const RealtimeSettings = () => {
           ) : (
             <Card>
               <CardContent className="space-y-4">
+                {isSelfHosted && (
+                  <Admonition
+                    type="default"
+                    title={selfHostedCapability.title}
+                    description={
+                      <div className="space-y-3">
+                        <p>{selfHostedCapability.description}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="default">Planned</Badge>
+                          <span className="text-xs text-foreground-light">
+                            Required backend: {selfHostedCapability.backend}
+                          </span>
+                        </div>
+                        {selfHostedConfig?.sources && (
+                          <div className="grid gap-2 text-xs sm:grid-cols-2">
+                            {Object.entries(selfHostedConfig.sources).map(([setting, source]) => (
+                              <div
+                                key={setting}
+                                className="flex min-w-0 items-center justify-between gap-2 rounded border px-2 py-1"
+                              >
+                                <span className="truncate text-foreground-light">{setting}</span>
+                                <code className="shrink-0 text-code">{source}</code>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    }
+                  />
+                )}
                 {hasSelfHostedRuntimeFallback && (
                   <Admonition
                     type="default"
                     title="Self-hosted Realtime settings are managed in the runtime"
                   >
-                    Studio is showing safe defaults because it cannot read the runtime
-                    configuration from the self-hosted management API. Update Realtime environment
-                    variables in your deployment platform, then redeploy Realtime and Kong.
+                    Studio is showing safe defaults because it cannot read the runtime configuration
+                    from the self-hosted management API. Update Realtime environment variables in
+                    your deployment platform, then redeploy Realtime and Kong.
                   </Admonition>
                 )}
                 <FormField
@@ -312,11 +354,11 @@ export const RealtimeSettings = () => {
                           >
                             <FormControl>
                               <Switch
-                                  id="allow_public"
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  disabled={!canUpdateRealtimeSettings}
-                                />
+                                id="allow_public"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                disabled={!canUpdateRealtimeSettings}
+                              />
                             </FormControl>
                           </FormItemLayout>
 
