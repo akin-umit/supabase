@@ -61,6 +61,9 @@ FROM base AS production
 COPY --from=builder /app/apps/studio/public ./apps/studio/public
 COPY --from=builder /app/apps/studio/.next/standalone ./
 COPY --from=builder /app/apps/studio/.next/static ./apps/studio/.next/static
+# libpg-query is externalized by the standalone server and loads its WASM file
+# relative to its package path at runtime. Next does not trace that asset.
+COPY --from=builder /app/node_modules/.pnpm/libpg-query@17.6.0/node_modules/libpg-query/wasm/libpg-query.wasm ./node_modules/.pnpm/libpg-query@17.6.0/node_modules/libpg-query/wasm/libpg-query.wasm
 EXPOSE 3000
 ENTRYPOINT ["docker-entrypoint.sh"]
 HEALTHCHECK --interval=5s --timeout=5s --retries=3 CMD node -e "fetch('http://localhost:3000/api/platform/profile').then((r) => {if (r.status !== 200) throw new Error(r.status)})"
