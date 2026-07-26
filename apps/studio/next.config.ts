@@ -2,6 +2,7 @@
 
 import bundleAnalyzer from '@next/bundle-analyzer'
 import { withSentryConfig } from '@sentry/nextjs'
+import path from 'node:path'
 import type { NextConfig } from 'next'
 
 import { getCSP } from './csp'
@@ -56,6 +57,9 @@ const nextConfig = {
   output: 'standalone',
   experimental: {
     clientRouterFilter: false,
+    cpus: Number(process.env.NEXT_BUILD_CPUS ?? 1),
+    staticGenerationMaxConcurrency: Number(process.env.NEXT_STATIC_GENERATION_CONCURRENCY ?? 1),
+    staticGenerationMinPagesPerWorker: Number(process.env.NEXT_STATIC_GENERATION_MIN_PAGES ?? 1),
   },
   async rewrites() {
     return [
@@ -184,6 +188,24 @@ const nextConfig = {
   },
   transpilePackages: ['ui', 'ui-patterns', 'common', 'shared-data', 'api-types', 'icons'],
   serverExternalPackages: ['libpg-query'],
+  webpack(config) {
+    config.cache = false
+    config.resolve.alias = {
+      ...(config.resolve.alias ?? {}),
+      '@/public/deno/edge-runtime.d.ts': path.resolve('public/deno/edge-runtime.d.ts'),
+      '@/public/deno/lib.deno.d.ts': path.resolve('public/deno/lib.deno.d.ts'),
+    }
+    config.module.rules.push({
+      test: /\.md$/,
+      type: 'asset/source',
+    })
+    config.module.rules.push({
+      test: /public[\\/]deno[\\/].*\.d\.ts$/,
+      type: 'asset/source',
+    })
+
+    return config
+  },
   turbopack: {
     rules: {
       '*.md': {

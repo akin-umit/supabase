@@ -49,7 +49,7 @@ describe('buildSafeDirectConnectionString', () => {
     expect(
       buildSafeDirectConnectionString(
         {
-          connectionString: 'postgresql://postgres:real-password@db.example.test:5432/postgres',
+          connectionString: 'postgresql://postgres:YOUR_SECRET@db.example.test:5432/postgres',
           db_host: 'db.example.test',
           db_name: 'postgres',
           db_port: 5432,

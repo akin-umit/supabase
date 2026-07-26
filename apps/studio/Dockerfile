@@ -52,7 +52,9 @@ CMD ["pnpm", "dev:studio"]
 # Compile Next.js
 FROM dev AS builder
 
-RUN pnpm --filter studio exec next build
+RUN NEXT_TELEMETRY_DISABLED=1 \
+  NODE_OPTIONS=--max-old-space-size=6144 \
+  pnpm --filter studio exec next build --webpack
 
 # Copy only compiled code and dependencies
 FROM base AS production

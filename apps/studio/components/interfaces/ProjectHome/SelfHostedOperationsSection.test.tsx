@@ -107,7 +107,7 @@ describe('SelfHostedOperationsSection', () => {
         backup: { status: 'unavailable' },
         migration: { status: 'unavailable' },
         infrastructure: {
-          database: { host: 'postgres://admin:secret@db.internal:5432/postgres', port: 5432 },
+          database: { host: 'postgres://admin:YOUR_SECRET@db.internal:5432/postgres', port: 5432 },
           services: { total: 1, healthy: 1, unavailable: 0 },
         },
       },
@@ -116,7 +116,7 @@ describe('SelfHostedOperationsSection', () => {
     render(<SelfHostedOperationsSection />)
 
     expect(screen.queryByText('db.internal:5432')).not.toBeInTheDocument()
-    expect(screen.queryByText(/admin:secret/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/admin:YOUR_SECRET/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/postgres:\/\//i)).not.toBeInTheDocument()
   })
 
