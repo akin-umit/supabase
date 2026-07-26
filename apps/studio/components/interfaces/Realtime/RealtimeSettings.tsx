@@ -41,8 +41,8 @@ import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import type { SelfHostedRealtimeConfig } from '@/lib/api/self-hosted/realtime'
+import type { RuntimeConfigStatus } from '@/lib/api/self-hosted/runtime-config'
 import { IS_PLATFORM } from '@/lib/constants'
-import { getSelfHostedCapability } from '@/lib/self-hosted-capabilities'
 
 const formId = 'realtime-configuration-form'
 
@@ -59,10 +59,24 @@ async function fetchSelfHostedRealtimeConfig(projectRef?: string) {
   return payload as SelfHostedRealtimeConfig
 }
 
+async function fetchSelfHostedRealtimeRuntime(projectRef?: string) {
+  if (!projectRef) throw new Error('Project ref is required')
+
+  const response = await fetch(`/api/platform/projects/${projectRef}/runtime/realtime`)
+  const payload = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.error?.message ?? 'Failed to retrieve self-hosted Realtime runtime status'
+    )
+  }
+
+  return payload as RuntimeConfigStatus
+}
+
 export const RealtimeSettings = () => {
   const { ref: projectRef } = useParams()
   const isSelfHosted = !IS_PLATFORM
-  const selfHostedCapability = getSelfHostedCapability('realtime-config')
   const { data: project } = useSelectedProjectQuery()
   const { data: organization, isSuccess: isSuccessOrganization } = useSelectedOrganizationQuery()
   const { can: canUpdateConfig, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
@@ -90,6 +104,16 @@ export const RealtimeSettings = () => {
   } = useQuery<SelfHostedRealtimeConfig, Error>({
     queryKey: ['self-hosted', 'realtime-config', projectRef],
     queryFn: () => fetchSelfHostedRealtimeConfig(projectRef),
+    enabled: isSelfHosted && typeof projectRef !== 'undefined',
+  })
+  const {
+    data: selfHostedRuntime,
+    error: selfHostedRuntimeError,
+    isPending: isLoadingSelfHostedRuntime,
+    isError: isSelfHostedRuntimeError,
+  } = useQuery<RuntimeConfigStatus, Error>({
+    queryKey: ['self-hosted', 'runtime', 'realtime', projectRef],
+    queryFn: () => fetchSelfHostedRealtimeRuntime(projectRef),
     enabled: isSelfHosted && typeof projectRef !== 'undefined',
   })
 
@@ -246,16 +270,46 @@ export const RealtimeSettings = () => {
                 {isSelfHosted && (
                   <Admonition
                     type="default"
-                    title={selfHostedCapability.title}
+                    title="Self-hosted Realtime runtime configuration"
                     description={
                       <div className="space-y-3">
-                        <p>{selfHostedCapability.description}</p>
+                        <p>
+                          Studio is reading Realtime configuration from this deployment runtime.
+                          Saving from Studio stays disabled until an audited apply job can update
+                          environment variables and restart Realtime safely.
+                        </p>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="default">Planned</Badge>
+                          <Badge variant="default">
+                            {isLoadingSelfHostedRuntime
+                              ? 'Checking runtime'
+                              : (selfHostedRuntime?.status ?? 'Runtime unavailable')}
+                          </Badge>
                           <span className="text-xs text-foreground-light">
-                            Required backend: {selfHostedCapability.backend}
+                            Mode: {selfHostedRuntime?.mode ?? 'read only'}
                           </span>
                         </div>
+                        {isSelfHostedRuntimeError && (
+                          <p className="text-xs text-foreground-light">
+                            Runtime source status is unavailable: {selfHostedRuntimeError.message}
+                          </p>
+                        )}
+                        {selfHostedRuntime?.settings && (
+                          <div className="grid gap-2 text-xs sm:grid-cols-2">
+                            {selfHostedRuntime.settings.map((setting) => (
+                              <div
+                                key={setting.name}
+                                className="flex min-w-0 items-center justify-between gap-2 rounded border px-2 py-1"
+                              >
+                                <span className="truncate text-foreground-light">
+                                  {setting.name}
+                                </span>
+                                <code className="shrink-0 text-code">
+                                  {setting.activeSource ?? setting.status}
+                                </code>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         {selfHostedConfig?.sources && (
                           <div className="grid gap-2 text-xs sm:grid-cols-2">
                             {Object.entries(selfHostedConfig.sources).map(([setting, source]) => (
@@ -649,7 +703,7 @@ export const RealtimeSettings = () => {
                   {isPermissionsLoaded && !canUpdateRealtimeSettings && (
                     <p className="text-sm text-foreground-light">
                       {isSelfHosted
-                        ? 'Realtime settings are managed by the self-hosted runtime environment.'
+                        ? 'Realtime values are read from deployment runtime variables. Apply changes in the deployment environment, then redeploy Realtime.'
                         : 'You need additional permissions to update realtime settings'}
                     </p>
                   )}

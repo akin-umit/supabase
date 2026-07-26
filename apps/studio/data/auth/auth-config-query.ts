@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 
 import { authKeys } from './keys'
-import { SELF_HOSTED_AUTH_CONFIG_FALLBACK } from './self-hosted-auth-config-fallback'
 import type { components } from '@/data/api'
 import { get, handleError } from '@/data/fetchers'
 import { IS_PLATFORM } from '@/lib/constants'
@@ -54,9 +53,9 @@ export async function getProjectAuthConfig(
     })
 
     if (error) handleError(error)
-    return data ?? (!IS_PLATFORM ? SELF_HOSTED_AUTH_CONFIG_FALLBACK : data)
+    if (!data) throw new Error('Auth configuration response was empty')
+    return data
   } catch (error) {
-    if (!IS_PLATFORM) return SELF_HOSTED_AUTH_CONFIG_FALLBACK
     throw error
   } finally {
     if (typeof selfHostedSignal === 'object' && 'cleanup' in selfHostedSignal) {

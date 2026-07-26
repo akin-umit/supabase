@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { getSelfHostedCapability, SELF_HOSTED_CAPABILITIES } from './self-hosted-capabilities'
 
 describe('self-hosted capabilities', () => {
-  it('marks Log Drains as planned until a self-host sink backend exists', () => {
+  it('marks Log Drains as operator-managed with runtime visibility', () => {
     expect(getSelfHostedCapability('log-drains')).toMatchObject({
-      state: 'planned',
+      state: 'operator-managed',
       backend: expect.stringContaining('Vector/Logflare'),
     })
   })

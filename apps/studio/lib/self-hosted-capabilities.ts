@@ -16,11 +16,12 @@ export type SelfHostedCapabilityId =
 
 export const SELF_HOSTED_CAPABILITIES: Record<SelfHostedCapabilityId, SelfHostedCapability> = {
   'log-drains': {
-    state: 'planned',
-    title: 'Self-hosted log drains need an operator backend',
+    state: 'operator-managed',
+    title: 'Self-hosted log drains are read from the logging runtime',
     description:
-      'Studio cannot create, update or test Log Drain destinations in self-hosted mode until a local sink registry and audited apply job exist.',
-    backend: 'Vector/Logflare sink registry with RBAC, idempotency and audit logs',
+      'Studio can inspect logging and analytics runtime sources. Creating, updating, or testing destinations remains operator-managed until an audited sink apply job exists.',
+    backend:
+      'Runtime status reader plus Vector/Logflare sink registry with RBAC, idempotency and audit logs',
   },
   branching: {
     state: 'planned',
@@ -44,11 +45,11 @@ export const SELF_HOSTED_CAPABILITIES: Record<SelfHostedCapabilityId, SelfHosted
     backend: 'Backup scheduler, restore drill, checksum history and rollback evidence',
   },
   'realtime-config': {
-    state: 'planned',
-    title: 'Realtime settings need a config apply workflow',
+    state: 'operator-managed',
+    title: 'Realtime settings are read from the runtime',
     description:
-      'Self-host Realtime configuration can be displayed from runtime defaults, but saving changes requires validation and service reload jobs.',
-    backend: 'Realtime config reader, dry-run validator and restart/apply job',
+      'Self-host Realtime configuration is displayed from deployment runtime sources. Saving changes requires validation and service reload jobs.',
+    backend: 'Runtime status reader, dry-run validator and restart/apply job',
   },
 }
 

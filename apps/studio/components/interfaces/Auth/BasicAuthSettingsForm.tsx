@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
+import { useQuery } from '@tanstack/react-query'
 import { IS_PLATFORM, useParams } from 'common'
 import { ExternalLink } from 'lucide-react'
 import Link from 'next/link'
@@ -37,9 +38,9 @@ import { InlineLink } from '@/components/ui/InlineLink'
 import { NoPermission } from '@/components/ui/NoPermission'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
-import { SELF_HOSTED_AUTH_CONFIG_FALLBACK } from '@/data/auth/self-hosted-auth-config-fallback'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import type { RuntimeConfigStatus } from '@/lib/api/self-hosted/runtime-config'
 import { DOCS_URL } from '@/lib/constants'
 
 const schema = z.object({
@@ -49,6 +50,19 @@ const schema = z.object({
   MAILER_AUTOCONFIRM: z.boolean(),
   SITE_URL: z.string().min(1, 'Must have a Site URL'),
 })
+
+async function fetchSelfHostedAuthRuntime(projectRef?: string) {
+  if (!projectRef) throw new Error('Project ref is required')
+
+  const response = await fetch(`/api/platform/projects/${projectRef}/runtime/auth`)
+  const payload = await response.json()
+
+  if (!response.ok) {
+    throw new Error(payload?.error?.message ?? 'Failed to retrieve self-hosted Auth runtime status')
+  }
+
+  return payload as RuntimeConfigStatus
+}
 
 export const BasicAuthSettingsForm = () => {
   const { ref: projectRef } = useParams()
@@ -62,6 +76,16 @@ export const BasicAuthSettingsForm = () => {
     isPending: isLoading,
   } = useAuthConfigQuery({ projectRef })
   const { mutate: updateAuthConfig, isPending: isUpdatingConfig } = useAuthConfigUpdateMutation()
+  const {
+    data: authRuntime,
+    error: authRuntimeError,
+    isError: isAuthRuntimeError,
+    isPending: isLoadingAuthRuntime,
+  } = useQuery<RuntimeConfigStatus, Error>({
+    queryKey: ['self-hosted', 'runtime', 'auth', projectRef],
+    queryFn: () => fetchSelfHostedAuthRuntime(projectRef),
+    enabled: !IS_PLATFORM && typeof projectRef !== 'undefined',
+  })
 
   const { can: canReadConfig, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
     PermissionAction.READ,
@@ -72,13 +96,11 @@ export const BasicAuthSettingsForm = () => {
     'custom_config_gotrue'
   )
   const canManageConfig = IS_PLATFORM && canUpdateConfig
-  const effectiveAuthConfig = !IS_PLATFORM
-    ? authConfig ?? SELF_HOSTED_AUTH_CONFIG_FALLBACK
-    : authConfig
-  const shouldShowError = IS_PLATFORM && isError
+  const effectiveAuthConfig = authConfig
+  const shouldShowError = isError
   const shouldShowNoPermission = IS_PLATFORM && isPermissionsLoaded && !canReadConfig
-  const shouldShowLoading = IS_PLATFORM && isLoading
-  const shouldRenderForm = !!effectiveAuthConfig && (!IS_PLATFORM || isSuccess)
+  const shouldShowLoading = isLoading
+  const shouldRenderForm = !!effectiveAuthConfig && isSuccess
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -143,6 +165,21 @@ export const BasicAuthSettingsForm = () => {
             <AlertDescription>
               These controls mirror your current GoTrue environment values. Change them in your
               deployment environment, then redeploy the Auth service.
+              {isLoadingAuthRuntime ? (
+                <span className="mt-2 block">Checking runtime source status...</span>
+              ) : isAuthRuntimeError ? (
+                <span className="mt-2 block">
+                  Runtime source status is unavailable: {authRuntimeError.message}
+                </span>
+              ) : authRuntime ? (
+                <span className="mt-2 block">
+                  Runtime status: {authRuntime.status}. Required sources:{' '}
+                  {authRuntime.settings
+                    .filter((setting) => setting.required)
+                    .map((setting) => `${setting.name}=${setting.activeSource ?? setting.status}`)
+                    .join(', ')}
+                </span>
+              ) : null}
             </AlertDescription>
           </Alert>
         )}

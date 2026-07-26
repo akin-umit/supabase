@@ -32,7 +32,6 @@ import { AlertError } from '@/components/ui/AlertError'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
-import { SELF_HOSTED_AUTH_CONFIG_FALLBACK } from '@/data/auth/self-hosted-auth-config-fallback'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
@@ -82,12 +81,10 @@ export const EmailTemplates = () => {
   })
 
   const canManageConfig = IS_PLATFORM && canUpdateConfig
-  const effectiveAuthConfig = !IS_PLATFORM
-    ? authConfig ?? SELF_HOSTED_AUTH_CONFIG_FALLBACK
-    : authConfig
-  const shouldShowError = IS_PLATFORM && isError
-  const shouldShowLoading = IS_PLATFORM && isLoading
-  const shouldRenderTemplates = !!effectiveAuthConfig && (!IS_PLATFORM || isSuccess)
+  const effectiveAuthConfig = authConfig
+  const shouldShowError = isError
+  const shouldShowLoading = isLoading
+  const shouldRenderTemplates = !!effectiveAuthConfig && isSuccess
 
   const usingBuiltInEmailSender = !hasCustomEmailSender(effectiveAuthConfig)
   const hasSendEmailHook = !!(
