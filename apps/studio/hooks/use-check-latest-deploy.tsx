@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Button, StatusIcon } from 'ui'
 
+import { useDeploymentModeQuery } from '@/data/config/deployment-mode-query'
 import { useDeploymentCommitQuery } from '@/data/utils/deployment-commit-query'
 import { BASE_PATH, IS_PLATFORM } from '@/lib/constants'
 
@@ -45,9 +46,19 @@ const DeployCheckToast = ({ id }: { id: string | number }) => {
 export function useCheckLatestDeploy() {
   const [currentCommitTime, setCurrentCommitTime] = useState('')
   const [isToastShown, setIsToastShown] = useState(false)
+  const {
+    data: deploymentMode,
+    isError: isDeploymentModeError,
+    isPending: isDeploymentModePending,
+  } = useDeploymentModeQuery({ enabled: IS_PLATFORM })
+
+  const isPlatformRuntime =
+    IS_PLATFORM &&
+    (isDeploymentModeError ||
+      (!isDeploymentModePending && deploymentMode?.is_cli_mode !== false))
 
   const { data: commit } = useDeploymentCommitQuery({
-    enabled: IS_PLATFORM,
+    enabled: isPlatformRuntime,
     staleTime: 1000 * 60 * 10, // 10 minutes
   })
 

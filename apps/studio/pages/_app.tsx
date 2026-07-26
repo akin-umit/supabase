@@ -49,6 +49,7 @@ import { MainScrollContainerProvider } from '@/components/layouts/MainScrollCont
 import { BannerStackProvider } from '@/components/ui/BannerStack/BannerStackProvider'
 import { GlobalErrorBoundaryState } from '@/components/ui/ErrorBoundary/GlobalErrorBoundaryState'
 import { GlobalShortcuts } from '@/components/ui/GlobalShortcuts/GlobalShortcuts'
+import { useDeploymentModeQuery } from '@/data/config/deployment-mode-query'
 import { getCLIReleaseVersion } from '@/data/misc/cli-release-version-query'
 import { useRootQueryClient } from '@/data/query-client'
 import { inter, manrope, sourceCodePro } from '@/fonts'
@@ -127,6 +128,27 @@ const TimestampInfoTimezoneBridge = ({ children }: { children: React.ReactNode }
   return <TimestampInfoProvider timezone={timezone}>{children}</TimestampInfoProvider>
 }
 
+const StudioFavicons = ({ route }: { route: string }) => {
+  const {
+    data: deploymentMode,
+    isError: isDeploymentModeError,
+    isPending: isDeploymentModePending,
+  } = useDeploymentModeQuery({ enabled: IS_PLATFORM })
+
+  const includeManifest =
+    IS_PLATFORM &&
+    (isDeploymentModeError ||
+      (!isDeploymentModePending && deploymentMode?.is_cli_mode !== false))
+
+  return (
+    <MetaFaviconsPagesRouter
+      includeManifest={includeManifest}
+      applicationName="Supabase Studio"
+      route={route}
+    />
+  )
+}
+
 configureMonacoLoader()
 
 // [Joshen TODO] Once we settle on the new nav layout - we'll need a lot of clean up in terms of our layout components
@@ -200,11 +222,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
                           />
                         )}
                       </Head>
-                      <MetaFaviconsPagesRouter
-                        includeManifest
-                        applicationName="Supabase Studio"
-                        route={isNonProdEnv ? '/favicon/staging' : '/favicon'}
-                      />
+                      <StudioFavicons route={isNonProdEnv ? '/favicon/staging' : '/favicon'} />
                       <TooltipProvider>
                         <RouteValidationWrapper>
                           <ThemeProvider>
