@@ -28,12 +28,18 @@ import {
 } from '@/components/layouts/Scaffold'
 import { AlertError } from '@/components/ui/AlertError'
 import { useProjectUpgradeEligibilityQuery } from '@/data/config/project-upgrade-eligibility-query'
+import { useProjectOperationsQuery } from '@/data/operations/project-operations-query'
 import { useProjectServiceVersionsQuery } from '@/data/projects/project-service-versions'
 import { useReadReplicasQuery } from '@/data/read-replicas/replicas-query'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useIsOrioleDb, useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { IS_PLATFORM } from '@/lib/constants'
 
 export const InfrastructureInfo = () => {
+  if (!IS_PLATFORM) {
+    return <SelfHostedInfrastructureInfo />
+  }
+
   const { ref } = useParams()
   const { data: project } = useSelectedProjectQuery()
 
@@ -213,6 +219,65 @@ export const InfrastructureInfo = () => {
                   </>
                 )}
               </>
+            )}
+          </ScaffoldSectionContent>
+        </ScaffoldSection>
+      </ScaffoldContainer>
+    </>
+  )
+}
+
+const SelfHostedInfrastructureInfo = () => {
+  const { ref } = useParams()
+  const { data, isPending, isError, refetch, isFetching } = useProjectOperationsQuery({
+    projectRef: ref,
+  })
+
+  return (
+    <>
+      <ScaffoldDivider />
+      <ScaffoldContainer>
+        <ScaffoldSection>
+          <ScaffoldSectionDetail>
+            <h4 className="text-base capitalize m-0">Service versions</h4>
+            <p className="text-foreground-light text-sm pr-8 mt-1">
+              Version and service evidence reported by the self-hosted runtime.
+            </p>
+          </ScaffoldSectionDetail>
+          <ScaffoldSectionContent>
+            {isPending ? (
+              <GenericSkeletonLoader />
+            ) : isError ? (
+              <Admonition type="warning" title="Service versions could not be loaded">
+                <button
+                  className="text-sm underline"
+                  type="button"
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                >
+                  Retry
+                </button>
+              </Admonition>
+            ) : (
+              <div className="space-y-3">
+                <FormItemLayout label="Studio image version" layout="vertical" isReactForm={false}>
+                  <Input readOnly disabled value={data?.deployment.version ?? 'Unknown'} />
+                </FormItemLayout>
+                <FormItemLayout label="Deployed commit" layout="vertical" isReactForm={false}>
+                  <Input readOnly disabled value={data?.deployment.commit ?? 'Unknown'} />
+                </FormItemLayout>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {Object.entries(data?.services ?? {}).map(([service, status]) => (
+                    <div
+                      key={service}
+                      className="flex items-center justify-between rounded border bg-surface-75 px-3 py-2 text-sm"
+                    >
+                      <span className="text-foreground">{service}</span>
+                      <Badge variant={status === 'healthy' ? 'success' : 'default'}>{status}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </ScaffoldSectionContent>
         </ScaffoldSection>

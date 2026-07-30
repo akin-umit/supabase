@@ -28,12 +28,19 @@ describe('api/self-hosted/signing-keys', () => {
       const key = getLegacySigningKey()
 
       expect(key).toEqual({
-        id: '00000000-0000-0000-0000-000000000000',
+        id: 'legacy-hs256-unconfigured',
         algorithm: 'HS256',
         status: 'in_use',
         created_at: '1970-01-01T00:00:00.000Z',
         updated_at: '1970-01-01T00:00:00.000Z',
       })
+    })
+
+    it('should derive a non-secret key id from the runtime JWT secret', () => {
+      const key = getLegacySigningKey({ JWT_SECRET: 'test-secret-value' })
+
+      expect(key.id).toMatch(/^legacy-hs256-[a-f0-9]{16}$/)
+      expect(key.id).not.toContain('test-secret-value')
     })
   })
 })

@@ -29,7 +29,7 @@ import {
   useSelectedProjectQuery,
 } from '@/hooks/misc/useSelectedProject'
 import { useUrlState } from '@/hooks/ui/useUrlState'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import { formatBytes } from '@/lib/helpers'
 
 export interface DiskSizeConfigurationProps {
@@ -37,6 +37,10 @@ export interface DiskSizeConfigurationProps {
 }
 
 export const DiskSizeConfiguration = ({ disabled = false }: DiskSizeConfigurationProps) => {
+  if (!IS_PLATFORM) {
+    return <SelfHostedDiskSizeConfiguration />
+  }
+
   const { ref: projectRef } = useParams()
   const { data: project } = useSelectedProjectQuery()
   const { data: organization } = useSelectedOrganizationQuery()
@@ -225,5 +229,67 @@ Read more about [disk management](${DOCS_URL}/guides/platform/database-size#disk
         hideModal={setShowIncreaseDiskSizeModal}
       />
     </>
+  )
+}
+
+const SelfHostedDiskSizeConfiguration = () => {
+  const { data: project } = useSelectedProjectQuery()
+  const { data } = useDatabaseSizeQuery({
+    projectRef: project?.ref,
+    connectionString: project?.connectionString,
+  })
+  const databaseSizeBytesUsed = data ?? 0
+  const currentDiskSize = project?.volumeSizeGb
+
+  return (
+    <PageSection id="disk-management">
+      <PageSectionMeta>
+        <PageSectionSummary>
+          <PageSectionTitle>Disk Management</PageSectionTitle>
+        </PageSectionSummary>
+        <DocsButton href={`${DOCS_URL}/guides/self-hosting`} />
+      </PageSectionMeta>
+      <PageSectionContent>
+        <Panel className="m-0!">
+          <Panel.Content>
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
+              <div className="space-y-2">
+                <h4 className="text-foreground">Self-hosted disk runtime</h4>
+                <p className="max-w-2xl text-sm text-foreground-light">
+                  Disk capacity, storage class, IOPS and resize operations are controlled by your
+                  VPS, Docker volume, Coolify persistent storage or block storage provider. Studio
+                  only shows database evidence it can read from the runtime.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded border bg-surface-75 p-3">
+                  <p className="text-xs text-foreground-light">Database used</p>
+                  <p className="mt-1 font-mono text-lg text-foreground">
+                    {formatBytes(databaseSizeBytesUsed, 2, 'GB')}
+                  </p>
+                </div>
+                <div className="rounded border bg-surface-75 p-3">
+                  <p className="text-xs text-foreground-light">Configured disk</p>
+                  <p className="mt-1 font-mono text-lg text-foreground">
+                    {typeof currentDiskSize === 'number' && currentDiskSize > 0
+                      ? `${currentDiskSize} GB`
+                      : 'Host managed'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <Alert className="mt-6">
+              <Info size={16} />
+              <AlertTitle>Resize through your deployment host</AlertTitle>
+              <AlertDescription>
+                Studio does not call Supabase Cloud billing or spend-cap APIs in self-hosted mode.
+                Resize the attached volume in Coolify or your hosting provider, then restart the
+                affected Postgres services after your storage procedure is complete.
+              </AlertDescription>
+            </Alert>
+          </Panel.Content>
+        </Panel>
+      </PageSectionContent>
+    </PageSection>
   )
 }

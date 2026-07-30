@@ -24,23 +24,15 @@ export const BucketsUpgradePlan = ({ type }: { type: 'analytics' | 'vector' }) =
       <PageContainer>
         <PageSection>
           <PageSectionContent className="flex flex-col gap-y-8">
-            <AlphaNotice
-              entity={type === 'analytics' ? 'Analytics buckets' : 'Vector buckets'}
-              feedbackUrl={
-                type === 'analytics'
-                  ? 'https://github.com/orgs/supabase/discussions/40116'
-                  : 'https://github.com/orgs/supabase/discussions/40815'
-              }
-            />
             <Admonition
               type="default"
               title={`Configure ${type} buckets in your self-hosted Storage runtime`}
             >
               <div className="space-y-3 text-sm text-foreground-light">
                 <p>
-                  This bucket type depends on Supabase Cloud Storage APIs in Studio. In self-hosted
-                  deployments, manage the backing object storage, extensions, wrappers, and service
-                  configuration directly in your runtime.
+                  This bucket type is controlled by your Storage runtime, object storage backend,
+                  database extensions and service environment. Studio does not open Supabase Cloud
+                  upgrade or provisioning flows in self-hosted mode.
                 </p>
               </div>
             </Admonition>

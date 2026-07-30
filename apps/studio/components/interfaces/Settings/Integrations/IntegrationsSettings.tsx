@@ -60,7 +60,7 @@ export const IntegrationSettings = () => {
   const vercelIntegrationEnabled = useIsFeatureEnabled('integrations:vercel')
   const awsPrivateLinkEnabled = useIsFeatureEnabled('integrations:aws_private_link')
   const showVercelIntegration = !IS_PLATFORM || vercelIntegrationEnabled
-  const showAWSPrivateLinkFeature = !IS_PLATFORM || awsPrivateLinkEnabled
+  const showAWSPrivateLinkFeature = IS_PLATFORM && awsPrivateLinkEnabled
   // PrivateLink is not available in eu-central-2 (Zurich) until Feb 2026
   const isPrivateLinkUnsupportedRegion = project?.region === 'eu-central-2'
   const showAWSPrivateLink = showAWSPrivateLinkFeature && !isPrivateLinkUnsupportedRegion

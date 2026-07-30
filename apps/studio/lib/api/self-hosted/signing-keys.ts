@@ -1,5 +1,5 @@
-import { components } from 'api-types'
 import { createHash } from 'crypto'
+import { components } from 'api-types'
 
 import { assertSelfHosted } from './util'
 
@@ -8,7 +8,9 @@ type SigningKeyResponse = components['schemas']['SigningKeyResponse']
 const LEGACY_KEY_CREATED_AT = '1970-01-01T00:00:00.000Z'
 const LEGACY_KEY_FALLBACK_ID = 'legacy-hs256-unconfigured'
 
-function legacyKeyId(environment = process.env) {
+type SigningKeyEnvironment = Record<string, string | undefined>
+
+function legacyKeyId(environment: SigningKeyEnvironment = process.env) {
   const secret = environment.AUTH_JWT_SECRET || environment.JWT_SECRET || ''
   if (!secret) return LEGACY_KEY_FALLBACK_ID
 
@@ -27,7 +29,9 @@ function legacyKeyId(environment = process.env) {
  *
  * _Only call this from server-side self-hosted code._
  */
-export function getLegacySigningKey(environment = process.env): SigningKeyResponse {
+export function getLegacySigningKey(
+  environment: SigningKeyEnvironment = process.env
+): SigningKeyResponse {
   assertSelfHosted()
 
   return {

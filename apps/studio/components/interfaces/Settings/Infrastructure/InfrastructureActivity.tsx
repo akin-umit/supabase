@@ -1,9 +1,18 @@
 import { useParams } from 'common'
 import dayjs from 'dayjs'
 import { capitalize } from 'lodash'
-import { BarChart2, ChartLine, ExternalLink } from 'lucide-react'
+import {
+  Activity,
+  BarChart2,
+  ChartLine,
+  Cpu,
+  ExternalLink,
+  HardDrive,
+  MemoryStick,
+  Server,
+} from 'lucide-react'
 import Link from 'next/link'
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useMemo, useState, type ReactNode } from 'react'
 import { Button } from 'ui'
 import { Admonition } from 'ui-patterns/admonition'
 import { ShimmeringLoader } from 'ui-patterns/ShimmeringLoader'
@@ -31,13 +40,21 @@ import {
   InfraMonitoringAttribute,
   useInfraMonitoringAttributesQuery,
 } from '@/data/analytics/infra-monitoring-query'
+import { useProjectOperationsQuery } from '@/data/operations/project-operations-query'
 import { useOrgSubscriptionQuery } from '@/data/subscriptions/org-subscription-query'
 import { useProjectAddonsQuery } from '@/data/subscriptions/project-addons-query'
 import { useResourceWarningsQuery } from '@/data/usage/resource-warnings-query'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL, INSTANCE_MICRO_SPECS, INSTANCE_NANO_SPECS, InstanceSpecs } from '@/lib/constants'
+import type { ProjectOperations } from '@/lib/api/self-hosted/project-operations'
+import {
+  DOCS_URL,
+  INSTANCE_MICRO_SPECS,
+  INSTANCE_NANO_SPECS,
+  InstanceSpecs,
+  IS_PLATFORM,
+} from '@/lib/constants'
 import { TIME_PERIODS_BILLING, TIME_PERIODS_REPORTS } from '@/lib/constants/metrics'
 import { useDatabaseSelectorStateSnapshot } from '@/state/database-selector'
 
@@ -57,6 +74,10 @@ const INFRA_ATTRIBUTES: InfraMonitoringAttribute[] = [
 ]
 
 export const InfrastructureActivity = () => {
+  if (!IS_PLATFORM) {
+    return <SelfHostedInfrastructureActivity />
+  }
+
   const { ref: projectRef } = useParams()
   const { data: project } = useSelectedProjectQuery()
   const { data: organization } = useSelectedOrganizationQuery()
@@ -457,6 +478,132 @@ export const InfrastructureActivity = () => {
           </Fragment>
         )
       })}
+    </>
+  )
+}
+
+function formatRuntimePercent(value?: number) {
+  return typeof value === 'number' ? `${Math.round(value)}%` : 'Telemetry pending'
+}
+
+function formatRuntimeConnections(data?: ProjectOperations) {
+  const runtime = data?.infrastructure?.runtime
+  const max = runtime?.connectionsMax ?? data?.infrastructure?.database.maxClientConnections
+
+  if (typeof runtime?.connectionsCurrent === 'number' && typeof max === 'number') {
+    return `${runtime.connectionsCurrent}/${max}`
+  }
+  if (typeof max === 'number') return `Max ${max}`
+  return 'Telemetry pending'
+}
+
+function SelfHostedMetric({
+  icon,
+  title,
+  value,
+  description,
+}: {
+  icon: ReactNode
+  title: string
+  value: string
+  description: string
+}) {
+  return (
+    <Panel>
+      <Panel.Content>
+        <div className="flex items-start gap-3">
+          <div className="rounded border bg-surface-75 p-2 text-foreground-light">{icon}</div>
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm text-foreground">{title}</p>
+            <p className="truncate font-mono text-lg text-foreground" title={value}>
+              {value}
+            </p>
+            <p className="text-sm text-foreground-light">{description}</p>
+          </div>
+        </div>
+      </Panel.Content>
+    </Panel>
+  )
+}
+
+function SelfHostedInfrastructureActivity() {
+  const { ref: projectRef } = useParams()
+  const { data, isPending, isError, refetch, isFetching } = useProjectOperationsQuery({
+    projectRef,
+  })
+  const runtime = data?.infrastructure?.runtime
+  const services = data?.infrastructure?.services
+
+  return (
+    <>
+      <ScaffoldContainer id="infrastructure-activity">
+        <div className="mx-auto flex flex-col gap-10 pt-6">
+          <div>
+            <p className="text-xl">Infrastructure Activity</p>
+            <p className="text-sm text-foreground-light">
+              Runtime telemetry reported by the self-hosted management API.
+            </p>
+          </div>
+        </div>
+      </ScaffoldContainer>
+      <ScaffoldContainer>
+        {isError ? (
+          <Panel>
+            <Panel.Content>
+              <div className="flex min-h-32 flex-col items-start justify-center gap-3">
+                <div>
+                  <p className="text-sm text-foreground">Infrastructure telemetry is unavailable</p>
+                  <p className="text-sm text-foreground-light">
+                    The management API could not provide safe runtime evidence.
+                  </p>
+                </div>
+                <Button size="small" type="button" onClick={() => refetch()} loading={isFetching}>
+                  Retry
+                </Button>
+              </div>
+            </Panel.Content>
+          </Panel>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy={isPending}>
+            <SelfHostedMetric
+              icon={<Cpu size={18} strokeWidth={1.5} />}
+              title="CPU"
+              value={isPending ? 'Loading' : formatRuntimePercent(runtime?.cpuPercent)}
+              description="Host CPU percentage from runtime telemetry."
+            />
+            <SelfHostedMetric
+              icon={<MemoryStick size={18} strokeWidth={1.5} />}
+              title="RAM"
+              value={isPending ? 'Loading' : formatRuntimePercent(runtime?.memoryPercent)}
+              description="Memory pressure reported by the runtime host."
+            />
+            <SelfHostedMetric
+              icon={<HardDrive size={18} strokeWidth={1.5} />}
+              title="Disk"
+              value={isPending ? 'Loading' : formatRuntimePercent(runtime?.diskPercent)}
+              description="Disk usage reported by the deployment host."
+            />
+            <SelfHostedMetric
+              icon={<Activity size={18} strokeWidth={1.5} />}
+              title="Connections"
+              value={isPending ? 'Loading' : formatRuntimeConnections(data)}
+              description="Current and configured database connection evidence."
+            />
+            <SelfHostedMetric
+              icon={<Server size={18} strokeWidth={1.5} />}
+              title="Services"
+              value={
+                isPending
+                  ? 'Loading'
+                  : services
+                    ? `${services.healthy}/${services.total}`
+                    : 'Telemetry pending'
+              }
+              description="Healthy services reported by the management API."
+            />
+          </div>
+        )}
+      </ScaffoldContainer>
     </>
   )
 }

@@ -1,4 +1,5 @@
 import { SupportCategories } from '@supabase/shared-types/out/constants'
+import { useQuery } from '@tanstack/react-query'
 import { useFlag, useParams } from 'common'
 import { Clock3, GitBranch, Lock, Network, Server, ShieldCheck } from 'lucide-react'
 import { useTheme } from 'next-themes'
@@ -48,6 +49,10 @@ import {
   useIsProjectActive,
   useSelectedProjectQuery,
 } from '@/hooks/misc/useSelectedProject'
+import type {
+  RuntimeConfigResource,
+  RuntimeConfigStatus,
+} from '@/lib/api/self-hosted/runtime-config'
 import { BASE_PATH, DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import { getDatabaseMajorVersion, getSemanticVersion } from '@/lib/helpers'
 import { useAddonsPagePanel } from '@/state/addons-page'
@@ -60,7 +65,51 @@ export const Addons = () => {
   return <PlatformAddons />
 }
 
+const SELF_HOSTED_ADDON_RUNTIME_RESOURCES: RuntimeConfigResource[] = [
+  'auth',
+  'storage',
+  'realtime',
+  'logging',
+]
+
+async function fetchSelfHostedAddonRuntimeStatus(projectRef: string, signal?: AbortSignal) {
+  const responses = await Promise.allSettled(
+    SELF_HOSTED_ADDON_RUNTIME_RESOURCES.map(async (resource) => {
+      const response = await fetch(`/api/platform/projects/${projectRef}/runtime/${resource}`, {
+        headers: { Accept: 'application/json' },
+        signal,
+      })
+      if (!response.ok) throw new Error(`Failed to load ${resource} runtime config`)
+      return [resource, (await response.json()) as RuntimeConfigStatus] as const
+    })
+  )
+
+  return Object.fromEntries(
+    responses.map((response, index) => {
+      const resource = SELF_HOSTED_ADDON_RUNTIME_RESOURCES[index]
+      return [resource, response.status === 'fulfilled' ? response.value[1] : undefined]
+    })
+  ) as Partial<Record<RuntimeConfigResource, RuntimeConfigStatus>>
+}
+
+function getSelfHostedAddonBadge(
+  status: RuntimeConfigStatus | undefined,
+  fallback: string
+): { label: string; variant: 'success' | 'warning' | 'default' } {
+  if (!status) return { label: fallback, variant: 'default' }
+  if (status.status === 'configured') return { label: 'Configured', variant: 'success' }
+  if (status.status === 'incomplete') return { label: 'Needs config', variant: 'warning' }
+  return { label: 'Unavailable', variant: 'default' }
+}
+
 const SelfHostedAddons = () => {
+  const { ref: projectRef } = useParams()
+  const { data: runtimeStatus } = useQuery({
+    queryKey: ['self-hosted-addons-runtime-status', projectRef],
+    queryFn: ({ signal }) => fetchSelfHostedAddonRuntimeStatus(projectRef!, signal),
+    enabled: typeof projectRef === 'string' && projectRef.length > 0,
+    refetchOnWindowFocus: false,
+  })
   const resourceItemClassName =
     'min-h-[128px] border-b! last:border-b-0! [&>div:first-child]:hidden @lg:[&>div:first-child]:flex'
   const iconBoxClassName =
@@ -71,7 +120,7 @@ const SelfHostedAddons = () => {
       title: 'Backups and point-in-time recovery',
       description:
         'Run scheduled dumps, WAL archiving, restore drills, and recovery evidence from your deployment automation.',
-      badge: 'Operator',
+      badge: { label: 'Operator evidence', variant: 'default' as const },
       href: `${DOCS_URL}/guides/platform/backups`,
       linkLabel: 'Backup and PITR guidance',
       icon: <ShieldCheck size={28} strokeWidth={1.5} />,
@@ -80,7 +129,7 @@ const SelfHostedAddons = () => {
       title: 'Custom domains and TLS',
       description:
         'Configure DNS, certificates, and reverse proxy routing in Coolify or your host, then expose the public URL to Studio.',
-      badge: 'Runtime env',
+      badge: { label: 'Runtime env', variant: 'default' as const },
       href: `${DOCS_URL}/guides/platform/custom-domains`,
       linkLabel: 'Custom domain guidance',
       icon: <Network size={28} strokeWidth={1.5} />,
@@ -89,7 +138,7 @@ const SelfHostedAddons = () => {
       title: 'Dedicated IPv4 and private networking',
       description:
         'Use host firewall rules, private Docker networks, and provider networking instead of Supabase Cloud billing add-ons.',
-      badge: 'Host managed',
+      badge: { label: 'Host managed', variant: 'default' as const },
       href: `${DOCS_URL}/guides/self-hosting`,
       linkLabel: 'Self-hosting docs',
       icon: <Server size={28} strokeWidth={1.5} />,
@@ -98,7 +147,7 @@ const SelfHostedAddons = () => {
       title: 'Log drains and observability',
       description:
         'Send Logflare, Postgres, Kong, and function logs to your selected logging backend through environment variables.',
-      badge: 'Runtime env',
+      badge: getSelfHostedAddonBadge(runtimeStatus?.logging, 'Runtime env'),
       href: `${DOCS_URL}/guides/platform/log-drains`,
       linkLabel: 'Log drain guidance',
       icon: <Clock3 size={28} strokeWidth={1.5} />,
@@ -107,7 +156,7 @@ const SelfHostedAddons = () => {
       title: 'GitHub and deployment automation',
       description:
         'Keep Compose files, image pins, acceptance tests, and changelog evidence in Git so Coolify can deploy repeatably.',
-      badge: 'Source of truth',
+      badge: { label: 'Source of truth', variant: 'default' as const },
       href: `${DOCS_URL}/guides/deployment/managing-environments`,
       linkLabel: 'Deployment guidance',
       icon: <GitBranch size={28} strokeWidth={1.5} />,
@@ -132,7 +181,7 @@ const SelfHostedAddons = () => {
               key={addon.title}
               className={resourceItemClassName}
               media={<div className={iconBoxClassName}>{addon.icon}</div>}
-              meta={<Badge variant="default">{addon.badge}</Badge>}
+              meta={<Badge variant={addon.badge.variant}>{addon.badge.label}</Badge>}
             >
               <div className="space-y-1">
                 <div>{addon.title}</div>
