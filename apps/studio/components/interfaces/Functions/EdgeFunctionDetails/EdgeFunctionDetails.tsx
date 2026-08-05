@@ -76,7 +76,7 @@ export const EdgeFunctionDetails = () => {
     '*'
   )
 
-  const canUpdateEdgeFunction = !IS_PLATFORM || canUpdateEdgeFunctionPermission
+  const canUpdateEdgeFunction = IS_PLATFORM && canUpdateEdgeFunctionPermission
 
   const { can: canReadAPIKeys } = useAsyncCheckPermissions(PermissionAction.SECRETS_READ, '*')
   const { data: apiKeyData } = useAPIKeys({ projectRef }, { enabled: canReadAPIKeys })
@@ -150,6 +150,16 @@ export const EdgeFunctionDetails = () => {
           </PageSectionSummary>
         </PageSectionMeta>
         <PageSectionContent>
+          {!IS_PLATFORM && (
+            <Alert className="mb-4">
+              <AlertTitle>Function configuration is managed by the self-hosted runtime</AlertTitle>
+              <AlertDescription>
+                Update function files, JWT verification, and deployment lifecycle through your
+                Supabase CLI workflow or operator automation. Studio does not call Supabase Cloud
+                Edge Function write APIs in self-hosted mode.
+              </AlertDescription>
+            </Alert>
+          )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onUpdateFunction)}>
               <Card>
@@ -191,8 +201,7 @@ export const EdgeFunctionDetails = () => {
                               satisfies this.
                             </p>
                             <p>
-                              Recommended: OFF with JWT and custom auth logic in your function
-                              code.
+                              Recommended: OFF with JWT and custom auth logic in your function code.
                             </p>
                           </>
                         }
@@ -303,60 +312,60 @@ export const EdgeFunctionDetails = () => {
 
       <>
         <PageSection>
-            <PageSectionMeta>
-              <PageSectionSummary>
-                <PageSectionTitle>Develop locally</PageSectionTitle>
-              </PageSectionSummary>
-            </PageSectionMeta>
-            <PageSectionContent>
-              <div className="rounded-sm border bg-surface-100 px-6 py-4 drop-shadow-xs">
-                <div className="space-y-6">
-                  <CommandRender
-                    commands={[
-                      {
-                        command: `supabase functions download ${selectedFunction?.slug}`,
-                        description: 'Download the function to your local machine',
-                        jsx: () => (
-                          <>
-                            <span className="text-brand">supabase</span> functions download{' '}
-                            {selectedFunction?.slug}
-                          </>
-                        ),
-                        comment: '1. Download the function',
-                      },
-                    ]}
-                  />
-                  <CommandRender commands={[managementCommands[0]]} />
-                  <CommandRender commands={[managementCommands[1]]} />
-                </div>
+          <PageSectionMeta>
+            <PageSectionSummary>
+              <PageSectionTitle>Develop locally</PageSectionTitle>
+            </PageSectionSummary>
+          </PageSectionMeta>
+          <PageSectionContent>
+            <div className="rounded-sm border bg-surface-100 px-6 py-4 drop-shadow-xs">
+              <div className="space-y-6">
+                <CommandRender
+                  commands={[
+                    {
+                      command: `supabase functions download ${selectedFunction?.slug}`,
+                      description: 'Download the function to your local machine',
+                      jsx: () => (
+                        <>
+                          <span className="text-brand">supabase</span> functions download{' '}
+                          {selectedFunction?.slug}
+                        </>
+                      ),
+                      comment: '1. Download the function',
+                    },
+                  ]}
+                />
+                <CommandRender commands={[managementCommands[0]]} />
+                <CommandRender commands={[managementCommands[1]]} />
               </div>
-            </PageSectionContent>
+            </div>
+          </PageSectionContent>
         </PageSection>
         <PageSection>
-            <PageSectionMeta>
-              <PageSectionSummary>
-                <PageSectionTitle>Delete function</PageSectionTitle>
-              </PageSectionSummary>
-            </PageSectionMeta>
-            <PageSectionContent>
-              <Alert variant="destructive">
-                <CriticalIcon />
-                <AlertTitle>Once your function is deleted, it can no longer be restored</AlertTitle>
-                <AlertDescription>
-                  Make sure you have made a backup if you want to restore your edge function
-                </AlertDescription>
-                <AlertDescription className="mt-3">
-                  <Button
-                    variant="danger"
-                    disabled={!canUpdateEdgeFunction}
-                    loading={selectedFunction?.id === undefined}
-                    onClick={() => setShowDeleteModal(true)}
-                  >
-                    Delete edge function
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            </PageSectionContent>
+          <PageSectionMeta>
+            <PageSectionSummary>
+              <PageSectionTitle>Delete function</PageSectionTitle>
+            </PageSectionSummary>
+          </PageSectionMeta>
+          <PageSectionContent>
+            <Alert variant="destructive">
+              <CriticalIcon />
+              <AlertTitle>Once your function is deleted, it can no longer be restored</AlertTitle>
+              <AlertDescription>
+                Make sure you have made a backup if you want to restore your edge function
+              </AlertDescription>
+              <AlertDescription className="mt-3">
+                <Button
+                  variant="danger"
+                  disabled={!canUpdateEdgeFunction}
+                  loading={selectedFunction?.id === undefined}
+                  onClick={() => setShowDeleteModal(true)}
+                >
+                  Delete edge function
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </PageSectionContent>
         </PageSection>
         <ConfirmationModal
           visible={showDeleteModal}

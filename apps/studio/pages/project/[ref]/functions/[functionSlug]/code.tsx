@@ -34,7 +34,7 @@ const CodePage = () => {
   const [showDeployWarning, setShowDeployWarning] = useState(false)
 
   const { can: canDeployFunction } = useAsyncCheckPermissions(PermissionAction.FUNCTIONS_WRITE, '*')
-  const canDeployFunctionInCurrentRuntime = !IS_PLATFORM || canDeployFunction
+  const canDeployFunctionInCurrentRuntime = IS_PLATFORM && canDeployFunction
 
   const { data: selectedFunction } = useEdgeFunctionQuery({
     projectRef: ref,
@@ -231,7 +231,9 @@ const CodePage = () => {
                 content: {
                   side: 'top',
                   text: !canDeployFunctionInCurrentRuntime
-                    ? 'You need additional permissions to update edge functions'
+                    ? IS_PLATFORM
+                      ? 'You need additional permissions to update edge functions'
+                      : 'Deploy updates from the self-hosted runtime or Supabase CLI'
                     : undefined,
                 },
               }}

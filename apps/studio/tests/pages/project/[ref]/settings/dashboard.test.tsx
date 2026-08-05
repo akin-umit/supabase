@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -59,15 +59,16 @@ describe('/project/[ref]/settings/dashboard', () => {
     expect(screen.queryByText('Edits')).not.toBeInTheDocument()
   })
 
-  it('redirects self-hosted visits to account preferences', async () => {
+  it('renders local dashboard preferences for self-hosted visits', () => {
     mockIsPlatform.value = false
 
     render(<DashboardPage dehydratedState={{}} />)
 
-    await waitFor(() => {
-      expect(mockRouter.replace).toHaveBeenCalledWith('/account/me#dashboard')
-    })
-
-    expect(screen.queryByText('DashboardPreferences')).not.toBeInTheDocument()
+    expect(mockRouter.replace).not.toHaveBeenCalled()
+    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+    expect(
+      screen.getByText('Configure local dashboard preferences for this self-hosted project.')
+    ).toBeInTheDocument()
+    expect(screen.getByText('DashboardPreferences')).toBeInTheDocument()
   })
 })

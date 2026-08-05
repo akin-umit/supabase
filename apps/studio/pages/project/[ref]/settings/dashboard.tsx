@@ -1,6 +1,4 @@
 import { useFlag } from 'common'
-import { useRouter } from 'next/router'
-import { useEffect } from 'react'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import {
   PageHeader,
@@ -17,17 +15,9 @@ import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const Preferences: NextPageWithLayout = () => {
-  const router = useRouter()
   // [Joshen] Using this flag to determine whether to show query preferences or not
   const showQueryPreferences = useFlag('dashboardPreferences')
-
-  useEffect(() => {
-    if (!IS_PLATFORM) {
-      router.replace('/account/me#dashboard')
-    }
-  }, [router])
-
-  if (!IS_PLATFORM) return null
+  const showDashboardPreferences = !IS_PLATFORM || showQueryPreferences
 
   return (
     <>
@@ -36,12 +26,16 @@ const Preferences: NextPageWithLayout = () => {
           <PageHeaderSummary>
             <PageHeaderTitle>Dashboard</PageHeaderTitle>
             <PageHeaderDescription>
-              Configure dashboard query preferences for this project.
+              {IS_PLATFORM
+                ? 'Configure dashboard query preferences for this project.'
+                : 'Configure local dashboard preferences for this self-hosted project.'}
             </PageHeaderDescription>
           </PageHeaderSummary>
         </PageHeaderMeta>
       </PageHeader>
-      <PageContainer size="small">{showQueryPreferences && <DashboardPreferences />}</PageContainer>
+      <PageContainer size="small">
+        {showDashboardPreferences && <DashboardPreferences />}
+      </PageContainer>
     </>
   )
 }

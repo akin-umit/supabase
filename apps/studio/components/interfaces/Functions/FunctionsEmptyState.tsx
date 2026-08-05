@@ -39,9 +39,9 @@ export const FunctionsEmptyState = () => {
     return EDGE_FUNCTION_TEMPLATES.filter((template) => template.value !== 'stripe-webhook')
   }, [showStripeExample])
 
-  const canCreateInBrowser = IS_PLATFORM || isSelfHosted
+  const canCreateInBrowser = IS_PLATFORM
   const showCliInstructions = IS_PLATFORM || isCli || isSelfHosted
-  const showTemplates = IS_PLATFORM || isSelfHosted
+  const showTemplates = IS_PLATFORM
   const emptyStateTitle = 'Deploy your first edge function'
 
   return (
