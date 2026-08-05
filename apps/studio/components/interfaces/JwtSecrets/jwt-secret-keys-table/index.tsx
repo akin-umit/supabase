@@ -212,10 +212,10 @@ export const JWTSecretKeysTable = () => {
           <Card className="mb-4 bg-transparent">
             <CardContent className="space-y-3 p-4">
               <div>
-                <p className="text-sm text-foreground">Self-hosted JWT signing source</p>
+                <p className="text-sm text-foreground">JWT signing configuration</p>
                 <p className="text-sm text-foreground-light">
-                  JWT rotation is controlled by deployment secrets. Studio reads the safe runtime
-                  source names and never exposes private key material in the browser.
+                  Studio reads signing key status from the deployment and never exposes private key
+                  material in the browser.
                 </p>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">

@@ -1,7 +1,7 @@
 import { SupportCategories } from '@supabase/shared-types/out/constants'
 import { useFlag, useParams } from 'common'
 import { AlertCircle, Globe2 } from 'lucide-react'
-import { Badge, Card, CardContent } from 'ui'
+import { Card, CardContent } from 'ui'
 import {
   PageSection,
   PageSectionContent,
@@ -52,14 +52,10 @@ const SelfHostedCustomDomainConfig = () => (
               <Globe2 size={18} strokeWidth={1.5} />
             </div>
             <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <h4 className="m-0 text-base">Self-hosted custom domains</h4>
-                <Badge variant="default">Operator managed</Badge>
-              </div>
+              <h4 className="m-0 text-base">Self-hosted custom domains</h4>
               <p className="m-0 text-sm text-foreground-light">
-                Custom domains are configured in DNS, your reverse proxy, Coolify, and the
-                Supabase runtime environment. Studio shows the required shape here instead of
-                opening Supabase Cloud billing.
+                Studio uses the public project URL configured in this deployment. DNS, TLS, and
+                service routing must point to the same host before users copy URLs from Studio.
               </p>
             </div>
           </div>
@@ -67,27 +63,27 @@ const SelfHostedCustomDomainConfig = () => (
             <div className="rounded-md border p-4">
               <p className="m-0 text-sm font-medium">Public project URL</p>
               <p className="m-0 mt-1 text-sm text-foreground-light">
-                Set SUPABASE_PUBLIC_URL and SITE_URL to the HTTPS domain users copy from Studio.
+                `SUPABASE_PUBLIC_URL` and `SITE_URL` must match the HTTPS domain shown in Studio.
               </p>
             </div>
             <div className="rounded-md border p-4">
               <p className="m-0 text-sm font-medium">API and Auth callbacks</p>
               <p className="m-0 mt-1 text-sm text-foreground-light">
-                Keep API_EXTERNAL_URL, Auth redirects, and OAuth callback URLs aligned with the same
+                `API_EXTERNAL_URL`, redirect allow lists, and OAuth callback URLs must use the same
                 public host.
               </p>
             </div>
             <div className="rounded-md border p-4">
               <p className="m-0 text-sm font-medium">TLS and reverse proxy</p>
               <p className="m-0 mt-1 text-sm text-foreground-light">
-                Terminate TLS in Coolify, Traefik, Nginx, Caddy, or your provider load balancer.
+                TLS terminates at Coolify or your reverse proxy before requests reach Kong.
               </p>
             </div>
             <div className="rounded-md border p-4">
               <p className="m-0 text-sm font-medium">Redeploy scope</p>
               <p className="m-0 mt-1 text-sm text-foreground-light">
                 After changing domains, redeploy Studio, Kong, Auth, REST, Storage, Realtime, and
-                Functions.
+                Functions so generated URLs stay consistent.
               </p>
             </div>
           </div>

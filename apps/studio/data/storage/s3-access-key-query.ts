@@ -17,6 +17,7 @@ async function fetchStorageCredentials(
   signal?: AbortSignal
 ) {
   if (!projectRef) throw new Error('projectRef is required')
+  if (!IS_PLATFORM) return { data: [] as S3AccessKey[] }
 
   const { data, error } = await get('/platform/storage/{ref}/credentials', {
     params: { path: { ref: projectRef } },

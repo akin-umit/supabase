@@ -118,27 +118,26 @@ const SelfHostedAddons = () => {
   const addons = [
     {
       title: 'Backups and point-in-time recovery',
-      description:
-        'Run scheduled dumps, WAL archiving, restore drills, and recovery evidence from your deployment automation.',
-      badge: { label: 'Operator evidence', variant: 'default' as const },
-      href: `${DOCS_URL}/guides/platform/backups`,
-      linkLabel: 'Backup and PITR guidance',
+      description: 'View the latest backup and migration evidence published by this deployment.',
+      badge: { label: 'Runtime evidence', variant: 'default' as const },
+      href: `/project/${projectRef}/database/backups/scheduled`,
+      linkLabel: 'Open backup evidence',
       icon: <ShieldCheck size={28} strokeWidth={1.5} />,
     },
     {
       title: 'Custom domains and TLS',
       description:
-        'Configure DNS, certificates, and reverse proxy routing in Coolify or your host, then expose the public URL to Studio.',
-      badge: { label: 'Runtime env', variant: 'default' as const },
-      href: `${DOCS_URL}/guides/platform/custom-domains`,
-      linkLabel: 'Custom domain guidance',
+        'Check the public URL, callback host, TLS, and redeploy requirements for this runtime.',
+      badge: { label: 'Configured in runtime', variant: 'default' as const },
+      href: `/project/${projectRef}/settings/general#custom-domains`,
+      linkLabel: 'Open domain settings',
       icon: <Network size={28} strokeWidth={1.5} />,
     },
     {
       title: 'Dedicated IPv4 and private networking',
       description:
-        'Use host firewall rules, private Docker networks, and provider networking instead of Supabase Cloud billing add-ons.',
-      badge: { label: 'Host managed', variant: 'default' as const },
+        'Network isolation is provided by this host, Docker networks, firewall rules, and reverse proxy.',
+      badge: { label: 'Runtime network', variant: 'default' as const },
       href: `${DOCS_URL}/guides/self-hosting`,
       linkLabel: 'Self-hosting docs',
       icon: <Server size={28} strokeWidth={1.5} />,
@@ -146,17 +145,17 @@ const SelfHostedAddons = () => {
     {
       title: 'Log drains and observability',
       description:
-        'Send Logflare, Postgres, Kong, and function logs to your selected logging backend through environment variables.',
-      badge: getSelfHostedAddonBadge(runtimeStatus?.logging, 'Runtime env'),
-      href: `${DOCS_URL}/guides/platform/log-drains`,
-      linkLabel: 'Log drain guidance',
+        'Inspect Logflare and Vector status used by logs, Edge Function analytics, and dashboards.',
+      badge: getSelfHostedAddonBadge(runtimeStatus?.logging, 'Checking'),
+      href: `/project/${projectRef}/settings/log-drains`,
+      linkLabel: 'Open log drains',
       icon: <Clock3 size={28} strokeWidth={1.5} />,
     },
     {
       title: 'GitHub and deployment automation',
       description:
         'Keep Compose files, image pins, acceptance tests, and changelog evidence in Git so Coolify can deploy repeatably.',
-      badge: { label: 'Source of truth', variant: 'default' as const },
+      badge: { label: 'Git backed', variant: 'default' as const },
       href: `${DOCS_URL}/guides/deployment/managing-environments`,
       linkLabel: 'Deployment guidance',
       icon: <GitBranch size={28} strokeWidth={1.5} />,
@@ -166,15 +165,6 @@ const SelfHostedAddons = () => {
   return (
     <PageContainer size="default">
       <PageSection className="last:pb-0 gap-0">
-        <Admonition
-          type="default"
-          className="mb-4"
-          title="Self-hosted add-ons are managed in your deployment runtime"
-        >
-          Supabase Cloud add-ons are billed and provisioned by the hosted control plane. In this
-          self-hosted Studio, the same operational capabilities are enabled through Docker, Coolify,
-          environment variables, backup jobs, DNS, and your secret manager.
-        </Admonition>
         <ResourceList>
           {addons.map((addon) => (
             <ResourceItem

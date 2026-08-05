@@ -105,14 +105,12 @@ describe('General', () => {
       })
     })
 
-    it('renders the CLI admonition alongside a read-only project name', () => {
+    it('renders a read-only project name', () => {
       render(<General />)
 
       expect(screen.getByText('Project name')).toBeInTheDocument()
       expect(screen.getByDisplayValue('My Project')).toHaveAttribute('readonly')
-
-      expect(screen.getByText(/Local development with the Supabase CLI/i)).toBeInTheDocument()
-      expect(screen.queryByText(/Self-hosted Supabase/i)).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Save changes/i })).not.toBeInTheDocument()
     })
   })
 
@@ -126,21 +124,18 @@ describe('General', () => {
       })
     })
 
-    it('renders the self-hosted admonition alongside a read-only project name', () => {
+    it('renders a read-only project name', () => {
       render(<General />)
 
       expect(screen.getByText('Project name')).toBeInTheDocument()
       expect(screen.getByDisplayValue('My Project')).toHaveAttribute('readonly')
-
-      expect(screen.getByText(/Self-hosted Supabase/i)).toBeInTheDocument()
-      expect(screen.queryByText(/Local development with the Supabase CLI/i)).not.toBeInTheDocument()
     })
 
-    it('does not render Project ID, region, Save action, or the member access section', () => {
+    it('renders runtime identity without save actions or the member access section', () => {
       render(<General />)
 
-      expect(screen.queryByText('Project ID')).not.toBeInTheDocument()
-      expect(screen.queryByText('Project region')).not.toBeInTheDocument()
+      expect(screen.getByText('Project ID')).toBeInTheDocument()
+      expect(screen.getByText('Project region')).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /Save changes/i })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /Cancel/i })).not.toBeInTheDocument()
       expect(screen.queryByText('ProjectAccessSection')).not.toBeInTheDocument()

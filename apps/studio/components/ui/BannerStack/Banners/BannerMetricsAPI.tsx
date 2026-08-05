@@ -7,7 +7,6 @@ import { BannerCard } from '../BannerCard'
 import { useBannerStack } from '../BannerStackProvider'
 import { AnimatedLogos } from '@/components/interfaces/LogDrains/AnimatedLogos'
 import { useLocalStorageQuery } from '@/hooks/misc/useLocalStorage'
-import { DOCS_URL } from '@/lib/constants'
 import { useTrack } from '@/lib/telemetry/track'
 
 export const BannerMetricsAPI = () => {
@@ -34,19 +33,19 @@ export const BannerMetricsAPI = () => {
           <AnimatedLogos iconSize={20} className="h-[22px]!" />
         </div>
         <div className="flex flex-col gap-y-1 mb-2">
-          <p className="text-sm font-medium">Export Metrics to your dashboards</p>
+          <p className="text-sm font-medium">Runtime metrics are enabled</p>
           <p className="text-xs text-foreground-lighter text-balance">
-            Visualize over 200 database performance and health metrics with our Metrics API.
+            Inspect the Logflare and Vector configuration that powers observability in this
+            deployment.
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="default" size="tiny" asChild>
             <Link
-              href={`${DOCS_URL}/guides/telemetry/metrics`}
-              target="_blank"
+              href={`/project/${ref}/settings/log-drains`}
               onClick={() => track('metrics_api_banner_cta_button_clicked')}
             >
-              Get started for free
+              Open log drains
             </Link>
           </Button>
         </div>

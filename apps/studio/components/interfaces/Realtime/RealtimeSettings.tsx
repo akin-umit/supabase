@@ -270,13 +270,13 @@ export const RealtimeSettings = () => {
                 {isSelfHosted && (
                   <Admonition
                     type="default"
-                    title="Self-hosted Realtime runtime configuration"
+                    title="Realtime configuration"
                     description={
                       <div className="space-y-3">
                         <p>
-                          Studio is reading Realtime configuration from this deployment runtime.
-                          Saving from Studio stays disabled until an audited apply job can update
-                          environment variables and restart Realtime safely.
+                          Studio is reading the active Realtime values from this deployment. Changes
+                          must be applied through the deployment environment and then Realtime must
+                          be redeployed.
                         </p>
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge variant="default">
@@ -703,7 +703,7 @@ export const RealtimeSettings = () => {
                   {isPermissionsLoaded && !canUpdateRealtimeSettings && (
                     <p className="text-sm text-foreground-light">
                       {isSelfHosted
-                        ? 'Realtime values are read from deployment runtime variables. Apply changes in the deployment environment, then redeploy Realtime.'
+                        ? 'Realtime values are read from deployment variables.'
                         : 'You need additional permissions to update realtime settings'}
                     </p>
                   )}

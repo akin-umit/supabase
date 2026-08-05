@@ -134,7 +134,7 @@ function SelfHostedComputeAndDisk() {
       </div>
       <Panel className="mt-4">
         <Panel.Content>
-          <p className="text-sm text-foreground">Operator managed sizing</p>
+          <p className="text-sm text-foreground">Runtime sizing</p>
           <p className="text-sm text-foreground-light">
             Compute size, volume size, IOPS, and throughput are controlled by the self-hosted
             deployment host. Change Docker, Coolify, or host volume limits, then redeploy the

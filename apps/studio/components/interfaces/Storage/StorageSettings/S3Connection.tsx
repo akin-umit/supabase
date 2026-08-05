@@ -279,7 +279,9 @@ export const S3Connection = () => {
               </PageSectionDescription>
             </PageSectionSummary>
             <PageSectionAside>
-              <CreateCredentialModal visible={openCreateCred} onOpenChange={setOpenCreateCred} />
+              {IS_PLATFORM && (
+                <CreateCredentialModal visible={openCreateCred} onOpenChange={setOpenCreateCred} />
+              )}
             </PageSectionAside>
           </PageSectionMeta>
 
@@ -331,6 +333,19 @@ export const S3Connection = () => {
                               }}
                             />
                           ))
+                        ) : !IS_PLATFORM ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="rounded-b-md! overflow-hidden">
+                              <p className="text-sm text-foreground">
+                                S3 access keys are configured in the deployment
+                              </p>
+                              <p className="text-sm text-foreground-light">
+                                Rotate `S3_PROTOCOL_ACCESS_KEY_ID` and
+                                `S3_PROTOCOL_ACCESS_KEY_SECRET` in your runtime secrets, then
+                                redeploy Storage and Kong.
+                              </p>
+                            </TableCell>
+                          </TableRow>
                         ) : (
                           <TableRow>
                             <TableCell colSpan={4} className="rounded-b-md! overflow-hidden">

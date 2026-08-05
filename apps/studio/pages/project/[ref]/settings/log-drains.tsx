@@ -189,12 +189,11 @@ const LogDrainsSettings: NextPageWithLayout = () => {
 
         {isSelfHosted ? (
           <Alert variant="default">
-            <AlertTitle>Self-hosted log export runtime</AlertTitle>
+            <AlertTitle>Log export configuration</AlertTitle>
             <AlertDescription className="space-y-2">
               <p>
-                Studio is reading the current logging and analytics runtime configuration from the
-                deployment. Add or rotate destinations in Vector/Logflare configuration, then
-                redeploy the logging services.
+                Studio is reading the Logflare and Vector configuration from this deployment. These
+                values power logs, Edge Function invocations, and observability charts.
               </p>
               <p>
                 Status:{' '}
@@ -271,7 +270,7 @@ const LogDrainsSettings: NextPageWithLayout = () => {
         title="Log Drains"
         subtitle={
           isSelfHosted
-            ? 'Inspect self-hosted log export runtime configuration'
+            ? 'Inspect Logflare and Vector status for this deployment'
             : 'Send your project logs to third party destinations'
         }
         primaryActions={

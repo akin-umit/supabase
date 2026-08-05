@@ -3,16 +3,7 @@ import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { IS_PLATFORM, useParams } from 'common'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import {
-  Button,
-  Card,
-  CardContent,
-  CardFooter,
-  Form,
-  FormControl,
-  FormField,
-  Input,
-} from 'ui'
+import { Button, Card, CardContent, CardFooter, Form, FormControl, FormField, Input } from 'ui'
 import { Admonition } from 'ui-patterns/admonition'
 import { Input as PasswordInput } from 'ui-patterns/DataInputs/Input'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
@@ -125,12 +116,6 @@ export const General = () => {
             </Card>
           ) : (
             <>
-              {!IS_PLATFORM && project === undefined && (
-                <Admonition type="default" className="mb-4" title="Self-hosted project metadata">
-                  Project metadata is read from the runtime environment when the hosted project API
-                  is not available.
-                </Admonition>
-              )}
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                   <Card>
@@ -148,7 +133,7 @@ export const General = () => {
                             <FormControl>
                               <Input
                                 {...field}
-                                readOnly={isBranch || !canUpdateProject || !project}
+                                readOnly={!IS_PLATFORM || isBranch || !canUpdateProject || !project}
                                 autoComplete="off"
                               />
                             </FormControl>
@@ -157,74 +142,76 @@ export const General = () => {
                       />
                     </CardContent>
 
-                  {isBranch && (
+                    {isBranch && (
+                      <CardContent>
+                        <FormItemLayout
+                          layout="flex-row-reverse"
+                          label={`${entityLabel} type`}
+                          description="Preview or persistent"
+                          className="[&>div]:md:w-1/2 [&>div>div]:md:w-full"
+                        >
+                          <FormControl>
+                            <Input readOnly value={branch?.persistent ? 'Persistent' : 'Preview'} />
+                          </FormControl>
+                        </FormItemLayout>
+                      </CardContent>
+                    )}
+
                     <CardContent>
                       <FormItemLayout
                         layout="flex-row-reverse"
-                        label={`${entityLabel} type`}
-                        description="Preview or persistent"
+                        label={`${entityLabel} ID`}
+                        description="Reference used in APIs and URLs."
                         className="[&>div]:md:w-1/2 [&>div>div]:md:w-full"
                       >
                         <FormControl>
-                          <Input readOnly value={branch?.persistent ? 'Persistent' : 'Preview'} />
+                          <PasswordInput copy readOnly size="small" value={fallbackProjectRef} />
                         </FormControl>
                       </FormItemLayout>
                     </CardContent>
-                  )}
 
-                  <CardContent>
-                    <FormItemLayout
-                      layout="flex-row-reverse"
-                      label={`${entityLabel} ID`}
-                      description="Reference used in APIs and URLs."
-                      className="[&>div]:md:w-1/2 [&>div>div]:md:w-full"
-                    >
-                      <FormControl>
-                        <PasswordInput copy readOnly size="small" value={fallbackProjectRef} />
-                      </FormControl>
-                    </FormItemLayout>
-                  </CardContent>
-
-                  <CardContent>
-                    <FormItemLayout
-                      layout="flex-row-reverse"
-                      label={`${entityLabel} region`}
-                      description={regionDescription}
-                      className="[&>div]:md:w-1/2 [&>div>div]:md:w-full"
-                    >
-                      <FormControl>
-                        <PasswordInput copy readOnly size="small" value={fallbackProjectRegion} />
-                      </FormControl>
-                    </FormItemLayout>
-                  </CardContent>
-
-                  <CardFooter className="justify-end space-x-2">
-                    {form.formState.isDirty && (
-                      <Button
-                        variant="default"
-                        type="button"
-                        disabled={isUpdating}
-                        onClick={() => form.reset({ name: fallbackProjectName })}
+                    <CardContent>
+                      <FormItemLayout
+                        layout="flex-row-reverse"
+                        label={`${entityLabel} region`}
+                        description={regionDescription}
+                        className="[&>div]:md:w-1/2 [&>div>div]:md:w-full"
                       >
-                        Cancel
-                      </Button>
+                        <FormControl>
+                          <PasswordInput copy readOnly size="small" value={fallbackProjectRegion} />
+                        </FormControl>
+                      </FormItemLayout>
+                    </CardContent>
+
+                    {IS_PLATFORM && (
+                      <CardFooter className="justify-end space-x-2">
+                        {form.formState.isDirty && (
+                          <Button
+                            variant="default"
+                            type="button"
+                            disabled={isUpdating}
+                            onClick={() => form.reset({ name: fallbackProjectName })}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                        <Button
+                          variant="primary"
+                          type="submit"
+                          disabled={
+                            !form.formState.isDirty ||
+                            isUpdating ||
+                            !canUpdateProject ||
+                            isBranch ||
+                            !project
+                          }
+                          loading={isUpdating}
+                        >
+                          Save changes
+                        </Button>
+                      </CardFooter>
                     )}
-                    <Button
-                      variant="primary"
-                      type="submit"
-                      disabled={
-                        !form.formState.isDirty ||
-                        isUpdating ||
-                        !canUpdateProject ||
-                        isBranch ||
-                        !project
-                      }
-                      loading={isUpdating}
-                    >
-                      Save changes
-                    </Button>
-                  </CardFooter>
-                </Card>
+                  </Card>
                 </form>
               </Form>
             </>

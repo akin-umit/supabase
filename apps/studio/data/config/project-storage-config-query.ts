@@ -81,6 +81,6 @@ export const useIsVectorBucketsEnabled = ({ projectRef }: { projectRef?: string 
   const { data } = useProjectStorageConfigQuery({ projectRef })
   const { isCli, isPlatform } = useDeploymentMode()
 
-  const isVectorBucketsEnabled = isCli || !isPlatform || !!data?.features.vectorBuckets?.enabled
+  const isVectorBucketsEnabled = isCli || (isPlatform && !!data?.features.vectorBuckets?.enabled)
   return isVectorBucketsEnabled
 }

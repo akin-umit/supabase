@@ -1,18 +1,18 @@
+import { useParams } from 'common'
 import Link from 'next/link'
 
-import { DOCS_URL } from '@/lib/constants'
-
 export const ObservabilityLink = () => {
+  const { ref } = useParams()
+
   return (
     <div className="flex items-center justify-center gap-1.5 text-sm">
       <p className="text-foreground-light">
-        Export Metrics to your dashboards.{' '}
+        Metrics are read from Logflare and Vector.{' '}
         <Link
-          href={`${DOCS_URL}/guides/telemetry/metrics`}
+          href={`/project/${ref}/settings/log-drains`}
           className="text-foreground underline underline-offset-2 decoration-foreground-muted hover:decoration-foreground transition-all"
-          target="_blank"
         >
-          Get started for free!
+          Open log drains
         </Link>
       </p>
     </div>
