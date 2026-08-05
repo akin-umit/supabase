@@ -12,7 +12,8 @@
     "@supabase/build-icons": "workspace:*"
   },
   "devDependencies": {
-    "@types/react": "catalog:"
+    "@types/react": "catalog:",
+    "tsconfig": "workspace:*"
   },
   "peerDependencies": {
     "react": "catalog:"

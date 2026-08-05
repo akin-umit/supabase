@@ -1,7 +1,7 @@
 import { SupportCategories } from '@supabase/shared-types/out/constants'
 import { useQuery } from '@tanstack/react-query'
 import { useFlag, useParams } from 'common'
-import { Clock3, GitBranch, Lock, Network, Server, ShieldCheck } from 'lucide-react'
+import { Activity, Database, Lock, Radio } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import {
@@ -92,11 +92,11 @@ async function fetchSelfHostedAddonRuntimeStatus(projectRef: string, signal?: Ab
   ) as Partial<Record<RuntimeConfigResource, RuntimeConfigStatus>>
 }
 
-function getSelfHostedAddonBadge(
-  status: RuntimeConfigStatus | undefined,
-  fallback: string
-): { label: string; variant: 'success' | 'warning' | 'default' } {
-  if (!status) return { label: fallback, variant: 'default' }
+export function getSelfHostedServiceBadge(status: RuntimeConfigStatus | undefined): {
+  label: string
+  variant: 'success' | 'warning' | 'default'
+} {
+  if (!status) return { label: 'Unavailable', variant: 'default' }
   if (status.status === 'configured') return { label: 'Configured', variant: 'success' }
   if (status.status === 'incomplete') return { label: 'Needs config', variant: 'warning' }
   return { label: 'Unavailable', variant: 'default' }
@@ -104,7 +104,12 @@ function getSelfHostedAddonBadge(
 
 const SelfHostedAddons = () => {
   const { ref: projectRef } = useParams()
-  const { data: runtimeStatus } = useQuery({
+  const {
+    data: runtimeStatus,
+    error,
+    isError,
+    isPending,
+  } = useQuery({
     queryKey: ['self-hosted-addons-runtime-status', projectRef],
     queryFn: ({ signal }) => fetchSelfHostedAddonRuntimeStatus(projectRef!, signal),
     enabled: typeof projectRef === 'string' && projectRef.length > 0,
@@ -115,74 +120,74 @@ const SelfHostedAddons = () => {
   const iconBoxClassName =
     'bg rounded-lg border flex h-24 w-40 items-center justify-center text-foreground-light'
 
-  const addons = [
+  const services = [
     {
-      title: 'Backups and point-in-time recovery',
-      description: 'View the latest backup and migration evidence published by this deployment.',
-      badge: { label: 'Runtime evidence', variant: 'default' as const },
-      href: `/project/${projectRef}/database/backups/scheduled`,
-      linkLabel: 'Open backup evidence',
-      icon: <ShieldCheck size={28} strokeWidth={1.5} />,
+      title: 'Authentication',
+      description: 'Users, providers, sessions, policies, and authentication settings.',
+      badge: getSelfHostedServiceBadge(runtimeStatus?.auth),
+      href: `/project/${projectRef}/auth/users`,
+      linkLabel: 'Open Authentication',
+      icon: <Lock size={28} strokeWidth={1.5} />,
     },
     {
-      title: 'Custom domains and TLS',
-      description:
-        'Check the public URL, callback host, TLS, and redeploy requirements for this runtime.',
-      badge: { label: 'Configured in runtime', variant: 'default' as const },
-      href: `/project/${projectRef}/settings/general#custom-domains`,
-      linkLabel: 'Open domain settings',
-      icon: <Network size={28} strokeWidth={1.5} />,
+      title: 'Storage',
+      description: 'Buckets, objects, policies, and S3-compatible access.',
+      badge: getSelfHostedServiceBadge(runtimeStatus?.storage),
+      href: `/project/${projectRef}/storage/buckets`,
+      linkLabel: 'Open Storage',
+      icon: <Database size={28} strokeWidth={1.5} />,
     },
     {
-      title: 'Dedicated IPv4 and private networking',
-      description:
-        'Network isolation is provided by this host, Docker networks, firewall rules, and reverse proxy.',
-      badge: { label: 'Runtime network', variant: 'default' as const },
-      href: `${DOCS_URL}/guides/self-hosting`,
-      linkLabel: 'Self-hosting docs',
-      icon: <Server size={28} strokeWidth={1.5} />,
+      title: 'Realtime',
+      description: 'Broadcast, Presence, Postgres Changes, policies, and service limits.',
+      badge: getSelfHostedServiceBadge(runtimeStatus?.realtime),
+      href: `/project/${projectRef}/realtime/inspector`,
+      linkLabel: 'Open Realtime',
+      icon: <Radio size={28} strokeWidth={1.5} />,
     },
     {
-      title: 'Log drains and observability',
-      description:
-        'Inspect Logflare and Vector status used by logs, Edge Function analytics, and dashboards.',
-      badge: getSelfHostedAddonBadge(runtimeStatus?.logging, 'Checking'),
-      href: `/project/${projectRef}/settings/log-drains`,
-      linkLabel: 'Open log drains',
-      icon: <Clock3 size={28} strokeWidth={1.5} />,
-    },
-    {
-      title: 'GitHub and deployment automation',
-      description:
-        'Keep Compose files, image pins, acceptance tests, and changelog evidence in Git so Coolify can deploy repeatably.',
-      badge: { label: 'Git backed', variant: 'default' as const },
-      href: `${DOCS_URL}/guides/deployment/managing-environments`,
-      linkLabel: 'Deployment guidance',
-      icon: <GitBranch size={28} strokeWidth={1.5} />,
+      title: 'Logs and observability',
+      description: 'Application logs, query performance, and service metrics.',
+      badge: getSelfHostedServiceBadge(runtimeStatus?.logging),
+      href: `/project/${projectRef}/logs`,
+      linkLabel: 'Open Logs',
+      icon: <Activity size={28} strokeWidth={1.5} />,
     },
   ]
 
   return (
     <PageContainer size="default">
       <PageSection className="last:pb-0 gap-0">
-        <ResourceList>
-          {addons.map((addon) => (
-            <ResourceItem
-              key={addon.title}
-              className={resourceItemClassName}
-              media={<div className={iconBoxClassName}>{addon.icon}</div>}
-              meta={<Badge variant={addon.badge.variant}>{addon.badge.label}</Badge>}
-            >
-              <div className="space-y-1">
-                <div>{addon.title}</div>
-                <p className="m-0 text-foreground-light text-sm">{addon.description}</p>
-                <InlineLink className="text-foreground-light" href={addon.href}>
-                  {addon.linkLabel}
-                </InlineLink>
+        {isPending ? (
+          <ResourceList>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="min-h-[128px] border-b px-6 py-4 last:border-b-0">
+                <HorizontalShimmerWithIcon />
               </div>
-            </ResourceItem>
-          ))}
-        </ResourceList>
+            ))}
+          </ResourceList>
+        ) : isError ? (
+          <AlertError error={error} subject="Failed to retrieve service status" />
+        ) : (
+          <ResourceList>
+            {services.map((service) => (
+              <ResourceItem
+                key={service.title}
+                className={resourceItemClassName}
+                media={<div className={iconBoxClassName}>{service.icon}</div>}
+                meta={<Badge variant={service.badge.variant}>{service.badge.label}</Badge>}
+              >
+                <div className="space-y-1">
+                  <div>{service.title}</div>
+                  <p className="m-0 text-foreground-light text-sm">{service.description}</p>
+                  <InlineLink className="text-foreground-light" href={service.href}>
+                    {service.linkLabel}
+                  </InlineLink>
+                </div>
+              </ResourceItem>
+            ))}
+          </ResourceList>
+        )}
       </PageSection>
     </PageContainer>
   )

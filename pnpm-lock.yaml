@@ -2362,6 +2362,9 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.14
+      tsconfig:
+        specifier: workspace:*
+        version: link:../tsconfig
 
   packages/marketing:
     dependencies:

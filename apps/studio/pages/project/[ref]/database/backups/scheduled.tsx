@@ -15,7 +15,7 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
 import { BackupsList } from '@/components/interfaces/Database/Backups/BackupsList'
 import DatabaseBackupsNav from '@/components/interfaces/Database/Backups/DatabaseBackupsNav'
-import { SelfHostedBackupEvidence } from '@/components/interfaces/Database/Backups/SelfHostedBackupEvidence'
+import { SelfHostedBackups } from '@/components/interfaces/Database/Backups/SelfHostedBackups'
 import DatabaseLayout from '@/components/layouts/DatabaseLayout/DatabaseLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { AlertError } from '@/components/ui/AlertError'
@@ -71,7 +71,7 @@ const DatabaseScheduledBackups: NextPageWithLayout = () => {
                 <DocsButton abbrev={false} className="mt-2" href={`${DOCS_URL}`} />
               </Admonition>
             ) : !IS_PLATFORM ? (
-              <SelfHostedBackupEvidence mode="scheduled" />
+              <SelfHostedBackups mode="scheduled" />
             ) : (
               <div className="flex flex-col gap-y-4">
                 {isLoading && <GenericSkeletonLoader />}

@@ -20,11 +20,7 @@ export const useGenerateSettingsMenu = () => {
     billingAll: billingEnabled,
     logsAll,
     projectSettingsLogDrains,
-  } = useIsFeatureEnabled([
-    'billing:all',
-    'logs:all',
-    'project_settings:log_drains',
-  ])
+  } = useIsFeatureEnabled(['billing:all', 'logs:all', 'project_settings:log_drains'])
 
   // Log drains rely on the analytics backend (gated by logs:all) and on the dedicated
   // log_drains flag. Keep this in sync with ProjectSettings.Commands.tsx.
@@ -43,15 +39,6 @@ export const useGenerateSettingsMenu = () => {
             url: `/project/${ref}/settings/general`,
             items: [],
             shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_GENERAL,
-          },
-          {
-            name: 'Compute and Disk',
-            key: 'compute-and-disk',
-            url: `/project/${ref}/settings/compute-and-disk`,
-            items: [],
-            disabled: !isProjectActive,
-            isLoading: isPending,
-            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_COMPUTE_AND_DISK,
           },
           {
             name: 'Infrastructure',

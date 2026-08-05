@@ -10,6 +10,7 @@ import {
   useIsAnalyticsBucketsEnabled,
   useIsVectorBucketsEnabled,
 } from '@/data/config/project-storage-config-query'
+import { useVectorBucketsQuery } from '@/data/storage/vector-buckets-query'
 import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { SHORTCUT_IDS, type ShortcutId } from '@/state/shortcuts/registry'
@@ -26,7 +27,7 @@ export const StorageMenuV2 = () => {
   const { ref } = useParams()
   const page = useStorageV2Page()
 
-  const { isCli, isPlatform } = useDeploymentMode()
+  const { isCli, isPlatform, isSelfHosted } = useDeploymentMode()
 
   const { storageAnalytics, storageVectors } = useIsFeatureEnabled([
     'storage:analytics',
@@ -35,9 +36,15 @@ export const StorageMenuV2 = () => {
 
   const isAnalyticsBucketsEnabled = useIsAnalyticsBucketsEnabled({ projectRef: ref })
   const isVectorBucketsEnabled = useIsVectorBucketsEnabled({ projectRef: ref })
+  const { isSuccess: isSelfHostedVectorApiAvailable } = useVectorBucketsQuery(
+    { projectRef: ref },
+    { enabled: isSelfHosted }
+  )
 
-  const showAnalytics = !isPlatform || storageAnalytics
-  const showVectors = !isPlatform || storageVectors || isCli
+  const showAnalytics = isPlatform ? storageAnalytics : isCli
+  const showVectors = isPlatform
+    ? storageVectors
+    : isCli || (isSelfHosted && isSelfHostedVectorApiAvailable)
 
   useShortcut(SHORTCUT_IDS.NAV_STORAGE_FILES, () => router.push(`/project/${ref}/storage/files`))
   useShortcut(

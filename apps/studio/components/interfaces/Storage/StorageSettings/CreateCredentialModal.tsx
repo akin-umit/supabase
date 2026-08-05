@@ -46,8 +46,8 @@ export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentia
   )
 
   const { data: config } = useProjectStorageConfigQuery({ projectRef })
-  const isS3ConnectionEnabled = config?.features.s3Protocol.enabled
-  const canCreateCredentialsSurface = IS_PLATFORM && canCreateCredentials
+  const isS3ConnectionEnabled = !IS_PLATFORM || config?.features.s3Protocol.enabled
+  const canCreateCredentialsSurface = !IS_PLATFORM || canCreateCredentials
   const disableCreation = !isProjectActive || !canCreateCredentialsSurface || !isS3ConnectionEnabled
 
   const FormSchema = z.object({
@@ -105,9 +105,7 @@ export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentia
               : !isS3ConnectionEnabled
                 ? 'Connection via S3 protocol is currently disabled'
                 : !canCreateCredentialsSurface
-                  ? IS_PLATFORM
-                    ? 'You need additional permissions to create new access keys'
-                    : 'Create or rotate S3 access keys in the self-hosted runtime environment'
+                  ? 'You need additional permissions to create new access keys'
                   : ''}
           </TooltipContent>
         )}

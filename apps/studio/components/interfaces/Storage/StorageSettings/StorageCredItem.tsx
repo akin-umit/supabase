@@ -19,12 +19,14 @@ export const StorageCredItem = ({
   id,
   created_at,
   access_key,
+  canRevoke = true,
   onDeleteClick,
 }: {
   description: string
   id: string
-  created_at: string
+  created_at: string | null
   access_key: string
+  canRevoke?: boolean
   onDeleteClick: (id: string) => void
 }) => {
   const { can: canRemoveAccessKey } = useAsyncCheckPermissions(
@@ -55,10 +57,10 @@ export const StorageCredItem = ({
         <Input readOnly copy value={access_key} className="font-mono" />
       </TableCell>
       <TableCell className="text-foreground-lighter whitespace-nowrap">
-        {daysSince(created_at)}
+        {created_at ? daysSince(created_at) : 'Runtime'}
       </TableCell>
       <TableCell className="text-right">
-        {canRemoveAccessKey && (
+        {canRevoke && canRemoveAccessKey && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

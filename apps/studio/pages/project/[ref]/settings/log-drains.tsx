@@ -1,13 +1,10 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useQuery } from '@tanstack/react-query'
 import { IS_PLATFORM, useParams } from 'common'
 import { ChevronDown } from 'lucide-react'
 import { cloneElement, useState, type ReactElement } from 'react'
 import { toast } from 'sonner'
 import {
   Alert,
-  AlertDescription,
-  AlertTitle,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -36,24 +33,10 @@ import { useUpdateLogDrainMutation } from '@/data/log-drains/update-log-drain-mu
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
-import type { RuntimeConfigStatus } from '@/lib/api/self-hosted/runtime-config'
 import { DOCS_URL } from '@/lib/constants'
 import { useTrack } from '@/lib/telemetry/track'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import type { NextPageWithLayout } from '@/types'
-
-async function fetchSelfHostedLoggingRuntime(projectRef?: string) {
-  if (!projectRef) throw new Error('Project ref is required')
-
-  const response = await fetch(`/api/platform/projects/${projectRef}/runtime/logging`)
-  const payload = await response.json()
-
-  if (!response.ok) {
-    throw new Error(payload?.error?.message ?? 'Failed to retrieve self-hosted logging status')
-  }
-
-  return payload as RuntimeConfigStatus
-}
 
 const LogDrainsSettings: NextPageWithLayout = () => {
   const { isSelfHosted } = useDeploymentMode()
@@ -77,22 +60,10 @@ const LogDrainsSettings: NextPageWithLayout = () => {
   const canManageLogDrainSurface = canManageLogDrains || !IS_PLATFORM
 
   const enabledDrainTypes = useEnabledLogDrainTypes()
-  const {
-    data: loggingRuntime,
-    error: loggingRuntimeError,
-    isError: isLoggingRuntimeError,
-    isPending: isLoadingLoggingRuntime,
-  } = useQuery<RuntimeConfigStatus, Error>({
-    queryKey: ['self-hosted', 'runtime', 'logging', ref],
-    queryFn: () => fetchSelfHostedLoggingRuntime(ref),
-    enabled: isSelfHosted && typeof ref !== 'undefined',
-  })
-
   const { data: logDrains } = useLogDrainsQuery(
     { ref },
     {
-      enabled:
-        !isSelfHosted && (!IS_PLATFORM || (!isLoadingEntitlement && hasLogDrainSurfaceAccess)),
+      enabled: !IS_PLATFORM || (!isLoadingEntitlement && hasLogDrainSurfaceAccess),
     }
   )
 
@@ -143,84 +114,49 @@ const LogDrainsSettings: NextPageWithLayout = () => {
   const content = (
     <ScaffoldSection isFullWidth id="log-drains" className="gap-6">
       <ScaffoldContainer className="flex flex-col gap-10" bottomPadding>
-        {!isSelfHosted && (
-          <LogDrainDestinationSheetForm
-            mode={mode}
-            open={open}
-            onOpenChange={(v) => {
-              if (!v) {
-                setSelectedLogDrain(null)
-              }
-              setOpen(v)
-            }}
-            defaultValues={{
-              ...selectedLogDrain,
-              type: selectedLogDrain?.type ? selectedLogDrain.type : 'webhook',
-            }}
-            isLoading={isLoading}
-            existingDrainNames={(logDrains ?? []).map((drain) => drain.name)}
-            onSaveClick={(type) => {
-              track('log_drain_save_button_clicked', { destination: type })
-            }}
-            onSubmit={({ name, description, type, ...values }) => {
-              const logDrainValues = {
-                name,
-                description: description || '',
-                type,
-                config: values as any, // TODO: fix generated API types from backend
-                id: selectedLogDrain?.id,
-                projectRef: ref,
-                token: selectedLogDrain?.token,
-              }
+        <LogDrainDestinationSheetForm
+          mode={mode}
+          open={open}
+          onOpenChange={(v) => {
+            if (!v) {
+              setSelectedLogDrain(null)
+            }
+            setOpen(v)
+          }}
+          defaultValues={{
+            ...selectedLogDrain,
+            type: selectedLogDrain?.type ? selectedLogDrain.type : 'webhook',
+          }}
+          isLoading={isLoading}
+          existingDrainNames={(logDrains ?? []).map((drain) => drain.name)}
+          onSaveClick={(type) => {
+            track('log_drain_save_button_clicked', { destination: type })
+          }}
+          onSubmit={({ name, description, type, ...values }) => {
+            const logDrainValues = {
+              name,
+              description: description || '',
+              type,
+              config: values as any, // TODO: fix generated API types from backend
+              id: selectedLogDrain?.id,
+              projectRef: ref,
+              token: selectedLogDrain?.token,
+            }
 
-              if (mode === 'create') {
-                setPendingLogDrainValues(logDrainValues)
-                setIsCreateConfirmModalOpen(true)
-              } else {
-                if (!logDrainValues.id || !selectedLogDrain?.token) {
-                  toast.error('Unable to update log drain: missing ID or token')
-                  return
-                }
-                updateLogDrain(logDrainValues)
+            if (mode === 'create') {
+              setPendingLogDrainValues(logDrainValues)
+              setIsCreateConfirmModalOpen(true)
+            } else {
+              if (!logDrainValues.id || !selectedLogDrain?.token) {
+                toast.error('Unable to update log drain: missing ID or token')
+                return
               }
-            }}
-          />
-        )}
+              updateLogDrain(logDrainValues)
+            }
+          }}
+        />
 
-        {isSelfHosted ? (
-          <Alert variant="default">
-            <AlertTitle>Log export configuration</AlertTitle>
-            <AlertDescription className="space-y-2">
-              <p>
-                Studio is reading the Logflare and Vector configuration from this deployment. These
-                values power logs, Edge Function invocations, and observability charts.
-              </p>
-              <p>
-                Status:{' '}
-                {isLoadingLoggingRuntime
-                  ? 'checking runtime'
-                  : (loggingRuntime?.status ?? 'runtime unavailable')}
-                . Mode: {loggingRuntime?.mode ?? 'read only'}.
-              </p>
-              {isLoggingRuntimeError && <p>{loggingRuntimeError.message}</p>}
-              {loggingRuntime?.settings && (
-                <div className="grid gap-2 text-xs sm:grid-cols-2">
-                  {loggingRuntime.settings.map((setting) => (
-                    <div
-                      key={setting.name}
-                      className="flex min-w-0 items-center justify-between gap-2 rounded border px-2 py-1"
-                    >
-                      <span className="truncate text-foreground-light">{setting.name}</span>
-                      <code className="shrink-0 text-code">
-                        {setting.activeSource ?? setting.status}
-                      </code>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </AlertDescription>
-          </Alert>
-        ) : IS_PLATFORM && isLoadingPermissions ? (
+        {IS_PLATFORM && isLoadingPermissions ? (
           <GenericSkeletonLoader />
         ) : !canManageLogDrainSurface ? (
           <Alert variant="default">You do not have permission to manage log drains</Alert>
@@ -268,14 +204,10 @@ const LogDrainsSettings: NextPageWithLayout = () => {
     return (
       <PageLayout
         title="Log Drains"
-        subtitle={
-          isSelfHosted
-            ? 'Inspect Logflare and Vector status for this deployment'
-            : 'Send your project logs to third party destinations'
-        }
+        subtitle={'Send your project logs to third party destinations'}
         primaryActions={
           <>
-            {!isSelfHosted && !(logDrains?.length === 0) && (
+            {!(logDrains?.length === 0) && (
               <div className="flex items-center">
                 <Shortcut
                   id={SHORTCUT_IDS.LOG_DRAINS_ADD_DESTINATION}

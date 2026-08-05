@@ -3,6 +3,7 @@ import { Admonition } from 'ui-patterns/admonition'
 
 import { AWSPrivateLinkSection } from './AWSPrivateLink/AWSPrivateLinkSection'
 import { GitHubSection } from './GithubIntegration/GithubSection'
+import { SelfHostedIntegrations } from './SelfHostedIntegrations'
 import { VercelSection } from './VercelIntegration/VercelSection'
 import { SidePanelVercelProjectLinker } from '@/components/interfaces/Organization/IntegrationSettings/SidePanelVercelProjectLinker'
 import { InlineLink } from '@/components/ui/InlineLink'
@@ -64,6 +65,8 @@ export const IntegrationSettings = () => {
   // PrivateLink is not available in eu-central-2 (Zurich) until Feb 2026
   const isPrivateLinkUnsupportedRegion = project?.region === 'eu-central-2'
   const showAWSPrivateLink = showAWSPrivateLinkFeature && !isPrivateLinkUnsupportedRegion
+
+  if (!IS_PLATFORM) return <SelfHostedIntegrations />
 
   return (
     <>

@@ -1,4 +1,5 @@
 import { components } from 'api-types'
+import { IS_PLATFORM } from 'common'
 import dayjs from 'dayjs'
 import { motion } from 'framer-motion'
 import {
@@ -141,7 +142,7 @@ export const SigningKeyRow = ({
                 View key details
               </DropdownMenuItem>
             )}
-            {signingKey.status === 'standby' && (
+            {IS_PLATFORM && signingKey.status === 'standby' && (
               <>
                 <DropdownMenuItem
                   onSelect={() => handlePreviouslyUsedKey(signingKey.id)}
@@ -154,21 +155,23 @@ export const SigningKeyRow = ({
             )}
             {signingKey.status === 'previously_used' && (
               <>
-                <DropdownMenuItemTooltip
-                  disabled={!!standbyKey}
-                  onSelect={() => handleStandbyKey(signingKey.id)}
-                  tooltip={{
-                    content: {
-                      side: 'left',
-                      text: !!standbyKey
-                        ? 'You may only have one standby key at a time'
-                        : undefined,
-                    },
-                  }}
-                >
-                  <CircleArrowUp className="mr-2 size-4" />
-                  Move to standby key
-                </DropdownMenuItemTooltip>
+                {IS_PLATFORM && (
+                  <DropdownMenuItemTooltip
+                    disabled={!!standbyKey}
+                    onSelect={() => handleStandbyKey(signingKey.id)}
+                    tooltip={{
+                      content: {
+                        side: 'left',
+                        text: !!standbyKey
+                          ? 'You may only have one standby key at a time'
+                          : undefined,
+                      },
+                    }}
+                  >
+                    <CircleArrowUp className="mr-2 size-4" />
+                    Move to standby key
+                  </DropdownMenuItemTooltip>
+                )}
                 <DropdownMenuItem
                   onSelect={() => {
                     setSelectedKey(signingKey)
@@ -181,7 +184,7 @@ export const SigningKeyRow = ({
                 </DropdownMenuItem>
               </>
             )}
-            {signingKey.status === 'revoked' && (
+            {IS_PLATFORM && signingKey.status === 'revoked' && (
               <>
                 <DropdownMenuItemTooltip
                   disabled={!!standbyKey}

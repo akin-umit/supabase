@@ -1,3 +1,4 @@
+import { IS_PLATFORM } from 'common'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -129,22 +130,23 @@ export const CreateKeyDialog = ({
   const handleAddNewStandbyKey = async () => {
     mutate({
       projectRef: projectRef!,
-      algorithm: newKeyAlgorithm,
+      algorithm: IS_PLATFORM ? newKeyAlgorithm : 'ES256',
       status: 'standby',
-      private_jwk: isBYOK
-        ? newKeyAlgorithm === 'HS256'
-          ? {
-              kty: 'oct',
-              k: isBase64
-                ? privateKey
-                    .replace(/\s+/g, '')
-                    .replace(/\+/g, '-')
-                    .replace(/\//g, '_')
-                    .replace(/=/g, '')
-                : stringToBase64URL(privateKey),
-            }
-          : JSON.parse(privateKey)
-        : null,
+      private_jwk:
+        IS_PLATFORM && isBYOK
+          ? newKeyAlgorithm === 'HS256'
+            ? {
+                kty: 'oct',
+                k: isBase64
+                  ? privateKey
+                      .replace(/\s+/g, '')
+                      .replace(/\+/g, '-')
+                      .replace(/\//g, '_')
+                      .replace(/=/g, '')
+                  : stringToBase64URL(privateKey),
+              }
+            : JSON.parse(privateKey)
+          : null,
     })
   }
 
@@ -164,85 +166,96 @@ export const CreateKeyDialog = ({
         </p>
       </DialogSection>
       <DialogSectionSeparator />
-      <DialogSection className="flex flex-col gap-4">
-        <div className="flex flex-col gap-4">
-          <Label htmlFor="algorithm">Choose signing algorithm:</Label>
-          <Select
-            name="algorithm"
-            value={newKeyAlgorithm}
-            onValueChange={(value: JWTAlgorithm) => setNewKeyAlgorithm(value)}
-          >
-            <SelectTrigger id="algorithm">
-              <SelectValue placeholder="Select algorithm" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ES256">
-                <span>ES256 (ECC)</span>
-                <Badge variant="success" className="ml-2">
-                  Recommended
-                </Badge>
-              </SelectItem>
-              <SelectItem value="RS256">RS256 (RSA)</SelectItem>
-              <SelectItem value="HS256">HS256 (Shared Secret)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-4">
-          <Label htmlFor="byok" className="flex items-center gap-x-2">
-            <Checkbox id="byok" checked={isBYOK} onCheckedChange={(value) => setBYOK(!!value)} />
-            {newKeyAlgorithm === 'HS256'
-              ? 'Import an existing secret'
-              : 'Import an existing private key'}
-          </Label>
-          {isBYOK && (
-            <div className="flex flex-col gap-2">
-              <Textarea
-                className="font-mono"
-                placeholder={
-                  newKeyAlgorithm === 'HS256'
-                    ? 'Type in your JWT secret'
-                    : 'Add a private key in JWK (JSON Web Key) format'
-                }
-                value={privateKey}
-                onChange={(e: any) => {
-                  setPrivateKey(e.target.value)
-                }}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-              />
-              {privateKeyMessage && <p className="text-red-900 text-sm">{privateKeyMessage}</p>}
-            </div>
-          )}
-          {isBYOK && newKeyAlgorithm === 'HS256' && (
-            <>
-              <Label htmlFor="base64" className="flex items-center gap-x-2">
-                <Checkbox
-                  id="base64"
-                  checked={isBase64}
-                  onCheckedChange={(value) => setBase64(!!value)}
+      {IS_PLATFORM ? (
+        <DialogSection className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            <Label htmlFor="algorithm">Choose signing algorithm:</Label>
+            <Select
+              name="algorithm"
+              value={newKeyAlgorithm}
+              onValueChange={(value: JWTAlgorithm) => setNewKeyAlgorithm(value)}
+            >
+              <SelectTrigger id="algorithm">
+                <SelectValue placeholder="Select algorithm" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ES256">
+                  <span>ES256 (ECC)</span>
+                  <Badge variant="success" className="ml-2">
+                    Recommended
+                  </Badge>
+                </SelectItem>
+                <SelectItem value="RS256">RS256 (RSA)</SelectItem>
+                <SelectItem value="HS256">HS256 (Shared Secret)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-4">
+            <Label htmlFor="byok" className="flex items-center gap-x-2">
+              <Checkbox id="byok" checked={isBYOK} onCheckedChange={(value) => setBYOK(!!value)} />
+              {newKeyAlgorithm === 'HS256'
+                ? 'Import an existing secret'
+                : 'Import an existing private key'}
+            </Label>
+            {isBYOK && (
+              <div className="flex flex-col gap-2">
+                <Textarea
+                  className="font-mono"
+                  placeholder={
+                    newKeyAlgorithm === 'HS256'
+                      ? 'Type in your JWT secret'
+                      : 'Add a private key in JWK (JSON Web Key) format'
+                  }
+                  value={privateKey}
+                  onChange={(e: any) => {
+                    setPrivateKey(e.target.value)
+                  }}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                 />
-                Secret is already Base64 encoded
-              </Label>
-            </>
-          )}
-        </div>
-      </DialogSection>
+                {privateKeyMessage && <p className="text-red-900 text-sm">{privateKeyMessage}</p>}
+              </div>
+            )}
+            {isBYOK && newKeyAlgorithm === 'HS256' && (
+              <>
+                <Label htmlFor="base64" className="flex items-center gap-x-2">
+                  <Checkbox
+                    id="base64"
+                    checked={isBase64}
+                    onCheckedChange={(value) => setBase64(!!value)}
+                  />
+                  Secret is already Base64 encoded
+                </Label>
+              </>
+            )}
+          </div>
+        </DialogSection>
+      ) : (
+        <DialogSection>
+          <p className="text-sm text-foreground-light">
+            A recommended ES256 standby key will be generated securely by this project's management
+            service. Private signing material is never sent to the browser.
+          </p>
+        </DialogSection>
+      )}
       <DialogFooter>
         <Shortcut
           id={SHORTCUT_IDS.JWT_KEYS_SUBMIT_STANDBY}
           onTrigger={handleAddNewStandbyKey}
           options={{
             enabled:
-              !isPendingMutation && !privateKeyMessage && (!isBYOK || privateKey.trim().length > 0),
+              !isPendingMutation &&
+              (!IS_PLATFORM || (!privateKeyMessage && (!isBYOK || privateKey.trim().length > 0))),
           }}
           side="top"
         >
           <Button
             onClick={() => handleAddNewStandbyKey()}
             disabled={
-              isPendingMutation || !!privateKeyMessage || (isBYOK && privateKey.trim().length === 0)
+              isPendingMutation ||
+              (IS_PLATFORM && (!!privateKeyMessage || (isBYOK && privateKey.trim().length === 0)))
             }
             loading={isPendingMutation}
           >

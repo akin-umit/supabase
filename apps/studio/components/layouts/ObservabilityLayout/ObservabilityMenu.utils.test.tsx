@@ -196,6 +196,21 @@ describe('generateObservabilityMenuItems - GENERAL section', () => {
     const generalSection = findSection(menu, 'GENERAL')
     expect(itemKeys(generalSection)).toContain('api-overview')
   })
+
+  it('hides API Gateway when the self-hosted logging runtime is unavailable', () => {
+    const menu = generateObservabilityMenuItems({
+      ref: REF,
+      preservedQueryParams: QUERY_PARAMS,
+      showOverview: false,
+      isSupamonitorEnabled: false,
+      storageSupported: true,
+      isPlatform: false,
+      showApiGateway: false,
+    })
+
+    const generalSection = findSection(menu, 'GENERAL')
+    expect(itemKeys(generalSection)).not.toContain('api-overview')
+  })
 })
 
 describe('generateObservabilityMenuItems - URL construction', () => {

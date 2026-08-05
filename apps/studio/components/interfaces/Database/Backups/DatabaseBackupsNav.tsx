@@ -3,6 +3,7 @@ import { Badge, NavMenu, NavMenuItem } from 'ui'
 
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { IS_PLATFORM } from '@/lib/constants'
 
 type Props = {
   active: 'pitr' | 'scheduled' | 'rtnp'
@@ -26,7 +27,7 @@ function DatabaseBackupsNav({ active }: Props) {
       href: `/project/${ref}/database/backups/pitr`,
     },
     {
-      enabled: databaseRestoreToNewProject && cloud_provider !== 'FLY',
+      enabled: !IS_PLATFORM || (databaseRestoreToNewProject && cloud_provider !== 'FLY'),
       id: 'rtnp',
       label: (
         <div className="flex items-center gap-2">

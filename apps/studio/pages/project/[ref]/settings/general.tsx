@@ -45,7 +45,9 @@ const ProjectSettings: NextPageWithLayout = () => {
           <PageHeaderSummary>
             <PageHeaderTitle>Project Settings</PageHeaderTitle>
             <PageHeaderDescription>
-              General configuration, domains, ownership, and lifecycle
+              {IS_PLATFORM
+                ? 'General configuration, domains, ownership, and lifecycle'
+                : 'Project identity and connection details'}
             </PageHeaderDescription>
           </PageHeaderSummary>
         </PageHeaderMeta>
@@ -55,7 +57,7 @@ const ProjectSettings: NextPageWithLayout = () => {
         {IS_PLATFORM && <Project />}
         {/* this is only settable on compliance orgs, currently that means HIPAA orgs */}
         {!isBranch && hasHipaaAddon && <ComplianceConfig />}
-        {(!IS_PLATFORM || projectSettingsCustomDomains) && <CustomDomainConfig />}
+        {IS_PLATFORM && projectSettingsCustomDomains && <CustomDomainConfig />}
         {IS_PLATFORM && !isBranch && projectTransferEnabled && <TransferProjectPanel />}
         {IS_PLATFORM && (isBranch ? <DeleteBranchPanel /> : <DeleteProjectPanel />)}
       </PageContainer>

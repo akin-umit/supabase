@@ -1,4 +1,7 @@
+import { useParams } from 'common'
+import { Activity } from 'lucide-react'
 import { useCallback } from 'react'
+import { EmptyStatePresentational } from 'ui-patterns/EmptyStatePresentational'
 
 import { OBSERVABILITY_DOCS_HREFS } from '@/components/interfaces/Observability/Observability.constants'
 import {
@@ -21,14 +24,24 @@ import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import ObservabilityLayout from '@/components/layouts/ObservabilityLayout/ObservabilityLayout'
 import { DocsButton } from '@/components/ui/DocsButton'
 import { ObservabilityLink } from '@/components/ui/ObservabilityLink'
+import {
+  isSelfHostedLoggingReady,
+  useSelfHostedRuntimeConfigQuery,
+} from '@/data/config/self-hosted-runtime-config-query'
 import { useApiReport } from '@/data/reports/api-report-query'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useReportDateRange } from '@/hooks/misc/useReportDateRange'
 import type { NextPageWithLayout } from '@/types'
 
 const REPORT_TITLE = 'API Gateway'
 
 export const ApiReport: NextPageWithLayout = () => {
-  const report = useApiReport()
+  const { ref } = useParams()
+  const { isSelfHosted } = useDeploymentMode()
+  const { data: loggingRuntime, isPending: isLoggingRuntimePending } =
+    useSelfHostedRuntimeConfigQuery(ref, 'logging', { enabled: isSelfHosted })
+  const loggingReady = !isSelfHosted || isSelfHostedLoggingReady(loggingRuntime)
+  const report = useApiReport({ enabled: loggingReady })
 
   const {
     data,
@@ -96,6 +109,14 @@ export const ApiReport: NextPageWithLayout = () => {
     await refreshWithParams()
   }, [datePickerValue, datePickerHelpers, handleDatepickerChangeForRefresh, refreshWithParams])
 
+  if (isSelfHosted && (isLoggingRuntimePending || !loggingReady)) {
+    return null
+  }
+
+  const hasAnyData = Object.values(data).some((rows) => (rows?.length ?? 0) > 0)
+  const hasAnyError = Object.values(error).some(Boolean)
+  const showReportWidgets = isLoading || hasAnyData || hasAnyError
+
   return (
     <ReportPadding>
       <ReportHeader title={REPORT_TITLE} showDatabaseSelector={false} />
@@ -127,62 +148,71 @@ export const ApiReport: NextPageWithLayout = () => {
           </div>
         }
       >
-        <ReportWidget
-          isLoading={isLoading}
-          params={params.requestsByCountry}
-          error={error.requestsByCountry}
-          title="Requests by Geography"
-          tooltip="Number of API Gateway requests per geography"
-          data={data.requestsByCountry || []}
-          renderer={RequestsByCountryMapRenderer}
-          contentClassName="p-0 overflow-hidden"
-          headerClassName="px-4 pt-4"
-        />
-        <ReportWidget
-          isLoading={isLoading}
-          params={params.totalRequests}
-          title="Total Requests"
-          data={data.totalRequests || []}
-          error={error.totalRequest}
-          renderer={TotalRequestsChartRenderer}
-          append={TopApiRoutesRenderer}
-          appendProps={{ data: data.topRoutes || [], params: params.topRoutes }}
-        />
-        <ReportWidget
-          isLoading={isLoading}
-          params={params.errorCounts}
-          title="Response Errors"
-          tooltip="Error responses with 4XX or 5XX status codes"
-          data={data.errorCounts || []}
-          error={error.errorCounts}
-          renderer={ErrorCountsChartRenderer}
-          appendProps={{
-            data: data.topErrorRoutes || [],
-            params: params.topErrorRoutes,
-          }}
-          append={TopApiRoutesRenderer}
-        />
-        <ReportWidget
-          isLoading={isLoading}
-          params={params.responseSpeed}
-          title="Response Speed"
-          tooltip="Average response speed of a request (in ms)"
-          data={data.responseSpeed || []}
-          error={error.responseSpeed}
-          renderer={ResponseSpeedChartRenderer}
-          appendProps={{ data: data.topSlowRoutes || [], params: params.topSlowRoutes }}
-          append={TopApiRoutesRenderer}
-        />
+        {showReportWidgets ? (
+          <>
+            <ReportWidget
+              isLoading={isLoading}
+              params={params.requestsByCountry}
+              error={error.requestsByCountry}
+              title="Requests by Geography"
+              tooltip="Number of API Gateway requests per geography"
+              data={data.requestsByCountry || []}
+              renderer={RequestsByCountryMapRenderer}
+              contentClassName="p-0 overflow-hidden"
+              headerClassName="px-4 pt-4"
+            />
+            <ReportWidget
+              isLoading={isLoading}
+              params={params.totalRequests}
+              title="Total Requests"
+              data={data.totalRequests || []}
+              error={error.totalRequest}
+              renderer={TotalRequestsChartRenderer}
+              append={TopApiRoutesRenderer}
+              appendProps={{ data: data.topRoutes || [], params: params.topRoutes }}
+            />
+            <ReportWidget
+              isLoading={isLoading}
+              params={params.errorCounts}
+              title="Response Errors"
+              tooltip="Error responses with 4XX or 5XX status codes"
+              data={data.errorCounts || []}
+              error={error.errorCounts}
+              renderer={ErrorCountsChartRenderer}
+              appendProps={{
+                data: data.topErrorRoutes || [],
+                params: params.topErrorRoutes,
+              }}
+              append={TopApiRoutesRenderer}
+            />
+            <ReportWidget
+              isLoading={isLoading}
+              params={params.responseSpeed}
+              title="Response Speed"
+              tooltip="Average response speed of a request (in ms)"
+              data={data.responseSpeed || []}
+              error={error.responseSpeed}
+              renderer={ResponseSpeedChartRenderer}
+              appendProps={{ data: data.topSlowRoutes || [], params: params.topSlowRoutes }}
+              append={TopApiRoutesRenderer}
+            />
 
-        <ReportWidget
-          isLoading={isLoading}
-          params={params.networkTraffic}
-          error={error.networkTraffic}
-          title="Network Traffic"
-          tooltip="Ingress and egress of requests and responses respectively"
-          data={data.networkTraffic || []}
-          renderer={NetworkTrafficRenderer}
-        />
+            <ReportWidget
+              isLoading={isLoading}
+              params={params.networkTraffic}
+              error={error.networkTraffic}
+              title="Network Traffic"
+              tooltip="Ingress and egress of requests and responses respectively"
+              data={data.networkTraffic || []}
+              renderer={NetworkTrafficRenderer}
+            />
+          </>
+        ) : (
+          <EmptyStatePresentational
+            icon={Activity}
+            title="No API Gateway requests in this period"
+          />
+        )}
       </ReportStickyNav>
       <div className="py-8">
         <ObservabilityLink />

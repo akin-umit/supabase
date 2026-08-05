@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { logDrainsKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
 import { MAX_RETRY_FAILURE_COUNT } from '@/data/query-client'
-import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type LogDrainsVariables = {
@@ -15,21 +14,16 @@ export async function getLogDrains({ ref }: LogDrainsVariables, signal?: AbortSi
     throw new Error('ref is required')
   }
 
-  try {
-    const { data, error } = await get(`/platform/projects/{ref}/analytics/log-drains`, {
-      params: { path: { ref: ref } },
-      signal,
-    })
+  const { data, error } = await get(`/platform/projects/{ref}/analytics/log-drains`, {
+    params: { path: { ref: ref } },
+    signal,
+  })
 
-    if (error) {
-      handleError(error)
-    }
-
-    return data ?? []
-  } catch (error) {
-    if (!IS_PLATFORM) return []
-    throw error
+  if (error) {
+    handleError(error)
   }
+
+  return data ?? []
 }
 
 export type LogDrainsData = Awaited<ReturnType<typeof getLogDrains>>

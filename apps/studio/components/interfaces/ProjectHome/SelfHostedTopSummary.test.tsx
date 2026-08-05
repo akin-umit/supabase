@@ -61,6 +61,8 @@ describe('SelfHostedInfrastructureDiagram', () => {
       'href',
       '/project/default/settings/general'
     )
+    expect(screen.queryByText('Read-only')).not.toBeInTheDocument()
+    expect(screen.queryByText('Self-hosted evidence view')).not.toBeInTheDocument()
   })
 
   it('keeps the accepted health view when telemetry is not reported yet', () => {

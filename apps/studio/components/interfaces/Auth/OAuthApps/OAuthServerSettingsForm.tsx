@@ -23,7 +23,6 @@ import { PageSection, PageSectionContent } from 'ui-patterns/PageSection'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
-import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { OAuthEndpointsTable } from './OAuthEndpointsTable'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { NoPermission } from '@/components/ui/NoPermission'
@@ -117,6 +116,7 @@ export const OAuthServerSettingsForm = () => {
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canManageConfig = !IS_PLATFORM || canUpdateConfig
 
   const form = useForm<OAuthServerSettings>({
     resolver: zodResolver(schema),
@@ -132,7 +132,7 @@ export const OAuthServerSettingsForm = () => {
   useEffect(() => {
     if (isSuccess && authConfig) {
       form.reset({
-        OAUTH_SERVER_ENABLED: authConfig.OAUTH_SERVER_ENABLED ?? false,
+        OAUTH_SERVER_ENABLED: authConfig.OAUTH_SERVER_ENABLED ?? !IS_PLATFORM,
         OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION:
           authConfig.OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION ?? false,
         OAUTH_SERVER_AUTHORIZATION_PATH:
@@ -188,32 +188,20 @@ export const OAuthServerSettingsForm = () => {
     setShowDisableOAuthServerConfirmation(false)
   }
 
-  if (isPermissionsLoaded && !canReadConfig) {
+  if (IS_PLATFORM && isPermissionsLoaded && !canReadConfig) {
     return <NoPermission resourceText="view OAuth server settings" />
   }
 
-  if (isAuthConfigLoading || isLoadingPermissions) {
+  if (isAuthConfigLoading || (IS_PLATFORM && isLoadingPermissions)) {
     return (
       <PageSection>
         <PageSectionContent>
-          {IS_PLATFORM ? (
-            <>
-              <Card>
-                <CardContent>
-                  <GenericSkeletonLoader />
-                </CardContent>
-              </Card>
-              <OAuthEndpointsTable isLoading />
-            </>
-          ) : (
-            <SelfHostedAuthConfigNotice
-              settings={[
-                'GOTRUE_OAUTH_SERVER_ENABLED',
-                'GOTRUE_OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION',
-                'GOTRUE_OAUTH_SERVER_AUTHORIZATION_PATH',
-              ]}
-            />
-          )}
+          <Card>
+            <CardContent>
+              <GenericSkeletonLoader />
+            </CardContent>
+          </Card>
+          <OAuthEndpointsTable isLoading />
         </PageSectionContent>
       </PageSection>
     )
@@ -240,7 +228,7 @@ export const OAuthServerSettingsForm = () => {
                           <Switch
                             checked={field.value}
                             onCheckedChange={handleOAuthServerToggle}
-                            disabled={!canUpdateConfig}
+                            disabled={!canManageConfig}
                           />
                         </FormControl>
                       </FormItemLayout>
@@ -347,7 +335,7 @@ export const OAuthServerSettingsForm = () => {
                               <Switch
                                 checked={field.value}
                                 onCheckedChange={handleDynamicAppsToggle}
-                                disabled={!canUpdateConfig}
+                                disabled={!canManageConfig}
                               />
                             </FormControl>
                           </FormItemLayout>
@@ -364,7 +352,7 @@ export const OAuthServerSettingsForm = () => {
                   <Button
                     variant="primary"
                     type="submit"
-                    disabled={!canUpdateConfig || !form.formState.isDirty}
+                    disabled={!canManageConfig || !form.formState.isDirty}
                     loading={isPending}
                   >
                     Save changes

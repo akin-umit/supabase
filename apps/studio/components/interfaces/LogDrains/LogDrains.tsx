@@ -1,4 +1,5 @@
 import { useParams } from 'common'
+import { IS_PLATFORM } from 'common'
 import { toast } from 'sonner'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
@@ -22,13 +23,14 @@ export function LogDrains({
   const track = useTrack()
   const { hasAccess: hasAccessToLogDrains, isLoading: isLoadingEntitlement } =
     useCheckEntitlements('log_drains')
+  const hasAccess = !IS_PLATFORM || hasAccessToLogDrains
 
   const {
     data: logDrains,
     isPending: isLoading,
     error,
     isError,
-  } = useLogDrainsQuery({ ref }, { enabled: hasAccessToLogDrains })
+  } = useLogDrainsQuery({ ref }, { enabled: hasAccess })
 
   const { mutate: deleteLogDrain, isPending: isDeleting } = useDeleteLogDrainMutation({
     onError: () => {
@@ -42,7 +44,7 @@ export function LogDrains({
     },
   })
 
-  if (isLoadingEntitlement) {
+  if (IS_PLATFORM && isLoadingEntitlement) {
     return (
       <div>
         <GenericSkeletonLoader />
@@ -50,7 +52,7 @@ export function LogDrains({
     )
   }
 
-  if (!hasAccessToLogDrains) {
+  if (!hasAccess) {
     return <LogDrainsEmpty />
   }
 

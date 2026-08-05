@@ -1,11 +1,21 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { useQuery } from '@tanstack/react-query'
-import { useParams } from 'common'
-import { useEffect, useMemo } from 'react'
+import { IS_PLATFORM, useParams } from 'common'
+import { useEffect, useMemo, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { Button, Card, CardContent, CardFooter, Form, FormControl, FormField, Switch } from 'ui'
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardFooter,
+  Form,
+  FormControl,
+  FormField,
+  Switch,
+} from 'ui'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import {
   PageSection,
@@ -20,6 +30,7 @@ import z from 'zod'
 import { AlertError } from '@/components/ui/AlertError'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { DocsButton } from '@/components/ui/DocsButton'
+import { databaseSettingsOperationQueryOptions } from '@/data/config/database-settings-operation-query'
 import { usePostgresConfigurationUpdateMutation } from '@/data/config/postgres-config-mutation'
 import { postgresConfigurationQueryOptions } from '@/data/config/postgres-config-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
@@ -39,6 +50,8 @@ export const ConnectionLogging = () => {
     'projects',
     { resource: { project_id: project?.id } }
   )
+  const canUpdate = !IS_PLATFORM || canUpdatePostgresConfiguration
+  const [operationId, setOperationId] = useState<string>()
 
   const {
     data: postgresConfig,
@@ -49,8 +62,17 @@ export const ConnectionLogging = () => {
 
   const { mutate: updatePostgresConfig, isPending: isSaving } =
     usePostgresConfigurationUpdateMutation({
-      onSuccess: () => toast('Successfully updated logging settings'),
+      onSuccess: (data) => {
+        setOperationId(data.operation?.id)
+        if (!data.operation || data.operation.status === 'succeeded') {
+          toast('Successfully updated logging settings')
+        }
+      },
     })
+
+  const { data: operation } = useQuery(
+    databaseSettingsOperationQueryOptions({ projectRef, operationId })
+  )
 
   const defaultValues = useMemo(
     () => ({
@@ -74,6 +96,14 @@ export const ConnectionLogging = () => {
   useEffect(() => {
     if (isSuccess) form.reset(defaultValues)
   }, [isSuccess, defaultValues, form])
+
+  useEffect(() => {
+    if (operation?.status === 'succeeded') {
+      toast('Successfully applied logging settings')
+    } else if (operation?.status === 'failed') {
+      toast.error('Failed to apply logging settings')
+    }
+  }, [operation?.status])
 
   return (
     <PageSection id="log-connections">
@@ -129,6 +159,27 @@ export const ConnectionLogging = () => {
                   />
                 </CardContent>
                 <CardFooter className="gap-x-2 justify-end">
+                  {operation !== undefined && (
+                    <Badge
+                      variant={
+                        operation.status === 'failed' || operation.status === 'cancelled'
+                          ? 'destructive'
+                          : 'default'
+                      }
+                    >
+                      {operation.status === 'queued'
+                        ? 'Queued'
+                        : operation.status === 'running'
+                          ? 'Applying'
+                          : operation.status === 'succeeded'
+                            ? 'Applied'
+                            : operation.status === 'failed'
+                              ? 'Failed'
+                              : operation.status === 'cancelled'
+                                ? 'Cancelled'
+                                : 'Applying'}
+                    </Badge>
+                  )}
                   <Button
                     type="button"
                     variant="default"
@@ -141,11 +192,11 @@ export const ConnectionLogging = () => {
                     type="submit"
                     variant="primary"
                     loading={isSaving}
-                    disabled={!hasChanges || !canUpdatePostgresConfiguration}
+                    disabled={!hasChanges || !canUpdate}
                     tooltip={{
                       content: {
                         side: 'bottom',
-                        text: !canUpdatePostgresConfiguration
+                        text: !canUpdate
                           ? 'You need additional permissions to update this setting'
                           : undefined,
                       },

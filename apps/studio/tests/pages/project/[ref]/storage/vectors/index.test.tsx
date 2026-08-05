@@ -38,16 +38,12 @@ vi.mock('@/lib/constants', async (importOriginal) => {
   }
 })
 
-// Stub the heavy leaf children — each fires its own queries and renders a large
-// tree. We only assert which branch the page picks. Keep the real
-// `VECTOR_BUCKETS_AVAILABLE_REGIONS` so the region gate runs for real.
-vi.mock(
-  '@/components/interfaces/Storage/VectorBuckets/RegionLimitation',
-  async (importOriginal) => ({
-    ...(await importOriginal<Record<string, unknown>>()),
-    RegionLimitation: () => <div>region-limitation</div>,
-  })
-)
+// Stub the heavy leaf children. Keep the region contract without importing
+// the icon-heavy implementation.
+vi.mock('@/components/interfaces/Storage/VectorBuckets/RegionLimitation', () => ({
+  RegionLimitation: () => <div>region-limitation</div>,
+  VECTOR_BUCKETS_AVAILABLE_REGIONS: ['us-east-1'],
+}))
 
 vi.mock('@/components/interfaces/Storage/VectorBuckets', () => ({
   VectorsBuckets: () => <div>vectors-buckets</div>,
@@ -65,7 +61,11 @@ const mockProject = (region: string) => {
     method: 'get',
     path: '/platform/projects/:ref',
     // The page only reads `region` off the project
-    response: () => HttpResponse.json<ProjectDetail>({ region } as unknown as ProjectDetail),
+    response: () =>
+      HttpResponse.json<ProjectDetail>({
+        region,
+        status: 'ACTIVE_HEALTHY',
+      } as unknown as ProjectDetail),
   })
 }
 
@@ -93,6 +93,16 @@ const mockStorageConfig = (vectorBucketsEnabled: boolean) => {
 const mockDeploymentMode = (isCli: boolean) => {
   mswServer.use(
     http.get(`${API_URL}/platform/deployment-mode`, () => HttpResponse.json({ is_cli_mode: isCli }))
+  )
+}
+
+const mockVectorBuckets = (status = 200) => {
+  mswServer.use(
+    http.get(`${API_URL}/platform/storage/:ref/vector-buckets`, () =>
+      status === 200
+        ? HttpResponse.json({ vectorBuckets: [] })
+        : HttpResponse.json({ error: { message: 'Unavailable' } }, { status })
+    )
   )
 }
 
@@ -141,9 +151,20 @@ describe('StorageVectorsPage', () => {
     expect(screen.queryByText('region-limitation')).not.toBeInTheDocument()
   })
 
-  test('self-hosted (non-platform): renders nothing', async () => {
+  test('self-hosted (non-platform): shows vector buckets when the Storage API is available', async () => {
     mockIsPlatform.value = false
     mockDeploymentMode(false)
+    mockVectorBuckets()
+
+    customRender(<StorageVectorsPage dehydratedState={undefined} />)
+
+    expect(await screen.findByText('vectors-buckets')).toBeInTheDocument()
+  })
+
+  test('self-hosted (non-platform): hides the surface when the Storage API is unavailable', async () => {
+    mockIsPlatform.value = false
+    mockDeploymentMode(false)
+    mockVectorBuckets(503)
 
     const { container } = customRender(<StorageVectorsPage dehydratedState={undefined} />)
 

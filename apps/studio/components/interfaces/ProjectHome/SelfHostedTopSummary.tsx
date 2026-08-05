@@ -286,7 +286,6 @@ export function SelfHostedInfrastructureDiagram() {
   return (
     <Card className="h-[400px] md:h-[500px] overflow-hidden bg-transparent">
       <CardContent className="relative flex h-full items-center justify-center p-6">
-        <div className="absolute inset-0 bg-[radial-gradient(hsl(var(--border))_1px,transparent_1px)] bg-[size:18px_18px] opacity-40" />
         <div className="relative w-full max-w-lg rounded-md border bg-surface-100 shadow-sm">
           <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 border-b">
             <div className="flex items-start gap-3">
@@ -367,14 +366,6 @@ export function SelfHostedInfrastructureDiagram() {
               </>
             )}
           </CardContent>
-        </div>
-        <div className="absolute bottom-4 left-4 flex items-center gap-2 text-xs text-foreground-light">
-          <Server size={14} strokeWidth={1.5} />
-          Self-hosted evidence view
-        </div>
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 text-xs text-foreground-light">
-          <Activity size={14} strokeWidth={1.5} />
-          Read-only
         </div>
       </CardContent>
     </Card>

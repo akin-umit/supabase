@@ -1,6 +1,6 @@
 import { SupportCategories } from '@supabase/shared-types/out/constants'
 import { useFlag, useParams } from 'common'
-import { AlertCircle, Globe2 } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { Card, CardContent } from 'ui'
 import {
   PageSection,
@@ -17,7 +17,7 @@ import { CustomDomainsConfigureHostname } from './CustomDomainsConfigureHostname
 import { CustomDomainsShimmerLoader } from './CustomDomainsShimmerLoader'
 import { CustomDomainVerify } from './CustomDomainVerify'
 import { SupportLink } from '@/components/interfaces/Support/SupportLink'
-import { InlineLink, InlineLinkClassName } from '@/components/ui/InlineLink'
+import { InlineLinkClassName } from '@/components/ui/InlineLink'
 import { UpgradeToPro } from '@/components/ui/UpgradeToPro'
 import {
   useCustomDomainsQuery,
@@ -26,75 +26,8 @@ import {
 import { useProjectAddonsQuery } from '@/data/subscriptions/project-addons-query'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
-export const CustomDomainConfig = () => {
-  if (!IS_PLATFORM) {
-    return <SelfHostedCustomDomainConfig />
-  }
-
-  return <PlatformCustomDomainConfig />
-}
-
-const SelfHostedCustomDomainConfig = () => (
-  <PageSection id="custom-domains">
-    <PageSectionMeta>
-      <PageSectionSummary>
-        <PageSectionTitle>Custom domains</PageSectionTitle>
-        <PageSectionDescription>Present a branded experience to your users</PageSectionDescription>
-      </PageSectionSummary>
-    </PageSectionMeta>
-    <PageSectionContent>
-      <Card>
-        <CardContent className="space-y-6">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-surface-100 text-foreground-light">
-              <Globe2 size={18} strokeWidth={1.5} />
-            </div>
-            <div className="space-y-2">
-              <h4 className="m-0 text-base">Self-hosted custom domains</h4>
-              <p className="m-0 text-sm text-foreground-light">
-                Studio uses the public project URL configured in this deployment. DNS, TLS, and
-                service routing must point to the same host before users copy URLs from Studio.
-              </p>
-            </div>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-md border p-4">
-              <p className="m-0 text-sm font-medium">Public project URL</p>
-              <p className="m-0 mt-1 text-sm text-foreground-light">
-                `SUPABASE_PUBLIC_URL` and `SITE_URL` must match the HTTPS domain shown in Studio.
-              </p>
-            </div>
-            <div className="rounded-md border p-4">
-              <p className="m-0 text-sm font-medium">API and Auth callbacks</p>
-              <p className="m-0 mt-1 text-sm text-foreground-light">
-                `API_EXTERNAL_URL`, redirect allow lists, and OAuth callback URLs must use the same
-                public host.
-              </p>
-            </div>
-            <div className="rounded-md border p-4">
-              <p className="m-0 text-sm font-medium">TLS and reverse proxy</p>
-              <p className="m-0 mt-1 text-sm text-foreground-light">
-                TLS terminates at Coolify or your reverse proxy before requests reach Kong.
-              </p>
-            </div>
-            <div className="rounded-md border p-4">
-              <p className="m-0 text-sm font-medium">Redeploy scope</p>
-              <p className="m-0 mt-1 text-sm text-foreground-light">
-                After changing domains, redeploy Studio, Kong, Auth, REST, Storage, Realtime, and
-                Functions so generated URLs stay consistent.
-              </p>
-            </div>
-          </div>
-          <InlineLink className="text-foreground-light" href={`${DOCS_URL}/guides/self-hosting`}>
-            Self-hosting docs
-          </InlineLink>
-        </CardContent>
-      </Card>
-    </PageSectionContent>
-  </PageSection>
-)
+export const CustomDomainConfig = () => <PlatformCustomDomainConfig />
 
 const PlatformCustomDomainConfig = () => {
   const { ref } = useParams()

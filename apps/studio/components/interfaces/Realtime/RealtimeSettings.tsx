@@ -1,13 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'common'
 import Link from 'next/link'
 import { useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -25,6 +24,7 @@ import {
 import { Admonition } from 'ui-patterns/admonition'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
+import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
 import { AlertError } from '@/components/ui/AlertError'
@@ -41,7 +41,6 @@ import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import type { SelfHostedRealtimeConfig } from '@/lib/api/self-hosted/realtime'
-import type { RuntimeConfigStatus } from '@/lib/api/self-hosted/runtime-config'
 import { IS_PLATFORM } from '@/lib/constants'
 
 const formId = 'realtime-configuration-form'
@@ -59,23 +58,25 @@ async function fetchSelfHostedRealtimeConfig(projectRef?: string) {
   return payload as SelfHostedRealtimeConfig
 }
 
-async function fetchSelfHostedRealtimeRuntime(projectRef?: string) {
-  if (!projectRef) throw new Error('Project ref is required')
-
-  const response = await fetch(`/api/platform/projects/${projectRef}/runtime/realtime`)
+async function updateSelfHostedRealtimeConfig(
+  projectRef: string,
+  values: Record<string, boolean | number>
+) {
+  const response = await fetch(`/api/platform/projects/${projectRef}/config/realtime`, {
+    method: 'PATCH',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(values),
+  })
   const payload = await response.json()
-
   if (!response.ok) {
-    throw new Error(
-      payload?.error?.message ?? 'Failed to retrieve self-hosted Realtime runtime status'
-    )
+    throw new Error(payload?.error?.message ?? 'Failed to update self-hosted realtime settings')
   }
-
-  return payload as RuntimeConfigStatus
+  return payload as SelfHostedRealtimeConfig
 }
 
 export const RealtimeSettings = () => {
   const { ref: projectRef } = useParams()
+  const queryClient = useQueryClient()
   const isSelfHosted = !IS_PLATFORM
   const { data: project } = useSelectedProjectQuery()
   const { data: organization, isSuccess: isSuccessOrganization } = useSelectedOrganizationQuery()
@@ -106,17 +107,6 @@ export const RealtimeSettings = () => {
     queryFn: () => fetchSelfHostedRealtimeConfig(projectRef),
     enabled: isSelfHosted && typeof projectRef !== 'undefined',
   })
-  const {
-    data: selfHostedRuntime,
-    error: selfHostedRuntimeError,
-    isPending: isLoadingSelfHostedRuntime,
-    isError: isSelfHostedRuntimeError,
-  } = useQuery<RuntimeConfigStatus, Error>({
-    queryKey: ['self-hosted', 'runtime', 'realtime', projectRef],
-    queryFn: () => fetchSelfHostedRealtimeRuntime(projectRef),
-    enabled: isSelfHosted && typeof projectRef !== 'undefined',
-  })
-
   const { data: policies, isSuccess: isSuccessPolicies } = useDatabasePoliciesQuery({
     projectRef,
     connectionString: project?.connectionString,
@@ -125,12 +115,10 @@ export const RealtimeSettings = () => {
 
   const isFreePlan = organization?.plan.id === 'free'
   const isUsageBillingEnabled = organization?.usage_billing_enabled
-  const canUpdateRealtimeSettings = !isSelfHosted && canUpdateConfig
-  const realtimeConfig = isSelfHosted ? (selfHostedConfig ?? REALTIME_DEFAULT_CONFIG) : data
+  const canUpdateRealtimeSettings = isSelfHosted || canUpdateConfig
+  const realtimeConfig = isSelfHosted ? selfHostedConfig : data
   const realtimeConfigError = isSelfHosted ? selfHostedError : error
-  const hasSelfHostedRuntimeFallback =
-    isSelfHosted && (isLoadingSelfHostedConfig || isSelfHostedConfigError || !selfHostedConfig)
-  const hasRealtimeConfigError = !isSelfHosted && isError
+  const hasRealtimeConfigError = isSelfHosted ? isSelfHostedConfigError : isError
   const isRealtimeDisabled = realtimeConfig?.suspend ?? REALTIME_DEFAULT_CONFIG.suspend
   // Check if RLS policies exist for realtime.messages table
   const realtimeMessagesPolicies = policies?.filter(
@@ -147,6 +135,18 @@ export const RealtimeSettings = () => {
         setIsConfirmNextModalOpen(false)
       },
     })
+  const { mutate: updateSelfHostedConfig, isPending: isUpdatingSelfHostedConfig } = useMutation({
+    mutationFn: ({ ref, values }: { ref: string; values: Record<string, boolean | number> }) =>
+      updateSelfHostedRealtimeConfig(ref, values),
+    onSuccess: async (updated) => {
+      queryClient.setQueryData(['self-hosted', 'realtime-config', projectRef], updated)
+      form.reset({ ...updated, allow_public: !updated.private_only })
+      toast.success('Successfully updated realtime settings')
+      setIsConfirmNextModalOpen(false)
+    },
+    onError: (error) => toast.error(error.message),
+  })
+  const isSaving = isUpdatingConfig || isUpdatingSelfHostedConfig
 
   const FormSchema = z.discriminatedUnion('suspend', [
     z.object({
@@ -205,53 +205,43 @@ export const RealtimeSettings = () => {
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = (_data) => {
     if (!projectRef) return console.error('Project ref is required')
-    if (isSelfHosted) {
-      toast.error('Realtime changes require a self-hosted config apply job')
-      return
-    }
     setIsConfirmNextModalOpen(true)
   }
 
   const onConfirmSave = () => {
     if (!projectRef) return console.error('Project ref is required')
+    const values = form.getValues()
+
+    const nextConfig = {
+      private_only: !values.allow_public,
+      connection_pool: Number(
+        values.connection_pool ?? realtimeConfig?.connection_pool ?? REALTIME_DEFAULT_CONFIG.connection_pool
+      ),
+      max_concurrent_users: Number(
+        values.max_concurrent_users ?? realtimeConfig?.max_concurrent_users ?? REALTIME_DEFAULT_CONFIG.max_concurrent_users
+      ),
+      max_events_per_second: Number(
+        values.max_events_per_second ?? realtimeConfig?.max_events_per_second ?? REALTIME_DEFAULT_CONFIG.max_events_per_second
+      ),
+      max_presence_events_per_second: Number(
+        values.max_presence_events_per_second ?? realtimeConfig?.max_presence_events_per_second ?? REALTIME_DEFAULT_CONFIG.max_presence_events_per_second
+      ),
+      max_payload_size_in_kb: Number(
+        values.max_payload_size_in_kb ?? realtimeConfig?.max_payload_size_in_kb ?? REALTIME_DEFAULT_CONFIG.max_payload_size_in_kb
+      ),
+      suspend: values.suspend,
+    }
+
     if (isSelfHosted) {
-      toast.error('Realtime changes require a self-hosted config apply job')
-      setIsConfirmNextModalOpen(false)
+      updateSelfHostedConfig({ ref: projectRef, values: nextConfig })
       return
     }
-    const values = form.getValues()
 
     // [Joshen] Casting to `Number` here as the values are being set as string when edited in the form
     // and returned in form.getValues() - I might be missing some easy util function from RHF though
     updateRealtimeConfig({
       ref: projectRef,
-      private_only: !values.allow_public,
-      connection_pool: Number(
-        values.connection_pool ??
-          realtimeConfig?.connection_pool ??
-          REALTIME_DEFAULT_CONFIG.connection_pool
-      ),
-      max_concurrent_users: Number(
-        values.max_concurrent_users ??
-          realtimeConfig?.max_concurrent_users ??
-          REALTIME_DEFAULT_CONFIG.max_concurrent_users
-      ),
-      max_events_per_second: Number(
-        values.max_events_per_second ??
-          realtimeConfig?.max_events_per_second ??
-          REALTIME_DEFAULT_CONFIG.max_events_per_second
-      ),
-      max_presence_events_per_second: Number(
-        values.max_presence_events_per_second ??
-          realtimeConfig?.max_presence_events_per_second ??
-          REALTIME_DEFAULT_CONFIG.max_presence_events_per_second
-      ),
-      max_payload_size_in_kb: Number(
-        values.max_payload_size_in_kb ??
-          realtimeConfig?.max_payload_size_in_kb ??
-          REALTIME_DEFAULT_CONFIG.max_payload_size_in_kb
-      ),
-      suspend: values.suspend,
+      ...nextConfig,
     })
   }
 
@@ -259,7 +249,9 @@ export const RealtimeSettings = () => {
     <>
       <Form {...form}>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
-          {hasRealtimeConfigError ? (
+          {isSelfHosted && isLoadingSelfHostedConfig ? (
+            <GenericSkeletonLoader />
+          ) : hasRealtimeConfigError ? (
             <AlertError
               error={realtimeConfigError}
               subject="Failed to retrieve realtime settings"
@@ -267,76 +259,6 @@ export const RealtimeSettings = () => {
           ) : (
             <Card>
               <CardContent className="space-y-4">
-                {isSelfHosted && (
-                  <Admonition
-                    type="default"
-                    title="Realtime configuration"
-                    description={
-                      <div className="space-y-3">
-                        <p>
-                          Studio is reading the active Realtime values from this deployment. Changes
-                          must be applied through the deployment environment and then Realtime must
-                          be redeployed.
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="default">
-                            {isLoadingSelfHostedRuntime
-                              ? 'Checking runtime'
-                              : (selfHostedRuntime?.status ?? 'Runtime unavailable')}
-                          </Badge>
-                          <span className="text-xs text-foreground-light">
-                            Mode: {selfHostedRuntime?.mode ?? 'read only'}
-                          </span>
-                        </div>
-                        {isSelfHostedRuntimeError && (
-                          <p className="text-xs text-foreground-light">
-                            Runtime source status is unavailable: {selfHostedRuntimeError.message}
-                          </p>
-                        )}
-                        {selfHostedRuntime?.settings && (
-                          <div className="grid gap-2 text-xs sm:grid-cols-2">
-                            {selfHostedRuntime.settings.map((setting) => (
-                              <div
-                                key={setting.name}
-                                className="flex min-w-0 items-center justify-between gap-2 rounded border px-2 py-1"
-                              >
-                                <span className="truncate text-foreground-light">
-                                  {setting.name}
-                                </span>
-                                <code className="shrink-0 text-code">
-                                  {setting.activeSource ?? setting.status}
-                                </code>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {selfHostedConfig?.sources && (
-                          <div className="grid gap-2 text-xs sm:grid-cols-2">
-                            {Object.entries(selfHostedConfig.sources).map(([setting, source]) => (
-                              <div
-                                key={setting}
-                                className="flex min-w-0 items-center justify-between gap-2 rounded border px-2 py-1"
-                              >
-                                <span className="truncate text-foreground-light">{setting}</span>
-                                <code className="shrink-0 text-code">{source}</code>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    }
-                  />
-                )}
-                {hasSelfHostedRuntimeFallback && (
-                  <Admonition
-                    type="default"
-                    title="Self-hosted Realtime settings are managed in the runtime"
-                  >
-                    Studio is showing safe defaults because it cannot read the runtime configuration
-                    from the self-hosted management API. Update Realtime environment variables in
-                    your deployment platform, then redeploy Realtime and Kong.
-                  </Admonition>
-                )}
                 <FormField
                   control={form.control}
                   name="suspend"
@@ -699,33 +621,33 @@ export const RealtimeSettings = () => {
               )}
 
               <CardFooter className="justify-between">
-                <div>
-                  {isPermissionsLoaded && !canUpdateRealtimeSettings && (
-                    <p className="text-sm text-foreground-light">
-                      {isSelfHosted
-                        ? 'Realtime values are read from deployment variables.'
-                        : 'You need additional permissions to update realtime settings'}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-x-2">
-                  {form.formState.isDirty && (
-                    <Button variant="default" onClick={() => form.reset(realtimeConfig as any)}>
-                      Cancel
+                  <div>
+                    {isPermissionsLoaded && !canUpdateRealtimeSettings && (
+                      <p className="text-sm text-foreground-light">
+                        {isSelfHosted
+                          ? 'Realtime write access is not configured'
+                          : 'You need additional permissions to update realtime settings'}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-x-2">
+                    {form.formState.isDirty && (
+                      <Button variant="default" onClick={() => form.reset(realtimeConfig as any)}>
+                        Cancel
+                      </Button>
+                    )}
+                    <Button
+                      variant="primary"
+                      type="submit"
+                      form={formId}
+                      disabled={
+                        !canUpdateRealtimeSettings || isSaving || !form.formState.isDirty
+                      }
+                      loading={isSaving}
+                    >
+                      Save changes
                     </Button>
-                  )}
-                  <Button
-                    variant="primary"
-                    type="submit"
-                    form={formId}
-                    disabled={
-                      !canUpdateRealtimeSettings || isUpdatingConfig || !form.formState.isDirty
-                    }
-                    loading={isUpdatingConfig}
-                  >
-                    Save changes
-                  </Button>
-                </div>
+                  </div>
               </CardFooter>
             </Card>
           )}
@@ -733,17 +655,17 @@ export const RealtimeSettings = () => {
       </Form>
 
       <ConfirmationModal
-        visible={isConfirmNextModalOpen}
-        title="Confirm saving changes"
-        confirmLabel="Save changes"
-        loading={isUpdatingConfig}
-        onCancel={() => setIsConfirmNextModalOpen(false)}
-        onConfirm={() => onConfirmSave()}
-      >
-        <p className="text-sm text-foreground-light">
-          Saving the changes will disconnect all the clients connected to your project. Are you sure
-          you want to continue?
-        </p>
+          visible={isConfirmNextModalOpen}
+          title="Confirm saving changes"
+          confirmLabel="Save changes"
+          loading={isSaving}
+          onCancel={() => setIsConfirmNextModalOpen(false)}
+          onConfirm={() => onConfirmSave()}
+        >
+          <p className="text-sm text-foreground-light">
+            Saving the changes will disconnect all the clients connected to your project. Are you
+            sure you want to continue?
+          </p>
       </ConfirmationModal>
     </>
   )

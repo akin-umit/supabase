@@ -1011,7 +1011,7 @@ export function LogDrainDestinationSheetForm({
           </SheetSection>
 
           <SheetFooter className="p-content mt-0! justify-between! flex-row! w-full items-center">
-            <div className="flex flex-col gap-0.5">
+            {IS_PLATFORM && <div className="flex flex-col gap-0.5">
               <span className="text-sm text-foreground-light">
                 <span>See full pricing breakdown</span>{' '}
                 <Link
@@ -1023,7 +1023,7 @@ export function LogDrainDestinationSheetForm({
                 </Link>
               </span>
               <TaxDisclaimer />
-            </div>
+            </div>}
             <Shortcut
               id={SHORTCUT_IDS.LOG_DRAINS_SAVE_DESTINATION}
               onTrigger={() => formRef.current?.requestSubmit()}

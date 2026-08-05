@@ -1,42 +1,33 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
+import {
+  requestSelfHostedManagement,
+  SelfHostedManagementError,
+} from '@/lib/api/self-hosted/management'
 import { IS_PLATFORM } from '@/lib/constants'
 
-function getSelfHostedCredentials() {
-  const accessKey =
-    process.env.S3_PROTOCOL_ACCESS_KEY_ID ?? process.env.STORAGE_S3_PROTOCOL_ACCESS_KEY_ID
-
-  if (!accessKey) return { data: [] }
-
-  return {
-    data: [
-      {
-        id: 'self-hosted-runtime',
-        access_key: accessKey,
-        description: 'Self-hosted runtime credential',
-        created_at: '1970-01-01T00:00:00.000Z',
-      },
-    ],
-  }
-}
-
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (IS_PLATFORM) {
     return res.status(404).json({ error: { message: 'Not found' } })
   }
 
-  switch (req.method) {
-    case 'GET':
-      return res.status(200).json(getSelfHostedCredentials())
-    case 'POST':
-      return res.status(405).json({
-        error: {
-          message:
-            'S3 access keys are managed by the self-hosted Storage service environment. Update the runtime secret manager, then redeploy Storage.',
-        },
-      })
-    default:
-      res.setHeader('Allow', 'GET, POST')
-      return res.status(405).json({ error: { message: 'Method not allowed' } })
+  const projectRef = String(req.query.ref ?? '')
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    res.setHeader('Allow', 'GET, POST')
+    return res.status(405).json({ error: { message: 'Method not allowed' } })
+  }
+
+  try {
+    const data = await requestSelfHostedManagement({
+      projectRef,
+      resource: ['storage', 's3', 'credentials'],
+      method: req.method,
+      body: req.body,
+    })
+    return res.status(req.method === 'POST' ? 201 : 200).json(data)
+  } catch (error) {
+    const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
+    const message = error instanceof Error ? error.message : 'Unable to manage S3 credentials'
+    return res.status(status).json({ error: { message } })
   }
 }

@@ -17,7 +17,7 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import DatabaseBackupsNav from '@/components/interfaces/Database/Backups/DatabaseBackupsNav'
 import { PITRNotice } from '@/components/interfaces/Database/Backups/PITR/PITRNotice'
 import { PITRSelection } from '@/components/interfaces/Database/Backups/PITR/PITRSelection'
-import { SelfHostedBackupEvidence } from '@/components/interfaces/Database/Backups/SelfHostedBackupEvidence'
+import { SelfHostedBackups } from '@/components/interfaces/Database/Backups/SelfHostedBackups'
 import DatabaseLayout from '@/components/layouts/DatabaseLayout/DatabaseLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { AlertError } from '@/components/ui/AlertError'
@@ -106,7 +106,7 @@ const PITR = () => {
   }
 
   if (!IS_PLATFORM) {
-    return <SelfHostedBackupEvidence mode="pitr" />
+    return <SelfHostedBackups mode="pitr" />
   }
 
   if (isLoading) {
@@ -130,35 +130,21 @@ const PITR = () => {
       {isSuccess && (
         <>
           {!isEnabled ? (
-            !IS_PLATFORM ? (
-              <Admonition
-                type="default"
-                title="Point-in-Time Recovery is managed by the self-hosted operator"
-                description="Self-hosted projects can use WAL archiving, base backups, and restore tooling from the deployment environment. Studio will show PITR restore controls when a self-hosted control plane publishes verified recovery evidence."
-              >
-                <DocsButton
-                  abbrev={false}
-                  className="mt-2"
-                  href={`${DOCS_URL}/guides/platform/backups`}
-                />
-              </Admonition>
-            ) : (
-              <UpgradeToPro
-                addon={hasAccessToPitr ? 'pitr' : undefined}
-                source="pitr"
-                featureProposition="enable Point-in-Time Recovery"
-                primaryText={
-                  hasAccessToPitr
-                    ? 'Point in Time Recovery is available as an add-on'
-                    : 'Point in Time Recovery is a Pro Plan add-on'
-                }
-                secondaryText={
-                  !hasAccessToPitr
-                    ? 'Roll back your database to a specific second. Starts at $100/month. Pro Plan already includes daily backups at no extra cost.'
-                    : 'Enable the add-on to add point-in-time recovery to your project.'
-                }
-              />
-            )
+            <UpgradeToPro
+              addon={hasAccessToPitr ? 'pitr' : undefined}
+              source="pitr"
+              featureProposition="enable Point-in-Time Recovery"
+              primaryText={
+                hasAccessToPitr
+                  ? 'Point in Time Recovery is available as an add-on'
+                  : 'Point in Time Recovery is a Pro Plan add-on'
+              }
+              secondaryText={
+                !hasAccessToPitr
+                  ? 'Roll back your database to a specific second. Starts at $100/month. Pro Plan already includes daily backups at no extra cost.'
+                  : 'Enable the add-on to add point-in-time recovery to your project.'
+              }
+            />
           ) : !isActiveHealthy ? (
             <Alert>
               <AlertCircle />

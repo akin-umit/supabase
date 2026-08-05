@@ -47,7 +47,8 @@ type PresetHooks = Record<keyof PresetConfig['queries'], () => PresetHookResult>
  */
 export const queriesFactory = <T extends string>(
   queries: BaseQueries<T>,
-  projectRef: string
+  projectRef: string,
+  enabled = true
 ): PresetHooks => {
   const hooks: PresetHooks = Object.entries<ReportQuery>(queries).reduce((acc, [k, query]) => {
     if (query.queryType === 'db') {
@@ -58,7 +59,7 @@ export const queriesFactory = <T extends string>(
     } else {
       return {
         ...acc,
-        [k]: () => useLogsQuery({ projectRef }),
+        [k]: () => useLogsQuery({ projectRef, enabled }),
       }
     }
   }, {})

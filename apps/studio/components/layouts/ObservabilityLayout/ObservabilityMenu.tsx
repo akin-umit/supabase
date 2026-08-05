@@ -18,9 +18,14 @@ import { UpdateCustomReportModal } from '@/components/interfaces/Reports/UpdateM
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { ProductMenu } from '@/components/ui/ProductMenu'
 import { ProductMenuShortcuts } from '@/components/ui/ProductMenu/ProductMenuShortcuts'
+import {
+  isSelfHostedLoggingReady,
+  useSelfHostedRuntimeConfigQuery,
+} from '@/data/config/self-hosted-runtime-config-query'
 import { useContentDeleteMutation } from '@/data/content/content-delete-mutation'
 import { Content, ContentBase, useContentQuery } from '@/data/content/content-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { IS_PLATFORM } from '@/lib/constants'
 import { useProfile } from '@/lib/profile'
@@ -32,11 +37,16 @@ export const ObservabilityMenu = () => {
   const router = useRouter()
   const { profile } = useProfile()
   const { ref, id } = useParams()
+  const { isPlatform, isSelfHosted } = useDeploymentMode()
   const pageKey = (id || router.pathname.split('/')[4] || 'observability') as string
   const showOverview = useFlag('observabilityOverview') || !IS_PLATFORM
   const { isSupamonitorEnabled } = useSupamonitorStatus()
 
   const storageSupported = useIsFeatureEnabled('project_storage:all')
+  const { data: loggingRuntime } = useSelfHostedRuntimeConfigQuery(ref, 'logging', {
+    enabled: isSelfHosted,
+  })
+  const showApiGateway = isPlatform || isSelfHostedLoggingReady(loggingRuntime)
 
   const { can: canCreateCustomReport } = useAsyncCheckPermissions(
     PermissionAction.CREATE,
@@ -153,7 +163,8 @@ export const ObservabilityMenu = () => {
     showOverview,
     isSupamonitorEnabled,
     storageSupported,
-    isPlatform: true,
+    isPlatform,
+    showApiGateway,
   })
 
   useShortcut(

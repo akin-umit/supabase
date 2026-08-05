@@ -11,7 +11,6 @@ import { CustomReportSection } from './CustomReportSection'
 import { DEFAULT_SECTION_ORDER, mergeSectionOrder } from './Home.utils'
 import { ProjectUsageSection } from './ProjectUsageSection'
 import { ProjectUsageSectionDeltas } from './ProjectUsageSectionDeltas'
-import { SelfHostedOperationsSection } from './SelfHostedOperationsSection'
 import { SelfHostedUsageSection } from './SelfHostedUsageSection'
 import { SortableSection } from '@/components/interfaces/ProjectHome/SortableSection'
 import { TopSection } from '@/components/interfaces/ProjectHome/TopSection'
@@ -85,7 +84,7 @@ export const ProjectHome = () => {
 
   const renderOrder = mergeSectionOrder(sectionOrder).filter((id) => {
     if (id === 'connect') return showConnectSection
-    if (id === 'operations') return isSelfHosted
+    if (id === 'operations') return false
     if (id === 'usage') return IS_PLATFORM || isSelfHosted
     if (id === 'custom-report') return IS_PLATFORM
     return true
@@ -124,13 +123,6 @@ export const ProjectHome = () => {
                       return (
                         <SortableSection key={id} id={id}>
                           <ConnectSection />
-                        </SortableSection>
-                      )
-                    }
-                    if (id === 'operations' && isSelfHosted) {
-                      return (
-                        <SortableSection key={id} id={id}>
-                          <SelfHostedOperationsSection />
                         </SortableSection>
                       )
                     }

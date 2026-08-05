@@ -1,3 +1,4 @@
+import { IS_PLATFORM } from 'common'
 import {
   PageHeader,
   PageHeaderDescription,
@@ -17,8 +18,12 @@ const ProjectAddons: NextPageWithLayout = () => {
       <PageHeader size="default">
         <PageHeaderMeta>
           <PageHeaderSummary>
-            <PageHeaderTitle>Add-ons</PageHeaderTitle>
-            <PageHeaderDescription>Level up your project with add-ons</PageHeaderDescription>
+            <PageHeaderTitle>{IS_PLATFORM ? 'Add-ons' : 'Services'}</PageHeaderTitle>
+            <PageHeaderDescription>
+              {IS_PLATFORM
+                ? 'Level up your project with add-ons'
+                : 'Installed Supabase services and their current status'}
+            </PageHeaderDescription>
           </PageHeaderSummary>
         </PageHeaderMeta>
       </PageHeader>
@@ -29,7 +34,7 @@ const ProjectAddons: NextPageWithLayout = () => {
 
 ProjectAddons.getLayout = (page) => (
   <DefaultLayout>
-    <SettingsLayout title="Add-ons">{page}</SettingsLayout>
+    <SettingsLayout title={IS_PLATFORM ? 'Add-ons' : 'Services'}>{page}</SettingsLayout>
   </DefaultLayout>
 )
 export default ProjectAddons

@@ -34,6 +34,14 @@ const SERVICES: Array<{
 ]
 
 export function getSelfHostedUsageServices(data: UsageApiCounts[], now = dayjs()) {
+  if (data.length === 0) {
+    return {
+      error: undefined,
+      hasTelemetry: false,
+      services: SERVICES.map((service) => ({ ...service, data: [], total: 0 })),
+    }
+  }
+
   const filled = fillTimeseriesSorted({
     data,
     timestampKey: 'timestamp',
@@ -46,6 +54,7 @@ export function getSelfHostedUsageServices(data: UsageApiCounts[], now = dayjs()
 
   return {
     error: filled.error,
+    hasTelemetry: true,
     services: SERVICES.map((service) => {
       const chartData: LogsBarChartDatum[] = filled.data.map((item) => ({
         timestamp: item.timestamp,
@@ -99,6 +108,17 @@ export function SelfHostedUsageSection() {
             <Button size="small" type="button" onClick={() => refetch()} loading={isFetching}>
               Retry
             </Button>
+          </CardContent>
+        </Card>
+      ) : !isPending && !usage.hasTelemetry ? (
+        <Card className="bg-transparent">
+          <CardContent className="flex min-h-32 items-center justify-center p-6 text-center">
+            <div>
+              <p className="text-sm text-foreground">No request telemetry yet</p>
+              <p className="text-sm text-foreground-light">
+                Usage charts will appear after Logflare records the first request.
+              </p>
+            </div>
           </CardContent>
         </Card>
       ) : (

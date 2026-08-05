@@ -8,7 +8,7 @@ import { getLogsSql, queriesFactory } from '@/components/interfaces/Reports/Repo
 import type { LogsEndpointParams } from '@/components/interfaces/Settings/Logs/Logs.types'
 import { useDatabaseSelectorStateSnapshot } from '@/state/database-selector'
 
-export const useApiReport = () => {
+export const useApiReport = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const { ref: projectRef } = useParams()
   const state = useDatabaseSelectorStateSnapshot()
 
@@ -17,7 +17,8 @@ export const useApiReport = () => {
 
   const queryHooks = queriesFactory<keyof typeof PRESET_CONFIG.api.queries>(
     PRESET_CONFIG.api.queries,
-    projectRef ?? 'default'
+    projectRef ?? 'default',
+    enabled
   )
   const totalRequests = queryHooks.totalRequests()
   const topRoutes = queryHooks.topRoutes()

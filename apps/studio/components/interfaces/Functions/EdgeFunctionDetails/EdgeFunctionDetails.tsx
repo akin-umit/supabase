@@ -76,7 +76,7 @@ export const EdgeFunctionDetails = () => {
     '*'
   )
 
-  const canUpdateEdgeFunction = IS_PLATFORM && canUpdateEdgeFunctionPermission
+  const canUpdateEdgeFunction = !IS_PLATFORM || canUpdateEdgeFunctionPermission
 
   const { can: canReadAPIKeys } = useAsyncCheckPermissions(PermissionAction.SECRETS_READ, '*')
   const { data: apiKeyData } = useAPIKeys({ projectRef }, { enabled: canReadAPIKeys })
@@ -150,16 +150,6 @@ export const EdgeFunctionDetails = () => {
           </PageSectionSummary>
         </PageSectionMeta>
         <PageSectionContent>
-          {!IS_PLATFORM && (
-            <Alert className="mb-4">
-              <AlertTitle>Function configuration is managed by the self-hosted runtime</AlertTitle>
-              <AlertDescription>
-                Update function files, JWT verification, and deployment lifecycle through your
-                Supabase CLI workflow or operator automation. Studio does not call Supabase Cloud
-                Edge Function write APIs in self-hosted mode.
-              </AlertDescription>
-            </Alert>
-          )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onUpdateFunction)}>
               <Card>

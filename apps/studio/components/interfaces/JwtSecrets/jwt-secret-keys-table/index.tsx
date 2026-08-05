@@ -1,5 +1,4 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useQuery } from '@tanstack/react-query'
 import { IS_PLATFORM, useParams } from 'common'
 import { AnimatePresence } from 'framer-motion'
 import { AlertCircle, RotateCw, Timer } from 'lucide-react'
@@ -49,19 +48,9 @@ import { useLegacyJWTSigningKeyCreateMutation } from '@/data/jwt-signing-keys/le
 import { useLegacyJWTSigningKeyQuery } from '@/data/jwt-signing-keys/legacy-jwt-signing-key-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import type { RuntimeConfigStatus } from '@/lib/api/self-hosted/runtime-config'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 
 type DialogType = 'legacy' | 'create' | 'rotate' | 'key-details' | 'revoke' | 'delete'
-
-async function fetchSelfHostedAuthRuntime(projectRef: string, signal?: AbortSignal) {
-  const response = await fetch(`/api/platform/projects/${projectRef}/runtime/auth`, {
-    headers: { Accept: 'application/json' },
-    signal,
-  })
-  if (!response.ok) throw new Error('Failed to load Auth runtime config')
-  return (await response.json()) as RuntimeConfigStatus
-}
 
 export const JWTSecretKeysTable = () => {
   const { ref: projectRef } = useParams()
@@ -91,13 +80,6 @@ export const JWTSecretKeysTable = () => {
   )
   const { data: legacyAPIKeysStatus, isPending: isLoadingLegacyAPIKeysStatus } =
     useLegacyAPIKeysStatusQuery({ projectRef }, { enabled: IS_PLATFORM && canReadAPIKeys })
-  const { data: authRuntime } = useQuery<RuntimeConfigStatus, Error>({
-    queryKey: ['self-hosted-auth-runtime', projectRef],
-    queryFn: ({ signal }) => fetchSelfHostedAuthRuntime(projectRef!, signal),
-    enabled: !IS_PLATFORM && typeof projectRef === 'string' && projectRef.length > 0,
-    refetchOnWindowFocus: false,
-  })
-
   const { mutate: migrateJWTSecret, isPending: isMigrating } = useLegacyJWTSigningKeyCreateMutation(
     {
       onSuccess: () => {
@@ -208,38 +190,22 @@ export const JWTSecretKeysTable = () => {
   return (
     <>
       <div className="-space-y-px">
-        {!IS_PLATFORM && (
-          <Card className="mb-4 bg-transparent">
-            <CardContent className="space-y-3 p-4">
-              <div>
-                <p className="text-sm text-foreground">JWT signing configuration</p>
-                <p className="text-sm text-foreground-light">
-                  Studio reads signing key status from the deployment and never exposes private key
-                  material in the browser.
-                </p>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {(authRuntime?.settings ?? []).map((setting) => (
-                  <div key={setting.name} className="rounded border bg-surface-75 p-3">
-                    <p className="truncate text-xs text-foreground-light">{setting.name}</p>
-                    <p className="mt-1 truncate font-mono text-sm text-foreground">
-                      {(setting.activeSource ?? setting.sources.join(', ')) || 'runtime'}
-                    </p>
-                    <p className="mt-1 text-xs text-foreground-light">{setting.status}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        {!IS_PLATFORM || !canReadAPIKeys ? null : legacyKey ? (
+        {legacyKey || !IS_PLATFORM ? (
           <>
             {standbyKey ? (
               <ActionPanel
-                title="Rotate Signing Key"
-                description="Switch the standby key to in use. All new JSON Web Tokens issued by Supabase Auth will be signed with this key."
-                buttonLabel="Rotate keys"
-                onClick={() => setShownDialog('rotate')}
+                title={inUseKey ? 'Rotate Signing Key' : 'Activate Standby Key'}
+                description="Switch the standby key to in use. New JSON Web Tokens issued by Supabase Auth will be signed with this key."
+                buttonLabel={inUseKey ? 'Rotate keys' : 'Activate key'}
+                onClick={() =>
+                  inUseKey
+                    ? setShownDialog('rotate')
+                    : updateJWTSigningKey({
+                        projectRef: projectRef!,
+                        keyId: standbyKey.id,
+                        status: 'in_use',
+                      })
+                }
                 loading={isUpdatingJWTSigningKey}
                 icon={<RotateCw className="size-4" />}
                 variant="primary"

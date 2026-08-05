@@ -3,13 +3,13 @@ import { components } from 'api-types'
 
 import { storageCredentialsKeys } from './s3-access-key-keys'
 import { get, handleError } from '@/data/fetchers'
-import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 type StorageCredentialsVariables = { projectRef?: string }
 
 export type S3AccessKey = components['schemas']['GetStorageCredentialsResponse']['data'][number] & {
   access_key: string
+  created_at: string | null
 }
 
 async function fetchStorageCredentials(
@@ -17,14 +17,11 @@ async function fetchStorageCredentials(
   signal?: AbortSignal
 ) {
   if (!projectRef) throw new Error('projectRef is required')
-  if (!IS_PLATFORM) return { data: [] as S3AccessKey[] }
-
   const { data, error } = await get('/platform/storage/{ref}/credentials', {
     params: { path: { ref: projectRef } },
     signal,
   })
 
-  if (error && !IS_PLATFORM) return { data: [] as S3AccessKey[] }
   if (error) handleError(error)
   return data as { data: S3AccessKey[] }
 }

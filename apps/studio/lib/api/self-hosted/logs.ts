@@ -34,7 +34,10 @@ export async function retrieveAnalyticsData({
   assert(PROJECT_ANALYTICS_URL, 'PROJECT_ANALYTICS_URL is required')
   assert(process.env.LOGFLARE_PRIVATE_ACCESS_TOKEN, 'LOGFLARE_PRIVATE_ACCESS_TOKEN is required')
 
-  const url = new URL(`${PROJECT_ANALYTICS_URL}endpoints/query/${name}`)
+  const baseUrl = new URL(PROJECT_ANALYTICS_URL)
+  const apiPath = baseUrl.pathname.replace(/\/$/, '').endsWith('/api') ? '' : '/api'
+  baseUrl.pathname = `${baseUrl.pathname.replace(/\/$/, '')}${apiPath}/`
+  const url = new URL(`endpoints/query/${encodeURIComponent(name)}`, baseUrl)
   url.searchParams.set('project', projectRef)
 
   // Add all other params

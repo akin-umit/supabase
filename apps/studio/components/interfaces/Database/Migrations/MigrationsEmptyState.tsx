@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from 'ui'
 import { EmptyStatePresentational } from 'ui-patterns/EmptyStatePresentational'
 
 import CommandRender from '@/components/interfaces/Functions/CommandRender'
+import { IS_PLATFORM } from '@/lib/constants'
 
 export const MigrationsEmptyState = () => {
   const { ref } = useParams()
@@ -43,6 +44,16 @@ export const MigrationsEmptyState = () => {
       },
     },
   ]
+
+  if (!IS_PLATFORM) {
+    return (
+      <EmptyStatePresentational
+        icon={Terminal}
+        title="No migrations applied"
+        description="Apply the first migration with the form above. Successful transactions are recorded here."
+      />
+    )
+  }
 
   return (
     <EmptyStatePresentational

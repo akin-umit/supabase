@@ -46,6 +46,10 @@ vi.mock('@/components/interfaces/Database/Backups/DatabaseBackupsNav', () => ({
   default: ({ active }: { active: string }) => <div>Backups nav {active}</div>,
 }))
 
+vi.mock('@/components/interfaces/Database/Backups/SelfHostedBackups', () => ({
+  SelfHostedBackups: ({ mode }: { mode: string }) => <div>Self-hosted backups {mode}</div>,
+}))
+
 vi.mock('@/components/interfaces/Database/Backups/PITR/PITRNotice', () => ({
   PITRNotice: () => <div>Cloud PITRNotice</div>,
 }))
@@ -93,7 +97,7 @@ vi.mock('@/hooks/misc/useSelectedProject', () => ({
   useSelectedProjectQuery: () => ({ data: { status: 'ACTIVE_HEALTHY' }, isPending: false }),
 }))
 
-describe('/project/[ref]/database/backups self-hosted evidence', () => {
+describe('/project/[ref]/database/backups self-hosted controls', () => {
   beforeEach(() => {
     mockIsPlatform.value = false
     mockOperationsQuery.mockReturnValue({
@@ -116,22 +120,17 @@ describe('/project/[ref]/database/backups self-hosted evidence', () => {
     })
   })
 
-  it('renders scheduled backup evidence from the self-hosted management API', () => {
-    render(<ScheduledBackupsPage />)
+  it('renders scheduled backup controls from the self-hosted management API', () => {
+    render(<ScheduledBackupsPage dehydratedState={{}} />)
 
-    expect(screen.getByText('Scheduled backup evidence')).toBeInTheDocument()
-    expect(screen.getByText('verified')).toBeInTheDocument()
-    expect(screen.getByText('2026-08-05 14:20:00 UTC')).toBeInTheDocument()
-    expect(screen.getByText('20260805142000_schema')).toBeInTheDocument()
+    expect(screen.getByText('Self-hosted backups scheduled')).toBeInTheDocument()
     expect(screen.queryByText('Cloud BackupsList')).not.toBeInTheDocument()
   })
 
-  it('renders PITR evidence from the self-hosted management API', () => {
-    render(<PitrBackupsPage />)
+  it('renders PITR controls from the self-hosted management API', () => {
+    render(<PitrBackupsPage dehydratedState={{}} />)
 
-    expect(screen.getByText('Point-in-time recovery evidence')).toBeInTheDocument()
-    expect(screen.getByText('applied')).toBeInTheDocument()
-    expect(screen.getByText('20260805142000_schema')).toBeInTheDocument()
+    expect(screen.getByText('Self-hosted backups pitr')).toBeInTheDocument()
     expect(screen.queryByText('Cloud PITRSelection')).not.toBeInTheDocument()
     expect(screen.queryByText('Cloud UpgradeToPro')).not.toBeInTheDocument()
   })

@@ -114,7 +114,7 @@ describe('useGenerateSettingsMenu (self-hosted)', () => {
     const { result } = renderHook(() => useGenerateSettingsMenu())
     const configGroup = result.current.find((group) => group.title === 'Configuration')
 
-    expect(configGroup?.items.some((item) => item.key === 'compute-and-disk')).toBe(true)
+    expect(configGroup?.items.some((item) => item.key === 'compute-and-disk')).toBe(false)
     expect(configGroup?.items.some((item) => item.key === 'infrastructure')).toBe(true)
     expect(configGroup?.items.some((item) => item.key === 'integrations')).toBe(true)
     expect(configGroup?.items.some((item) => item.key === 'addons')).toBe(true)

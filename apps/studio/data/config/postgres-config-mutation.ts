@@ -13,6 +13,12 @@ export type PostgresConfigurationUpdateVariables = {
   }
 }
 
+export type DatabaseSettingsOperation = {
+  id: string
+  status: 'queued' | 'accepted' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+  code?: string
+}
+
 export async function updatePostgresConfiguration({
   projectRef,
   payload,
@@ -23,7 +29,7 @@ export async function updatePostgresConfiguration({
   })
 
   if (error) handleError(error)
-  return data
+  return data as typeof data & { operation?: DatabaseSettingsOperation }
 }
 
 type PostgresConfigurationUpdateData = Awaited<ReturnType<typeof updatePostgresConfiguration>>

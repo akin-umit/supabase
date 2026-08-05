@@ -1,5 +1,4 @@
 import { IS_PLATFORM, useParams } from 'common'
-import { Admonition } from 'ui-patterns/admonition'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import {
   PageHeader,
@@ -11,6 +10,7 @@ import {
 import { PageSection, PageSectionContent } from 'ui-patterns/PageSection'
 
 import DatabaseBackupsNav from '@/components/interfaces/Database/Backups/DatabaseBackupsNav'
+import { SelfHostedBackups } from '@/components/interfaces/Database/Backups/SelfHostedBackups'
 import { RestoreToNewProject } from '@/components/interfaces/Database/RestoreToNewProject/RestoreToNewProject'
 import DatabaseLayout from '@/components/layouts/DatabaseLayout/DatabaseLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
@@ -45,18 +45,7 @@ const RestoreToNewProjectPage: NextPageWithLayout = () => {
               {IS_PLATFORM ? (
                 <RestoreToNewProject />
               ) : (
-                <Admonition
-                  type="default"
-                  title="Restore to a new project is a Supabase Cloud workflow"
-                >
-                  <div className="space-y-3 text-sm text-foreground-light">
-                    <p>
-                      In self-hosted deployments, create a new Postgres instance or project stack,
-                      restore your dump or snapshot there, then point services at the restored
-                      database.
-                    </p>
-                  </div>
-                </Admonition>
+                <SelfHostedBackups mode="restore" />
               )}
             </div>
           </PageSectionContent>

@@ -91,7 +91,8 @@ describe('SelfHostedUsageSection', () => {
       data: { result: [] },
     })
     rerender(<SelfHostedUsageSection />)
-    expect(screen.getAllByText('No requests in the last 24 hours')).toHaveLength(6)
+    expect(screen.getByText('No request telemetry yet')).toBeInTheDocument()
+    expect(screen.queryAllByTestId('usage-chart')).toHaveLength(0)
   })
 
   it('renders a restrained error and retries', () => {

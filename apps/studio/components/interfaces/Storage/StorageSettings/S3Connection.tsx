@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { IS_PLATFORM, useParams } from 'common'
+import { useParams } from 'common'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
@@ -52,11 +52,13 @@ import { useProjectStorageConfigQuery } from '@/data/config/project-storage-conf
 import { useProjectStorageConfigUpdateUpdateMutation } from '@/data/config/project-storage-config-update-mutation'
 import { useStorageCredentialsQuery } from '@/data/storage/s3-access-key-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useIsProjectActive, useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { DOCS_URL } from '@/lib/constants'
 
 export const S3Connection = () => {
   const { ref: projectRef } = useParams()
+  const { isPlatform, isSelfHosted } = useDeploymentMode()
   const isProjectActive = useIsProjectActive()
   const { data: project, isPending: projectIsLoading } = useSelectedProjectQuery()
 
@@ -68,7 +70,7 @@ export const S3Connection = () => {
     PermissionAction.STORAGE_ADMIN_READ,
     '*'
   )
-  const isResolvingPermissions = IS_PLATFORM && isLoadingPermissions
+  const isResolvingPermissions = isPlatform && isLoadingPermissions
   const { can: canUpdateStorageSettings } = useAsyncCheckPermissions(
     PermissionAction.STORAGE_ADMIN_WRITE,
     '*'
@@ -80,10 +82,10 @@ export const S3Connection = () => {
     error: configError,
     isSuccess: isSuccessStorageConfig,
     isError: isErrorStorageConfig,
-  } = useProjectStorageConfigQuery({ projectRef })
+  } = useProjectStorageConfigQuery({ projectRef }, { enabled: isPlatform })
   const { data: storageCreds, isPending: isLoadingStorageCreds } = useStorageCredentialsQuery(
     { projectRef },
-    { enabled: !IS_PLATFORM || canReadS3Credentials }
+    { enabled: isSelfHosted || canReadS3Credentials }
   )
 
   const { mutate: updateStorageConfig, isPending: isUpdating } =
@@ -105,9 +107,11 @@ export const S3Connection = () => {
   const protocol = settings?.app_config?.protocol ?? 'https'
   const endpoint = settings?.app_config?.storage_endpoint || settings?.app_config?.endpoint
   const hasStorageCreds = storageCreds?.data && storageCreds.data.length > 0
-  const s3connectionUrl = getConnectionURL(projectRef ?? '', protocol, endpoint)
-  const canReadS3CredentialsSurface = !IS_PLATFORM || canReadS3Credentials
-  const canUpdateStorageSettingsSurface = IS_PLATFORM && canUpdateStorageSettings
+  const s3connectionUrl = endpoint
+    ? getConnectionURL(projectRef ?? '', protocol, endpoint)
+    : undefined
+  const canReadS3CredentialsSurface = isSelfHosted || canReadS3Credentials
+  const canUpdateStorageSettingsSurface = isSelfHosted || canUpdateStorageSettings
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = async (data) => {
     if (!projectRef) return console.error('Project ref is required')
@@ -144,7 +148,7 @@ export const S3Connection = () => {
           </PageSectionMeta>
 
           <PageSectionContent>
-            {isErrorStorageConfig && (
+            {isPlatform && isErrorStorageConfig && (
               <AlertError
                 className="mb-4"
                 subject="Failed to retrieve storage configuration"
@@ -156,46 +160,50 @@ export const S3Connection = () => {
               <form id="s3-connection-form" onSubmit={form.handleSubmit(onSubmit)}>
                 {projectIsLoading ? (
                   <GenericSkeletonLoader />
-                ) : isProjectActive ? (
+                ) : isProjectActive || isSelfHosted ? (
                   <Card>
-                    <CardContent>
-                      <FormField
-                        name="s3ConnectionEnabled"
-                        control={form.control}
-                        render={({ field }) => (
-                          <FormItemLayout
-                            layout="flex-row-reverse"
-                            className="[&>*>label]:text-foreground"
-                            label="S3 protocol connection"
-                            description="Allow clients to connect to Supabase Storage via the S3 protocol"
-                          >
-                            <FormControl>
-                              <Switch
-                                size="large"
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={
-                                  !isSuccessStorageConfig ||
-                                  !canUpdateStorageSettingsSurface ||
-                                  field.disabled
-                                }
-                              />
-                            </FormControl>
-                          </FormItemLayout>
-                        )}
-                      />
-                    </CardContent>
+                    {isPlatform && (
+                      <CardContent>
+                        <FormField
+                          name="s3ConnectionEnabled"
+                          control={form.control}
+                          render={({ field }) => (
+                            <FormItemLayout
+                              layout="flex-row-reverse"
+                              className="[&>*>label]:text-foreground"
+                              label="S3 protocol connection"
+                              description="Allow clients to connect to Supabase Storage via the S3 protocol"
+                            >
+                              <FormControl>
+                                <Switch
+                                  size="large"
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  disabled={
+                                    !isSuccessStorageConfig ||
+                                    !canUpdateStorageSettingsSurface ||
+                                    field.disabled
+                                  }
+                                />
+                              </FormControl>
+                            </FormItemLayout>
+                          )}
+                        />
+                      </CardContent>
+                    )}
 
-                    <CardContent>
-                      <FormItemLayout
-                        layout="flex-row-reverse"
-                        className="[&>div]:md:w-1/2 [&>div>div]:w-full [&>div]:min-w-100"
-                        label="Endpoint"
-                        isReactForm={false}
-                      >
-                        <Input readOnly copy value={s3connectionUrl} />
-                      </FormItemLayout>
-                    </CardContent>
+                    {s3connectionUrl && (
+                      <CardContent>
+                        <FormItemLayout
+                          layout="flex-row-reverse"
+                          className="[&>div]:md:w-1/2 [&>div>div]:w-full [&>div]:min-w-100"
+                          label="Endpoint"
+                          isReactForm={false}
+                        >
+                          <Input readOnly copy value={s3connectionUrl} />
+                        </FormItemLayout>
+                      </CardContent>
+                    )}
 
                     <CardContent>
                       <FormItemLayout
@@ -216,40 +224,36 @@ export const S3Connection = () => {
                       </FormItemLayout>
                     </CardContent>
 
-                    {!isResolvingPermissions && !canUpdateStorageSettingsSurface && (
-                      <CardContent>
-                        <p className="text-sm text-foreground-light">
-                          S3 protocol changes are managed by the self-hosted runtime environment.
-                        </p>
-                      </CardContent>
-                    )}
-
-                    <CardFooter className="justify-end space-x-2">
-                      {form.formState.isDirty && (
+                    {isPlatform && (
+                      <CardFooter className="justify-end space-x-2">
+                        {form.formState.isDirty && (
+                          <Button
+                            variant="default"
+                            type="reset"
+                            onClick={() => form.reset()}
+                            disabled={
+                              !form.formState.isDirty ||
+                              !canUpdateStorageSettingsSurface ||
+                              isUpdating
+                            }
+                          >
+                            Cancel
+                          </Button>
+                        )}
                         <Button
-                          variant="default"
-                          type="reset"
-                          onClick={() => form.reset()}
+                          variant="primary"
+                          type="submit"
+                          loading={isUpdating}
                           disabled={
                             !form.formState.isDirty ||
                             !canUpdateStorageSettingsSurface ||
                             isUpdating
                           }
                         >
-                          Cancel
+                          Save
                         </Button>
-                      )}
-                      <Button
-                        variant="primary"
-                        type="submit"
-                        loading={isUpdating}
-                        disabled={
-                          !form.formState.isDirty || !canUpdateStorageSettingsSurface || isUpdating
-                        }
-                      >
-                        Save
-                      </Button>
-                    </CardFooter>
+                      </CardFooter>
+                    )}
                   </Card>
                 ) : (
                   <Alert variant="warning">
@@ -270,100 +274,93 @@ export const S3Connection = () => {
           </PageSectionContent>
         </PageSection>
 
-        <PageSection>
-          <PageSectionMeta>
-            <PageSectionSummary>
-              <PageSectionTitle>Access keys</PageSectionTitle>
-              <PageSectionDescription>
-                Manage your access keys for this project
-              </PageSectionDescription>
-            </PageSectionSummary>
-            <PageSectionAside>
-              {IS_PLATFORM && (
-                <CreateCredentialModal visible={openCreateCred} onOpenChange={setOpenCreateCred} />
-              )}
-            </PageSectionAside>
-          </PageSectionMeta>
-
-          <PageSectionContent>
-            {(IS_PLATFORM && projectIsLoading) || isResolvingPermissions ? (
-              <GenericSkeletonLoader />
-            ) : !canReadS3CredentialsSurface ? (
-              <NoPermission resourceText="view this project's S3 access keys" />
-            ) : !isProjectActive ? (
-              <Alert variant="warning">
-                <WarningIcon />
-                <AlertTitle>Can't fetch S3 access keys</AlertTitle>
-                <AlertDescription>
-                  To fetch your S3 access keys, you need to restore your project.
-                </AlertDescription>
-                <AlertDescription>
-                  <Button asChild variant="default" className="mt-3">
-                    <Link href={`/project/${projectRef}`}>Restore project</Link>
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <>
-                {isLoadingStorageCreds ? (
-                  <GenericSkeletonLoader />
-                ) : (
-                  <Card>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead key="description">Name</TableHead>
-                          <TableHead key="access-key-id">Key ID</TableHead>
-                          <TableHead key="created-at">Created at</TableHead>
-                          <TableHead key="actions" />
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {hasStorageCreds ? (
-                          storageCreds.data?.map((cred) => (
-                            <StorageCredItem
-                              key={cred.id}
-                              created_at={cred.created_at}
-                              access_key={cred.access_key}
-                              description={cred.description}
-                              id={cred.id}
-                              onDeleteClick={() => {
-                                setDeleteCred(cred)
-                                setOpenDeleteDialog(true)
-                              }}
-                            />
-                          ))
-                        ) : !IS_PLATFORM ? (
-                          <TableRow>
-                            <TableCell colSpan={4} className="rounded-b-md! overflow-hidden">
-                              <p className="text-sm text-foreground">
-                                S3 access keys are configured in the deployment
-                              </p>
-                              <p className="text-sm text-foreground-light">
-                                Rotate `S3_PROTOCOL_ACCESS_KEY_ID` and
-                                `S3_PROTOCOL_ACCESS_KEY_SECRET` in your runtime secrets, then
-                                redeploy Storage and Kong.
-                              </p>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="rounded-b-md! overflow-hidden">
-                              <p className="text-sm text-foreground">No access keys created</p>
-                              <p className="text-sm text-foreground-light">
-                                There are no access keys associated with your project yet
-                              </p>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </Card>
+        {(isPlatform || isLoadingStorageCreds || hasStorageCreds) && (
+          <PageSection>
+            <PageSectionMeta>
+              <PageSectionSummary>
+                <PageSectionTitle>Access keys</PageSectionTitle>
+                <PageSectionDescription>
+                  Access key IDs available to this project
+                </PageSectionDescription>
+              </PageSectionSummary>
+              <PageSectionAside>
+                {(isSelfHosted || isPlatform) && (
+                  <CreateCredentialModal
+                    visible={openCreateCred}
+                    onOpenChange={setOpenCreateCred}
+                  />
                 )}
-              </>
-            )}
-          </PageSectionContent>
-        </PageSection>
+              </PageSectionAside>
+            </PageSectionMeta>
+
+            <PageSectionContent>
+              {(isPlatform && projectIsLoading) || isResolvingPermissions ? (
+                <GenericSkeletonLoader />
+              ) : !canReadS3CredentialsSurface ? (
+                <NoPermission resourceText="view this project's S3 access keys" />
+              ) : !isProjectActive ? (
+                <Alert variant="warning">
+                  <WarningIcon />
+                  <AlertTitle>Can't fetch S3 access keys</AlertTitle>
+                  <AlertDescription>
+                    To fetch your S3 access keys, you need to restore your project.
+                  </AlertDescription>
+                  <AlertDescription>
+                    <Button asChild variant="default" className="mt-3">
+                      <Link href={`/project/${projectRef}`}>Restore project</Link>
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <>
+                  {isLoadingStorageCreds ? (
+                    <GenericSkeletonLoader />
+                  ) : (
+                    <Card>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead key="description">Name</TableHead>
+                            <TableHead key="access-key-id">Key ID</TableHead>
+                            <TableHead key="created-at">Created at</TableHead>
+                            <TableHead key="actions" />
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {hasStorageCreds ? (
+                            storageCreds.data?.map((cred) => (
+                              <StorageCredItem
+                                key={cred.id}
+                                created_at={cred.created_at}
+                                access_key={cred.access_key}
+                                description={cred.description}
+                                id={cred.id}
+                                canRevoke={canUpdateStorageSettingsSurface}
+                                onDeleteClick={() => {
+                                  setDeleteCred(cred)
+                                  setOpenDeleteDialog(true)
+                                }}
+                              />
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={4} className="rounded-b-md! overflow-hidden">
+                                <p className="text-sm text-foreground">No access keys created</p>
+                                <p className="text-sm text-foreground-light">
+                                  There are no access keys associated with your project yet
+                                </p>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </Card>
+                  )}
+                </>
+              )}
+            </PageSectionContent>
+          </PageSection>
+        )}
       </PageContainer>
 
       <RevokeCredentialModal

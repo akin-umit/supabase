@@ -22,6 +22,7 @@ import { ShimmeringLoader } from 'ui-patterns/ShimmeringLoader'
 import { TimestampInfo } from 'ui-patterns/TimestampInfo'
 
 import { MigrationsEmptyState } from './MigrationsEmptyState'
+import { SelfHostedMigrationApply } from './SelfHostedMigrationApply'
 import { SupportLink } from '@/components/interfaces/Support/SupportLink'
 import { CodeEditor } from '@/components/ui/CodeEditor/CodeEditor'
 import { DocsButton } from '@/components/ui/DocsButton'
@@ -69,6 +70,7 @@ const Migrations = () => {
 
   return (
     <>
+      {!IS_PLATFORM && <SelfHostedMigrationApply />}
       {isLoading && (
         <div className="space-y-2">
           <ShimmeringLoader />

@@ -4,13 +4,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import ComputeAndDiskPage from '@/pages/project/[ref]/settings/compute-and-disk'
 
-const { mockIsPlatform, mockOperationsQuery } = vi.hoisted(() => ({
+const { mockIsPlatform, mockReplace } = vi.hoisted(() => ({
   mockIsPlatform: { value: false },
-  mockOperationsQuery: vi.fn(),
+  mockReplace: vi.fn(),
 }))
 
 vi.mock('common', () => ({
   useParams: () => ({ ref: 'default' }),
+}))
+
+vi.mock('next/router', () => ({
+  useRouter: () => ({ replace: mockReplace }),
 }))
 
 vi.mock('@/lib/constants', async () => {
@@ -37,48 +41,17 @@ vi.mock('@/components/interfaces/DiskManagement/DiskManagementForm', () => ({
   DiskManagementForm: () => <div>Cloud DiskManagementForm</div>,
 }))
 
-vi.mock('@/data/operations/project-operations-query', () => ({
-  useProjectOperationsQuery: mockOperationsQuery,
-}))
-
 describe('/project/[ref]/settings/compute-and-disk', () => {
   beforeEach(() => {
     mockIsPlatform.value = false
-    mockOperationsQuery.mockReturnValue({
-      data: {
-        infrastructure: {
-          runtime: {
-            cpuPercent: 43,
-            memoryPercent: 44,
-            diskPercent: 34,
-            connectionsCurrent: 2,
-            connectionsMax: 100,
-          },
-          services: { healthy: 8, total: 8, unavailable: 0 },
-          database: { host: 'db', port: 5432, maxClientConnections: 100 },
-        },
-      },
-      isPending: false,
-      isError: false,
-      refetch: vi.fn(),
-      isFetching: false,
-    })
+    mockReplace.mockReset()
   })
 
-  it('renders runtime-backed compute and disk evidence in self-hosted mode', () => {
+  it('redirects self-hosted projects to the single infrastructure settings surface', () => {
     render(<ComputeAndDiskPage dehydratedState={{}} />)
 
-    expect(
-      screen.getByText('Inspect compute and disk telemetry from your self-hosted runtime.')
-    ).toBeInTheDocument()
-    expect(screen.getByText('CPU')).toBeInTheDocument()
-    expect(screen.getByText('43%')).toBeInTheDocument()
-    expect(screen.getByText('RAM')).toBeInTheDocument()
-    expect(screen.getByText('44%')).toBeInTheDocument()
-    expect(screen.getByText('Disk')).toBeInTheDocument()
-    expect(screen.getByText('34%')).toBeInTheDocument()
-    expect(screen.getByText('2/100')).toBeInTheDocument()
-    expect(screen.getByText('8/8')).toBeInTheDocument()
+    expect(mockReplace).toHaveBeenCalledWith('/project/default/settings/infrastructure')
+    expect(screen.queryByText('CPU')).not.toBeInTheDocument()
     expect(screen.queryByText('Cloud DiskManagementForm')).not.toBeInTheDocument()
   })
 
