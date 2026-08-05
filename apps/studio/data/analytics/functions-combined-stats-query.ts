@@ -3,6 +3,7 @@ import { operations } from 'api-types'
 
 import { analyticsKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { IS_PLATFORM } from '@/lib/constants'
 import { UseCustomQueryOptions } from '@/types'
 
@@ -58,8 +59,11 @@ export const useFunctionsCombinedStatsQuery = <TData = FunctionsCombinedStatsDat
     enabled = true,
     ...options
   }: UseCustomQueryOptions<FunctionsCombinedStatsData, FunctionsCombinedStatsError, TData> = {}
-) =>
-  useQuery<FunctionsCombinedStatsData, FunctionsCombinedStatsError, TData>({
+) => {
+  const { isSelfHosted } = useDeploymentMode()
+  const canUseAnalyticsEndpoint = IS_PLATFORM || isSelfHosted
+
+  return useQuery<FunctionsCombinedStatsData, FunctionsCombinedStatsError, TData>({
     queryKey: analyticsKeys.functionsCombinedStats(projectRef, { functionId, interval }),
     queryFn: ({ signal }) =>
       getFunctionsCombinedStats({ projectRef, functionId, interval }, signal),
@@ -68,6 +72,7 @@ export const useFunctionsCombinedStatsQuery = <TData = FunctionsCombinedStatsDat
       typeof projectRef !== 'undefined' &&
       typeof functionId !== 'undefined' &&
       typeof interval !== 'undefined' &&
-      IS_PLATFORM,
+      canUseAnalyticsEndpoint,
     ...options,
   })
+}
