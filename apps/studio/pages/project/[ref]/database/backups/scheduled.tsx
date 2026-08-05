@@ -15,6 +15,7 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
 import { BackupsList } from '@/components/interfaces/Database/Backups/BackupsList'
 import DatabaseBackupsNav from '@/components/interfaces/Database/Backups/DatabaseBackupsNav'
+import { SelfHostedBackupEvidence } from '@/components/interfaces/Database/Backups/SelfHostedBackupEvidence'
 import DatabaseLayout from '@/components/layouts/DatabaseLayout/DatabaseLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { AlertError } from '@/components/ui/AlertError'
@@ -70,16 +71,7 @@ const DatabaseScheduledBackups: NextPageWithLayout = () => {
                 <DocsButton abbrev={false} className="mt-2" href={`${DOCS_URL}`} />
               </Admonition>
             ) : !IS_PLATFORM ? (
-              <Admonition type="default" title="Manage backups from your self-hosted database">
-                <div className="space-y-3 text-sm text-foreground-light">
-                  <p>
-                    Supabase Cloud backup inventory and restore APIs are not available in
-                    self-hosted Studio. Use your Postgres backup tooling, volume snapshots, or
-                    managed database backup system to create, verify, and restore backups.
-                  </p>
-                  <DocsButton href={`${DOCS_URL}/guides/self-hosting`} />
-                </div>
-              </Admonition>
+              <SelfHostedBackupEvidence mode="scheduled" />
             ) : (
               <div className="flex flex-col gap-y-4">
                 {isLoading && <GenericSkeletonLoader />}

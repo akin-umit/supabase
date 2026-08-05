@@ -17,6 +17,7 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import DatabaseBackupsNav from '@/components/interfaces/Database/Backups/DatabaseBackupsNav'
 import { PITRNotice } from '@/components/interfaces/Database/Backups/PITR/PITRNotice'
 import { PITRSelection } from '@/components/interfaces/Database/Backups/PITR/PITRSelection'
+import { SelfHostedBackupEvidence } from '@/components/interfaces/Database/Backups/SelfHostedBackupEvidence'
 import DatabaseLayout from '@/components/layouts/DatabaseLayout/DatabaseLayout'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { AlertError } from '@/components/ui/AlertError'
@@ -105,18 +106,7 @@ const PITR = () => {
   }
 
   if (!IS_PLATFORM) {
-    return (
-      <Admonition type="default" title="Configure PITR in your self-hosted backup system">
-        <div className="space-y-3 text-sm text-foreground-light">
-          <p>
-            Supabase Cloud PITR add-ons and restore APIs are not available in self-hosted Studio.
-            Configure WAL archiving, point-in-time restore, and retention in your Postgres backup
-            tooling or managed database provider.
-          </p>
-          <DocsButton href={`${DOCS_URL}/guides/self-hosting`} />
-        </div>
-      </Admonition>
-    )
+    return <SelfHostedBackupEvidence mode="pitr" />
   }
 
   if (isLoading) {
