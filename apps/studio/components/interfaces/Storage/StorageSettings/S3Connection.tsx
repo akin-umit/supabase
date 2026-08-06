@@ -83,10 +83,12 @@ export const S3Connection = () => {
     isSuccess: isSuccessStorageConfig,
     isError: isErrorStorageConfig,
   } = useProjectStorageConfigQuery({ projectRef }, { enabled: isPlatform })
-  const { data: storageCreds, isPending: isLoadingStorageCreds } = useStorageCredentialsQuery(
-    { projectRef },
-    { enabled: isSelfHosted || canReadS3Credentials }
-  )
+  const {
+    data: storageCreds,
+    error: storageCredsError,
+    isError: isErrorStorageCreds,
+    isPending: isLoadingStorageCreds,
+  } = useStorageCredentialsQuery({ projectRef }, { enabled: isSelfHosted || canReadS3Credentials })
 
   const { mutate: updateStorageConfig, isPending: isUpdating } =
     useProjectStorageConfigUpdateUpdateMutation({
@@ -274,7 +276,7 @@ export const S3Connection = () => {
           </PageSectionContent>
         </PageSection>
 
-        {(isPlatform || isLoadingStorageCreds || hasStorageCreds) && (
+        {(isSelfHosted || isPlatform || isLoadingStorageCreds || hasStorageCreds) && (
           <PageSection>
             <PageSectionMeta>
               <PageSectionSummary>
@@ -294,7 +296,9 @@ export const S3Connection = () => {
             </PageSectionMeta>
 
             <PageSectionContent>
-              {(isPlatform && projectIsLoading) || isResolvingPermissions ? (
+              {isErrorStorageCreds ? (
+                <AlertError subject="Failed to retrieve S3 access keys" error={storageCredsError} />
+              ) : (isPlatform && projectIsLoading) || isResolvingPermissions ? (
                 <GenericSkeletonLoader />
               ) : !canReadS3CredentialsSurface ? (
                 <NoPermission resourceText="view this project's S3 access keys" />

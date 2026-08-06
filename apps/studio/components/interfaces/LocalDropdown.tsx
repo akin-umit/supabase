@@ -1,4 +1,4 @@
-import { FlaskConical, Settings } from 'lucide-react'
+import { FlaskConical, LogOut, Settings } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -93,6 +93,15 @@ export const LocalDropdown = ({
             ))}
           </DropdownMenuRadioGroup>
         </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="flex gap-2 cursor-pointer"
+          onClick={() => router.push('/logout')}
+          onSelect={() => router.push('/logout')}
+        >
+          <LogOut size={14} strokeWidth={1.5} className="text-foreground-lighter" />
+          Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

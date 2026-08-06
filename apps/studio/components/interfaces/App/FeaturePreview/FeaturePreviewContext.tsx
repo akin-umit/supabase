@@ -142,8 +142,11 @@ export const useIsMarketplaceEnabled = () => {
 export const useFeaturePreviewModal = () => {
   const featurePreviews = useFeaturePreviews()
   const [featurePreviewModal, setFeaturePreviewModal] = useQueryState('featurePreviewModal')
+  const [localFeaturePreviewModal, setLocalFeaturePreviewModal] = useState<string | null>(null)
 
-  const selectedFeatureKeyFromQuery = featurePreviewModal?.trim() ?? null
+  const selectedFeatureKeyFromQuery = IS_PLATFORM
+    ? featurePreviewModal?.trim() ?? null
+    : localFeaturePreviewModal
   const showFeaturePreviewModal = selectedFeatureKeyFromQuery !== null
 
   const selectedFeatureKey = (
@@ -152,7 +155,11 @@ export const useFeaturePreviewModal = () => {
 
   const selectFeaturePreview = useCallback(
     (featureKey: (typeof featurePreviews)[number]['key']) => {
-      setFeaturePreviewModal(featureKey)
+      if (IS_PLATFORM) {
+        setFeaturePreviewModal(featureKey)
+      } else {
+        setLocalFeaturePreviewModal(featureKey)
+      }
     },
     [setFeaturePreviewModal]
   )
@@ -160,7 +167,11 @@ export const useFeaturePreviewModal = () => {
   const toggleFeaturePreviewModal = useCallback(
     (value: boolean) => {
       if (!value) {
-        setFeaturePreviewModal(null)
+        if (IS_PLATFORM) {
+          setFeaturePreviewModal(null)
+        } else {
+          setLocalFeaturePreviewModal(null)
+        }
       } else {
         selectFeaturePreview(selectedFeatureKey)
       }

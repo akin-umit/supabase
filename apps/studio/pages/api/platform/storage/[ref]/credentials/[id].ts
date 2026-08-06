@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const data = await requestSelfHostedManagement({
       projectRef: String(req.query.ref ?? ''),
-      resource: ['storage', 's3', 'credentials', String(req.query.id ?? '')],
+      resource: ['storage', 's3-keys', String(req.query.id ?? '')],
       method: 'DELETE',
     })
     return res.status(200).json(data)
