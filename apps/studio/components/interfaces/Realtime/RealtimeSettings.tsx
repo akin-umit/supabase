@@ -301,7 +301,7 @@ export const RealtimeSettings = () => {
                         </h5>
                         <p className="text-foreground-light">
                           {isDisablingRealtime
-                            ? 'Clients will no longer be able to connect to your project’s realtime service once saved'
+                            ? "Clients will no longer be able to connect to your project's realtime service once saved"
                             : isEnablingRealtime
                               ? "Clients will be able to connect to your project's realtime service again once saved"
                               : isRealtimeDisabled

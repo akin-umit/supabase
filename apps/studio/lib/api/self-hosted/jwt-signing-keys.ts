@@ -62,7 +62,7 @@ async function managementRequest(pathname: string, init: RequestInit) {
   const baseUrl = process.env.INTERNAL_MANAGEMENT_API_URL
   const token = write
     ? process.env.INTERNAL_MANAGEMENT_API_WRITE_TOKEN
-    : process.env.INTERNAL_MANAGEMENT_API_TOKEN
+    : (process.env.INTERNAL_MANAGEMENT_API_TOKEN ?? process.env.INTERNAL_MANAGEMENT_API_WRITE_TOKEN)
 
   if (!baseUrl || !token) {
     throw new JwtSigningKeysManagementApiError('JWT signing key management is not configured', 503)

@@ -8,10 +8,11 @@ import { makeRandomString } from '@/lib/helpers'
 export type ListMigrationsResult = {
   version: string
   name?: string
+  statements?: string[]
 }
 
 const listMigrationVersionsQuery = () =>
-  'select version, name from supabase_migrations.schema_migrations order by version'
+  'select version, name, statements from supabase_migrations.schema_migrations order by version'
 
 const initializeHistoryTableQuery = () => `begin;
 
@@ -58,14 +59,25 @@ export async function listMigrationVersions({
 }: ListMigrationVersionsOptions): Promise<WrappedResult<ListMigrationsResult[]>> {
   assertSelfHosted()
 
+  const initializeResponse = await executeQuery<void>({
+    query: initializeHistoryTableQuery(),
+    headers,
+  })
+
+  if (initializeResponse.error) {
+    return { data: undefined, error: initializeResponse.error }
+  }
+
   const { data, error } = await executeQuery<ListMigrationsResult>({
     query: listMigrationVersionsQuery(),
     headers,
   })
 
   if (error) {
-    // Return empty list if the migrations table doesn't exist
-    if (error instanceof PgMetaDatabaseError && error.code === '42P01') {
+    if (
+      error instanceof PgMetaDatabaseError &&
+      (error.code === '42P01' || error.code === '42703')
+    ) {
       return { data: [], error: undefined }
     }
 

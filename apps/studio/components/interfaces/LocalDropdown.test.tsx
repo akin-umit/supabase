@@ -137,20 +137,18 @@ vi.mock('ui', async () => {
 })
 
 describe('LocalDropdown', () => {
-  it('shows Preferences, removes Command menu, and keeps theme controls wired', async () => {
+  it('shows Preferences, removes cloud-only actions, and keeps theme controls wired', async () => {
     const user = userEvent.setup()
 
     render(<LocalDropdown />)
 
     expect(screen.getByText('Preferences')).toBeInTheDocument()
     expect(screen.queryByText('Command menu')).not.toBeInTheDocument()
+    expect(screen.queryByText('Feature previews')).not.toBeInTheDocument()
     expect(screen.getByText('Theme')).toBeInTheDocument()
 
     await user.click(screen.getByText('Preferences'))
     expect(mockSetLastRoute).toHaveBeenCalledWith('/project/default/editor')
-
-    await user.click(screen.getByText('Feature previews'))
-    expect(mockToggleFeaturePreviewModal).toHaveBeenCalledWith(true)
 
     await user.click(screen.getByText('Light'))
     expect(mockSetTheme).toHaveBeenCalledWith('light')

@@ -20,7 +20,12 @@ type Backup = {
   earliestRestoreAt?: string
   latestRestoreAt?: string
 }
-type BackupResponse = { backups: Backup[]; schedule?: string; pitr?: { enabled: boolean } }
+type BackupResponse = {
+  backups?: Backup[]
+  schedule?: string
+  configured?: boolean
+  pitr?: { enabled?: boolean }
+}
 
 const formatBytes = (value?: number) =>
   value === undefined ? 'Size pending' : `${(value / 1024 / 1024).toFixed(1)} MB`
@@ -38,7 +43,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
   })
   const restore = useSelfHostedManagementMutation<unknown, { id: string; targetRef?: string }>({
     projectRef: ref,
-    resource: (value) => ['backups', value.id, 'restore'],
+    resource: (value) => ['backups', value.id, 'restore-to-new-project'],
   })
   const remove = useSelfHostedManagementMutation<unknown, { id: string }>({
     projectRef: ref,
@@ -59,6 +64,8 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
   if (error) return <AlertError error={error} subject="Failed to retrieve backups" />
 
   if (mode === 'pitr') {
+    const pitrEnabled = Boolean(data?.pitr?.enabled ?? data?.configured)
+
     return (
       <Card className="p-6 space-y-5">
         <div className="flex items-start justify-between gap-4">
@@ -69,7 +76,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
             </p>
           </div>
           <span className="text-sm text-brand">
-            {data?.pitr?.enabled ? 'Enabled' : 'Unavailable'}
+            {pitrEnabled ? 'Enabled' : 'Unavailable'}
           </span>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -77,13 +84,18 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
             type="datetime-local"
             value={restoreAt}
             onChange={(event) => setRestoreAt(event.target.value)}
-            disabled={!data?.pitr?.enabled}
+            disabled={!pitrEnabled}
           />
           <Button
             icon={<ArchiveRestore />}
-            disabled={!data?.pitr?.enabled || !restoreAt}
+            disabled={!pitrEnabled || !restoreAt}
             loading={run.isPending}
-            onClick={() => act(run.mutateAsync({ restoreAt }), 'PITR restore queued')}
+            onClick={() =>
+              act(
+                run.mutateAsync({ targetTime: new Date(restoreAt).toISOString() }),
+                'PITR restore queued'
+              )
+            }
           >
             Restore
           </Button>

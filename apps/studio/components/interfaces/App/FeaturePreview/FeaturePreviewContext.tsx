@@ -149,6 +149,12 @@ export const useFeaturePreviewModal = () => {
     : localFeaturePreviewModal
   const showFeaturePreviewModal = selectedFeatureKeyFromQuery !== null
 
+  useEffect(() => {
+    if (!IS_PLATFORM && featurePreviewModal !== null) {
+      setFeaturePreviewModal(null)
+    }
+  }, [featurePreviewModal, setFeaturePreviewModal])
+
   const selectedFeatureKey = (
     !selectedFeatureKeyFromQuery ? featurePreviews[0].key : selectedFeatureKeyFromQuery
   ) as (typeof featurePreviews)[number]['key']

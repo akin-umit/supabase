@@ -1,4 +1,4 @@
-import { FlaskConical, LogOut, Settings } from 'lucide-react'
+import { LogOut, Settings } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -17,7 +17,6 @@ import {
 } from 'ui'
 
 import { ButtonTooltip } from '../ui/ButtonTooltip'
-import { useFeaturePreviewModal } from './App/FeaturePreview/FeaturePreviewContext'
 import { ProfileImage } from '@/components/ui/ProfileImage'
 import { useTrack } from '@/lib/telemetry/track'
 import { useAppStateSnapshot } from '@/state/app-state'
@@ -32,7 +31,6 @@ export const LocalDropdown = ({
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const appStateSnapshot = useAppStateSnapshot()
-  const { toggleFeaturePreviewModal } = useFeaturePreviewModal()
   const track = useTrack()
 
   return (
@@ -65,15 +63,6 @@ export const LocalDropdown = ({
             Preferences
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem
-          className="flex gap-2 cursor-pointer"
-          onClick={() => toggleFeaturePreviewModal(true)}
-          onSelect={() => toggleFeaturePreviewModal(true)}
-        >
-          <FlaskConical size={14} strokeWidth={1.5} className="text-foreground-lighter" />
-          Feature previews
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuLabel>Theme</DropdownMenuLabel>
           <DropdownMenuRadioGroup
@@ -96,8 +85,12 @@ export const LocalDropdown = ({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="flex gap-2 cursor-pointer"
-          onClick={() => router.push('/logout')}
-          onSelect={() => router.push('/logout')}
+          onClick={() => {
+            window.location.assign('/_auth/logout')
+          }}
+          onSelect={() => {
+            window.location.assign('/_auth/logout')
+          }}
         >
           <LogOut size={14} strokeWidth={1.5} className="text-foreground-lighter" />
           Sign out

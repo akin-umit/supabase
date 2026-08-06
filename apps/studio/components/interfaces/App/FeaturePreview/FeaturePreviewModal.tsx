@@ -66,6 +66,8 @@ export const FeaturePreviewModal = () => {
   const featurePreviewContext = useFeaturePreviewContext()
   const track = useTrack()
 
+  if (!IS_PLATFORM) return null
+
   const { flags, onUpdateFlag } = featurePreviewContext
   const allFeaturePreviews = (
     IS_PLATFORM ? featurePreviews : featurePreviews.filter((x) => !x.isPlatformOnly)

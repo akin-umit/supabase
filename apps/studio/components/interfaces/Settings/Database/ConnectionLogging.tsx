@@ -42,6 +42,15 @@ const FormSchema = z.object({
   log_disconnections: z.boolean(),
 })
 
+type DatabaseSettingSummary = {
+  name: string
+  value: string
+  unit?: string
+  vartype?: string
+  context?: string
+  pendingRestart?: boolean
+}
+
 export const ConnectionLogging = () => {
   const { ref: projectRef } = useParams()
   const { data: project } = useSelectedProjectQuery()
@@ -87,6 +96,10 @@ export const ConnectionLogging = () => {
     values: defaultValues,
   })
   const hasChanges = form.formState.isDirty
+  const settingsList =
+    ((postgresConfig as { settingsList?: DatabaseSettingSummary[] } | undefined)?.settingsList ?? [])
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = (payload) => {
     if (!projectRef) return
@@ -119,95 +132,143 @@ export const ConnectionLogging = () => {
         {isError ? (
           <AlertError error={error} subject="Failed to retrieve Postgres configuration" />
         ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              <Card>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="log_connections"
-                    render={({ field }) => (
-                      <FormItemLayout
-                        layout="flex-row-reverse"
-                        label="Log connections"
-                        description="Enables logging for each successful connection to the database"
-                        className="[&>div:first-child]:xl:w-1/5"
+          <div className="space-y-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <Card>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="log_connections"
+                      render={({ field }) => (
+                        <FormItemLayout
+                          layout="flex-row-reverse"
+                          label="Log connections"
+                          description="Enables logging for each successful connection to the database"
+                          className="[&>div:first-child]:xl:w-1/5"
+                        >
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItemLayout>
+                      )}
+                    />
+                  </CardContent>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="log_disconnections"
+                      render={({ field }) => (
+                        <FormItemLayout
+                          layout="flex-row-reverse"
+                          label="Log disconnections"
+                          description="Enables logging for the end of each session, including its duration"
+                          className="[&>div:first-child]:xl:w-1/5"
+                        >
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItemLayout>
+                      )}
+                    />
+                  </CardContent>
+                  <CardFooter className="gap-x-2 justify-end">
+                    {operation !== undefined && (
+                      <Badge
+                        variant={
+                          operation.status === 'failed' || operation.status === 'cancelled'
+                            ? 'destructive'
+                            : 'default'
+                        }
                       >
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItemLayout>
+                        {operation.status === 'queued'
+                          ? 'Queued'
+                          : operation.status === 'running'
+                            ? 'Applying'
+                            : operation.status === 'succeeded'
+                              ? 'Applied'
+                              : operation.status === 'failed'
+                                ? 'Failed'
+                                : operation.status === 'cancelled'
+                                  ? 'Cancelled'
+                                  : 'Applying'}
+                      </Badge>
                     )}
-                  />
-                </CardContent>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="log_disconnections"
-                    render={({ field }) => (
-                      <FormItemLayout
-                        layout="flex-row-reverse"
-                        label="Log disconnections"
-                        description="Enables logging for the end of each session, including its duration"
-                        className="[&>div:first-child]:xl:w-1/5"
-                      >
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItemLayout>
-                    )}
-                  />
-                </CardContent>
-                <CardFooter className="gap-x-2 justify-end">
-                  {operation !== undefined && (
-                    <Badge
-                      variant={
-                        operation.status === 'failed' || operation.status === 'cancelled'
-                          ? 'destructive'
-                          : 'default'
-                      }
+                    <Button
+                      type="button"
+                      variant="default"
+                      disabled={!hasChanges || isSaving}
+                      onClick={() => form.reset(defaultValues)}
                     >
-                      {operation.status === 'queued'
-                        ? 'Queued'
-                        : operation.status === 'running'
-                          ? 'Applying'
-                          : operation.status === 'succeeded'
-                            ? 'Applied'
-                            : operation.status === 'failed'
-                              ? 'Failed'
-                              : operation.status === 'cancelled'
-                                ? 'Cancelled'
-                                : 'Applying'}
-                    </Badge>
-                  )}
-                  <Button
-                    type="button"
-                    variant="default"
-                    disabled={!hasChanges || isSaving}
-                    onClick={() => form.reset(defaultValues)}
-                  >
-                    Cancel
-                  </Button>
-                  <ButtonTooltip
-                    type="submit"
-                    variant="primary"
-                    loading={isSaving}
-                    disabled={!hasChanges || !canUpdate}
-                    tooltip={{
-                      content: {
-                        side: 'bottom',
-                        text: !canUpdate
-                          ? 'You need additional permissions to update this setting'
-                          : undefined,
-                      },
-                    }}
-                  >
-                    Save
-                  </ButtonTooltip>
-                </CardFooter>
+                      Cancel
+                    </Button>
+                    <ButtonTooltip
+                      type="submit"
+                      variant="primary"
+                      loading={isSaving}
+                      disabled={!hasChanges || !canUpdate}
+                      tooltip={{
+                        content: {
+                          side: 'bottom',
+                          text: !canUpdate
+                            ? 'You need additional permissions to update this setting'
+                            : undefined,
+                        },
+                      }}
+                    >
+                      Save
+                    </ButtonTooltip>
+                  </CardFooter>
+                </Card>
+              </form>
+            </Form>
+            {settingsList.length > 0 && (
+              <Card>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-sm">Postgres runtime settings</p>
+                    <p className="text-sm text-foreground-light">
+                      Current values are read from Postgres and applied through the self-hosted
+                      management API.
+                    </p>
+                  </div>
+                  <div className="overflow-x-auto rounded border">
+                    <table className="w-full text-sm">
+                      <thead className="bg-surface-100 text-foreground-light">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-normal">Setting</th>
+                          <th className="px-3 py-2 text-left font-normal">Value</th>
+                          <th className="px-3 py-2 text-left font-normal">Type</th>
+                          <th className="px-3 py-2 text-left font-normal">Context</th>
+                          <th className="px-3 py-2 text-left font-normal">Restart</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {settingsList.map((setting) => (
+                          <tr key={setting.name} className="border-t">
+                            <td className="px-3 py-2 font-mono">{setting.name}</td>
+                            <td className="px-3 py-2 font-mono">
+                              {setting.value}
+                              {setting.unit ? setting.unit : ''}
+                            </td>
+                            <td className="px-3 py-2">{setting.vartype ?? '-'}</td>
+                            <td className="px-3 py-2">{setting.context ?? '-'}</td>
+                            <td className="px-3 py-2">
+                              {setting.pendingRestart ? (
+                                <Badge variant="destructive">Required</Badge>
+                              ) : (
+                                <Badge variant="default">No</Badge>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
               </Card>
-            </form>
-          </Form>
+            )}
+          </div>
         )}
       </PageSectionContent>
     </PageSection>

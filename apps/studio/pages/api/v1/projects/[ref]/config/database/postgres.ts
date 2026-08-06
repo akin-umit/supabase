@@ -23,12 +23,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method === 'GET') {
       const result = await getDatabaseSettings(projectRef)
-      return res.status(200).json({ ...result.settings, operation: result.operation })
+      return res
+        .status(200)
+        .json({ ...result.settings, settingsList: result.settingsList, operation: result.operation })
     }
 
     if (req.method === 'PUT' || req.method === 'PATCH') {
       const result = await updateDatabaseSettings(projectRef, req.body)
-      return res.status(200).json({ ...result.settings, operation: result.operation })
+      return res
+        .status(200)
+        .json({ ...result.settings, settingsList: result.settingsList, operation: result.operation })
     }
 
     res.setHeader('Allow', ['GET', 'PUT', 'PATCH'])

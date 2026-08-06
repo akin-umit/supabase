@@ -28,9 +28,15 @@ const operationSchema = z
 
 const managementSettingSchema = z
   .object({
-    name: z.enum(['log_connections', 'log_disconnections']),
+    name: z.string().min(1),
     value: z.string(),
-    pendingRestart: z.boolean(),
+    unit: z.string().optional(),
+    vartype: z.string().optional(),
+    context: z.string().optional(),
+    enumvals: z.array(z.string()).optional(),
+    min_val: z.string().optional(),
+    max_val: z.string().optional(),
+    pendingRestart: z.boolean().optional().default(false),
   })
   .strip()
 
@@ -45,6 +51,7 @@ const operationResponseSchema = z.object({ operation: operationSchema }).strip()
 const databaseSettingsResponseSchema = z
   .object({
     settings: databaseSettingsSchema,
+    settingsList: z.array(managementSettingSchema).optional(),
     operation: operationSchema.optional(),
   })
   .strip()
@@ -56,6 +63,7 @@ export const databaseSettingsUpdateSchema = databaseSettingsSchema
   })
 
 export type DatabaseSettings = z.infer<typeof databaseSettingsSchema>
+export type DatabaseSettingSummary = z.infer<typeof managementSettingSchema>
 export type DatabaseSettingsOperation = z.infer<typeof operationSchema>
 export type DatabaseSettingsResponse = z.infer<typeof databaseSettingsResponseSchema>
 
@@ -73,7 +81,7 @@ function getManagementUrl(pathname: string, write = false) {
   const baseUrl = process.env.INTERNAL_MANAGEMENT_API_URL
   const token = write
     ? process.env.INTERNAL_MANAGEMENT_API_WRITE_TOKEN
-    : process.env.INTERNAL_MANAGEMENT_API_TOKEN
+    : (process.env.INTERNAL_MANAGEMENT_API_TOKEN ?? process.env.INTERNAL_MANAGEMENT_API_WRITE_TOKEN)
 
   if (!baseUrl || !token) {
     throw new DatabaseSettingsManagementApiError(
@@ -172,10 +180,13 @@ export async function getDatabaseSettings(projectRef: string): Promise<DatabaseS
   }
 
   const values = Object.fromEntries(
-    result.data.settings.map((setting) => [setting.name, setting.value === 'on'])
+    result.data.settings
+      .filter((setting) => setting.name in databaseSettingsSchema.shape)
+      .map((setting) => [setting.name, setting.value === 'on'])
   )
   return {
     settings: databaseSettingsSchema.parse(values),
+    settingsList: result.data.settings,
     operation: result.data.operation,
   }
 }
@@ -210,10 +221,13 @@ export async function updateDatabaseSettings(
   }
 
   const values = Object.fromEntries(
-    result.data.settings.map((setting) => [setting.name, setting.value === 'on'])
+    result.data.settings
+      .filter((setting) => setting.name in databaseSettingsSchema.shape)
+      .map((setting) => [setting.name, setting.value === 'on'])
   )
   return {
     settings: databaseSettingsSchema.parse(values),
+    settingsList: result.data.settings,
     operation: result.data.operation,
   }
 }

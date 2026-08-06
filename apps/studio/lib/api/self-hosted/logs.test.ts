@@ -27,4 +27,19 @@ describe('self-hosted Logflare queries', () => {
       expect.objectContaining({ method: 'GET' })
     )
   })
+
+  it('builds self-hosted log queries against the ClickHouse logs table', async () => {
+    const { getLogQuery } = await import('./logs')
+
+    const apiSql = getLogQuery('api', 25)
+    expect(apiSql).toContain('from logs')
+    expect(apiSql).toContain("source = 'edge_logs'")
+    expect(apiSql).toContain("log_attributes['request.method']")
+    expect(apiSql).toContain('limit 25')
+
+    const postgresSql = getLogQuery('postgres', 10)
+    expect(postgresSql).toContain('from logs')
+    expect(postgresSql).toContain("source = 'postgres_logs'")
+    expect(postgresSql).toContain("log_attributes['parsed.error_severity']")
+  })
 })

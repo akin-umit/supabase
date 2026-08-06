@@ -10,13 +10,13 @@ import {
   useSelfHostedManagementQuery,
 } from '@/data/self-hosted/management'
 
-type Publication = { name: string; tables: string[]; allTables?: boolean }
+type Publication = { name: string; tables: string[]; allTables?: boolean; all_tables?: boolean }
 type Slot = { name: string; plugin: string; active: boolean; retainedBytes?: number }
 type Destination = {
   id: string
   name: string
   type: string
-  status: 'active' | 'paused' | 'failed'
+  status: 'active' | 'paused' | 'failed' | 'configured'
   publication: string
   endpoint?: string
 }
@@ -27,13 +27,18 @@ type ReplicationState = {
   destinations: Destination[]
 }
 
-const destinationStatuses = new Set<Destination['status']>(['active', 'paused', 'failed'])
+const destinationStatuses = new Set<Destination['status']>([
+  'active',
+  'paused',
+  'failed',
+  'configured',
+])
 
 function normalizeReplicationState(data: ReplicationState | undefined): ReplicationState {
   const publications = Array.isArray(data?.publications)
     ? data.publications.map((item) => ({
         name: String(item?.name ?? 'unnamed_publication'),
-        allTables: Boolean(item?.allTables),
+        allTables: Boolean(item?.allTables ?? item?.all_tables),
         tables: Array.isArray(item?.tables) ? item.tables.filter(Boolean).map(String) : [],
       }))
     : []
@@ -88,7 +93,7 @@ export function SelfHostedReplication() {
 
   const submit = async () => {
     try {
-      await create.mutateAsync({ name, publication, endpoint, type: 'postgres' })
+      await create.mutateAsync({ name, publication, endpoint, credential: endpoint, type: 'postgres' })
       setName('')
       setEndpoint('')
       toast.success('Replication destination created')
@@ -116,7 +121,11 @@ export function SelfHostedReplication() {
               <div key={item.name} className="rounded border p-3">
                 <p className="font-mono text-sm">{item.name}</p>
                 <p className="text-xs text-foreground-light">
-                  {item.allTables ? 'All tables' : item.tables.join(', ') || 'No tables'}
+                  {item.allTables
+                    ? 'All tables'
+                    : item.tables.length > 0
+                      ? item.tables.join(', ')
+                      : 'No tables'}
                 </p>
               </div>
             ))

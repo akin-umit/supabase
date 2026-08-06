@@ -22,6 +22,19 @@ type RealtimeManagementResponse = {
   settings?: Partial<SelfHostedRealtimeConfig>
 }
 
+const DEFAULT_SELF_HOSTED_REALTIME_CONFIG: SelfHostedRealtimeConfig = {
+  private_only: false,
+  connection_pool: 5,
+  max_concurrent_users: 200,
+  max_events_per_second: 100,
+  max_bytes_per_second: 1_000_000,
+  max_channels_per_client: 100,
+  max_joins_per_second: 100,
+  max_presence_events_per_second: 5,
+  max_payload_size_in_kb: 100,
+  suspend: false,
+}
+
 export class RealtimeManagementApiError extends Error {
   constructor(
     message: string,
@@ -59,28 +72,63 @@ function managementUrl(projectRef: string) {
   return url
 }
 
+function readBoolean(value: unknown, fallback: boolean) {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (['true', '1', 'on', 'yes'].includes(normalized)) return true
+    if (['false', '0', 'off', 'no'].includes(normalized)) return false
+  }
+  return fallback
+}
+
+function readNumber(value: unknown, fallback: number) {
+  const parsed = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
 function validateManagementSettings(payload: RealtimeManagementResponse) {
   const settings = payload.settings
   if (!settings || typeof settings !== 'object') {
     throw new RealtimeManagementApiError('Realtime management API response was invalid', 502)
   }
 
-  const requiredNumbers = [
-    'connection_pool',
-    'max_concurrent_users',
-    'max_events_per_second',
-    'max_presence_events_per_second',
-    'max_payload_size_in_kb',
-  ] as const
-  if (
-    typeof settings.suspend !== 'boolean' ||
-    typeof settings.private_only !== 'boolean' ||
-    requiredNumbers.some((key) => !Number.isFinite(settings[key]))
-  ) {
-    throw new RealtimeManagementApiError('Realtime management API response was invalid', 502)
+  return {
+    suspend: readBoolean(settings.suspend, DEFAULT_SELF_HOSTED_REALTIME_CONFIG.suspend),
+    private_only: readBoolean(settings.private_only, DEFAULT_SELF_HOSTED_REALTIME_CONFIG.private_only),
+    connection_pool: readNumber(
+      settings.connection_pool,
+      DEFAULT_SELF_HOSTED_REALTIME_CONFIG.connection_pool
+    ),
+    max_concurrent_users: readNumber(
+      settings.max_concurrent_users,
+      DEFAULT_SELF_HOSTED_REALTIME_CONFIG.max_concurrent_users
+    ),
+    max_events_per_second: readNumber(
+      settings.max_events_per_second,
+      DEFAULT_SELF_HOSTED_REALTIME_CONFIG.max_events_per_second
+    ),
+    max_bytes_per_second: readNumber(
+      settings.max_bytes_per_second,
+      DEFAULT_SELF_HOSTED_REALTIME_CONFIG.max_bytes_per_second
+    ),
+    max_channels_per_client: readNumber(
+      settings.max_channels_per_client,
+      DEFAULT_SELF_HOSTED_REALTIME_CONFIG.max_channels_per_client
+    ),
+    max_joins_per_second: readNumber(
+      settings.max_joins_per_second,
+      DEFAULT_SELF_HOSTED_REALTIME_CONFIG.max_joins_per_second
+    ),
+    max_presence_events_per_second: readNumber(
+      settings.max_presence_events_per_second,
+      DEFAULT_SELF_HOSTED_REALTIME_CONFIG.max_presence_events_per_second
+    ),
+    max_payload_size_in_kb: readNumber(
+      settings.max_payload_size_in_kb,
+      DEFAULT_SELF_HOSTED_REALTIME_CONFIG.max_payload_size_in_kb
+    ),
   }
-
-  return settings as SelfHostedRealtimeConfig
 }
 
 async function requestManagedRealtimeConfig(

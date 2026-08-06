@@ -23,6 +23,7 @@ function normalizeKey(key: any) {
     description: key.description ?? key.name ?? 'Self-hosted runtime credential',
     access_key: key.access_key ?? key.accessKeyId ?? key.keyId ?? '',
     created_at: key.created_at ?? key.createdAt ?? null,
+    status: key.status ?? 'standby',
   }
 }
 
@@ -54,6 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(201).json({
         ...key,
         secret_key: (data as any)?.secretAccessKey ?? (data as any)?.secret_key,
+        operation: (data as any)?.operation,
       })
     }
 
