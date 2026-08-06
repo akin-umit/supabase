@@ -27,6 +27,45 @@ type ReplicationState = {
   destinations: Destination[]
 }
 
+const destinationStatuses = new Set<Destination['status']>(['active', 'paused', 'failed'])
+
+function normalizeReplicationState(data: ReplicationState | undefined): ReplicationState {
+  const publications = Array.isArray(data?.publications)
+    ? data.publications.map((item) => ({
+        name: String(item?.name ?? 'unnamed_publication'),
+        allTables: Boolean(item?.allTables),
+        tables: Array.isArray(item?.tables) ? item.tables.filter(Boolean).map(String) : [],
+      }))
+    : []
+
+  const slots = Array.isArray(data?.slots)
+    ? data.slots.map((slot) => ({
+        name: String(slot?.name ?? 'unnamed_slot'),
+        plugin: String(slot?.plugin ?? 'unknown'),
+        active: Boolean(slot?.active),
+        retainedBytes: typeof slot?.retainedBytes === 'number' ? slot.retainedBytes : undefined,
+      }))
+    : []
+
+  const destinations = Array.isArray(data?.destinations)
+    ? data.destinations.map((destination) => ({
+        id: String(destination?.id ?? destination?.name ?? 'destination'),
+        name: String(destination?.name ?? 'Unnamed destination'),
+        type: String(destination?.type ?? 'postgres'),
+        status: destinationStatuses.has(destination?.status) ? destination.status : 'paused',
+        publication: String(destination?.publication ?? ''),
+        endpoint: destination?.endpoint ? String(destination.endpoint) : undefined,
+      }))
+    : []
+
+  return {
+    walLevel: String(data?.walLevel ?? 'unknown'),
+    publications,
+    slots,
+    destinations,
+  }
+}
+
 export function SelfHostedReplication() {
   const { ref } = useParams()
   const [name, setName] = useState('')
@@ -45,6 +84,7 @@ export function SelfHostedReplication() {
     resource: (value) => ['replication', 'destinations', value.id],
     method: 'DELETE',
   })
+  const replication = normalizeReplicationState(data)
 
   const submit = async () => {
     try {
@@ -70,8 +110,9 @@ export function SelfHostedReplication() {
             <Database />
             <h3 className="text-lg">Publications</h3>
           </div>
-          {data?.publications?.length ? (
-            data.publications.map((item) => (
+          <p className="text-xs text-foreground-light">WAL level: {replication.walLevel}</p>
+          {replication.publications.length ? (
+            replication.publications.map((item) => (
               <div key={item.name} className="rounded border p-3">
                 <p className="font-mono text-sm">{item.name}</p>
                 <p className="text-xs text-foreground-light">
@@ -88,8 +129,8 @@ export function SelfHostedReplication() {
             <RadioTower />
             <h3 className="text-lg">Replication slots</h3>
           </div>
-          {data?.slots?.length ? (
-            data.slots.map((slot) => (
+          {replication.slots.length ? (
+            replication.slots.map((slot) => (
               <div key={slot.name} className="flex items-center justify-between rounded border p-3">
                 <div>
                   <p className="font-mono text-sm">{slot.name}</p>
@@ -144,7 +185,7 @@ export function SelfHostedReplication() {
       </Card>
 
       <div className="space-y-3">
-        {data?.destinations?.map((destination) => (
+        {replication.destinations.map((destination) => (
           <Card key={destination.id} className="flex items-center gap-4 p-4">
             <div className="min-w-0 flex-1">
               <p>{destination.name}</p>
