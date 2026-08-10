@@ -11,6 +11,7 @@ const ALLOWED_ROOTS = new Set([
   'migrations',
   'auth',
   'storage',
+  'runtime',
   'integrations',
   'webhooks',
 ])

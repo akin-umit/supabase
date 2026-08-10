@@ -38,4 +38,25 @@ describe('self-hosted management client', () => {
       })
     ).rejects.toBeInstanceOf(SelfHostedManagementError)
   })
+
+  it('allows runtime resources used by self-hosted settings panels', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_TOKEN', 'read-token')
+    const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ status: 'configured' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    )
+
+    await requestSelfHostedManagement({
+      projectRef: 'default',
+      resource: ['runtime', 'logging'],
+      method: 'GET',
+    })
+
+    const [url] = fetchMock.mock.calls[0]
+    expect(String(url)).toBe('http://management.internal/v1/projects/default/runtime/logging')
+    fetchMock.mockRestore()
+  })
 })

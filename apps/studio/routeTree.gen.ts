@@ -283,6 +283,7 @@ import { Route as ProjectRefStorageFilesBucketsBucketIdRouteImport } from './rou
 import { Route as ProjectRefStorageAnalyticsBucketsBucketIdRouteImport } from './routes/project/$ref/storage/analytics/buckets/$bucketId'
 import { Route as ProjectRefDatabaseReplicationReplicaReplicaIdRouteImport } from './routes/project/$ref/database/replication/replica/$replicaId'
 import { Route as ApiV1ProjectsRefTypesTypescriptRouteImport } from './routes/api/v1/projects/$ref/types/typescript'
+import { Route as ApiV1ProjectsRefFunctionsDeployRouteImport } from './routes/api/v1/projects/$ref/functions/deploy'
 import { Route as ApiV1ProjectsRefDatabaseMigrationsRouteImport } from './routes/api/v1/projects/$ref/database/migrations'
 import { Route as ApiV1ProjectsRefApiKeysIdRouteImport } from './routes/api/v1/projects/$ref/api-keys/$id'
 import { Route as ApiPlatformStorageRefCredentialsIdRouteImport } from './routes/api/platform/storage/$ref/credentials/$id'
@@ -312,11 +313,11 @@ import { Route as ApiPlatformProjectsRefConfigSecretsUpdateStatusRouteImport } f
 import { Route as ApiPlatformProjectsRefAnalyticsLogDrainsUuidRouteImport } from './routes/api/platform/projects/$ref/analytics/log-drains/$uuid'
 import { Route as ApiPlatformProjectsRefAnalyticsEndpointsNameRouteImport } from './routes/api/platform/projects/$ref/analytics/endpoints/$name'
 import { Route as ApiPlatformAuthRefUsersIdFactorsRouteImport } from './routes/api/platform/auth/$ref/users/$id/factors'
-import { Route as ApiV1ProjectsRefConfigAuthSigningKeysIdRouteImport } from './routes/api/v1/projects/$ref/config/auth/signing-keys/$id'
 import { Route as ApiV1ProjectsRefConfigAuthSigningKeysIndexRouteImport } from './routes/api/v1/projects/$ref/config/auth/signing-keys/index'
 import { Route as ApiPlatformStorageRefVectorBucketsIdIndexesIndexRouteImport } from './routes/api/platform/storage/$ref/vector-buckets/$id/indexes/index'
 import { Route as ApiPlatformStorageRefBucketsIdObjectsIndexRouteImport } from './routes/api/platform/storage/$ref/buckets/$id/objects/index'
 import { Route as ApiV1ProjectsRefConfigAuthSigningKeysLegacyRouteImport } from './routes/api/v1/projects/$ref/config/auth/signing-keys/legacy'
+import { Route as ApiV1ProjectsRefConfigAuthSigningKeysIdRouteImport } from './routes/api/v1/projects/$ref/config/auth/signing-keys/$id'
 import { Route as ApiPlatformStorageRefVectorBucketsIdIndexesIndexNameRouteImport } from './routes/api/platform/storage/$ref/vector-buckets/$id/indexes/$indexName'
 import { Route as ApiPlatformStorageRefBucketsIdObjectsSignMultiRouteImport } from './routes/api/platform/storage/$ref/buckets/$id/objects/sign-multi'
 import { Route as ApiPlatformStorageRefBucketsIdObjectsSignRouteImport } from './routes/api/platform/storage/$ref/buckets/$id/objects/sign'
@@ -1844,6 +1845,12 @@ const ApiV1ProjectsRefTypesTypescriptRoute =
     path: '/api/v1/projects/$ref/types/typescript',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiV1ProjectsRefFunctionsDeployRoute =
+  ApiV1ProjectsRefFunctionsDeployRouteImport.update({
+    id: '/api/v1/projects/$ref/functions/deploy',
+    path: '/api/v1/projects/$ref/functions/deploy',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiV1ProjectsRefDatabaseMigrationsRoute =
   ApiV1ProjectsRefDatabaseMigrationsRouteImport.update({
     id: '/api/v1/projects/$ref/database/migrations',
@@ -2018,12 +2025,6 @@ const ApiPlatformAuthRefUsersIdFactorsRoute =
     path: '/api/platform/auth/$ref/users/$id/factors',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiV1ProjectsRefConfigAuthSigningKeysIdRoute =
-  ApiV1ProjectsRefConfigAuthSigningKeysIdRouteImport.update({
-    id: '/api/v1/projects/$ref/config/auth/signing-keys/$id',
-    path: '/api/v1/projects/$ref/config/auth/signing-keys/$id',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiV1ProjectsRefConfigAuthSigningKeysIndexRoute =
   ApiV1ProjectsRefConfigAuthSigningKeysIndexRouteImport.update({
     id: '/api/v1/projects/$ref/config/auth/signing-keys/',
@@ -2046,6 +2047,12 @@ const ApiV1ProjectsRefConfigAuthSigningKeysLegacyRoute =
   ApiV1ProjectsRefConfigAuthSigningKeysLegacyRouteImport.update({
     id: '/api/v1/projects/$ref/config/auth/signing-keys/legacy',
     path: '/api/v1/projects/$ref/config/auth/signing-keys/legacy',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiV1ProjectsRefConfigAuthSigningKeysIdRoute =
+  ApiV1ProjectsRefConfigAuthSigningKeysIdRouteImport.update({
+    id: '/api/v1/projects/$ref/config/auth/signing-keys/$id',
+    path: '/api/v1/projects/$ref/config/auth/signing-keys/$id',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPlatformStorageRefVectorBucketsIdIndexesIndexNameRoute =
@@ -2364,6 +2371,7 @@ export interface FileRoutesByFullPath {
   '/api/platform/storage/$ref/credentials/$id': typeof ApiPlatformStorageRefCredentialsIdRoute
   '/api/v1/projects/$ref/api-keys/$id': typeof ApiV1ProjectsRefApiKeysIdRoute
   '/api/v1/projects/$ref/database/migrations': typeof ApiV1ProjectsRefDatabaseMigrationsRoute
+  '/api/v1/projects/$ref/functions/deploy': typeof ApiV1ProjectsRefFunctionsDeployRoute
   '/api/v1/projects/$ref/types/typescript': typeof ApiV1ProjectsRefTypesTypescriptRoute
   '/project/$ref/database/replication/replica/$replicaId': typeof ProjectRefDatabaseReplicationReplicaReplicaIdRoute
   '/project/$ref/storage/analytics/buckets/$bucketId': typeof ProjectRefStorageAnalyticsBucketsBucketIdRoute
@@ -2393,7 +2401,6 @@ export interface FileRoutesByFullPath {
   '/api/platform/storage/$ref/vector-buckets/$id/': typeof ApiPlatformStorageRefVectorBucketsIdIndexRoute
   '/api/v1/projects/$ref/functions/$slug/': typeof ApiV1ProjectsRefFunctionsSlugIndexRoute
   '/project/$ref/integrations/$id/$pageId/$childId/': typeof ProjectRefIntegrationsIdPageIdChildIdIndexRoute
-  '/api/v1/projects/$ref/config/auth/signing-keys/$id': typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRoute
   '/api/platform/storage/$ref/buckets/$id/objects/download': typeof ApiPlatformStorageRefBucketsIdObjectsDownloadRoute
   '/api/platform/storage/$ref/buckets/$id/objects/list': typeof ApiPlatformStorageRefBucketsIdObjectsListRoute
   '/api/platform/storage/$ref/buckets/$id/objects/move': typeof ApiPlatformStorageRefBucketsIdObjectsMoveRoute
@@ -2401,6 +2408,7 @@ export interface FileRoutesByFullPath {
   '/api/platform/storage/$ref/buckets/$id/objects/sign': typeof ApiPlatformStorageRefBucketsIdObjectsSignRoute
   '/api/platform/storage/$ref/buckets/$id/objects/sign-multi': typeof ApiPlatformStorageRefBucketsIdObjectsSignMultiRoute
   '/api/platform/storage/$ref/vector-buckets/$id/indexes/$indexName': typeof ApiPlatformStorageRefVectorBucketsIdIndexesIndexNameRoute
+  '/api/v1/projects/$ref/config/auth/signing-keys/$id': typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRoute
   '/api/v1/projects/$ref/config/auth/signing-keys/legacy': typeof ApiV1ProjectsRefConfigAuthSigningKeysLegacyRoute
   '/api/platform/storage/$ref/buckets/$id/objects/': typeof ApiPlatformStorageRefBucketsIdObjectsIndexRoute
   '/api/platform/storage/$ref/vector-buckets/$id/indexes/': typeof ApiPlatformStorageRefVectorBucketsIdIndexesIndexRoute
@@ -2667,6 +2675,7 @@ export interface FileRoutesByTo {
   '/api/platform/storage/$ref/credentials/$id': typeof ApiPlatformStorageRefCredentialsIdRoute
   '/api/v1/projects/$ref/api-keys/$id': typeof ApiV1ProjectsRefApiKeysIdRoute
   '/api/v1/projects/$ref/database/migrations': typeof ApiV1ProjectsRefDatabaseMigrationsRoute
+  '/api/v1/projects/$ref/functions/deploy': typeof ApiV1ProjectsRefFunctionsDeployRoute
   '/api/v1/projects/$ref/types/typescript': typeof ApiV1ProjectsRefTypesTypescriptRoute
   '/project/$ref/database/replication/replica/$replicaId': typeof ProjectRefDatabaseReplicationReplicaReplicaIdRoute
   '/project/$ref/storage/analytics/buckets/$bucketId': typeof ProjectRefStorageAnalyticsBucketsBucketIdRoute
@@ -2696,7 +2705,6 @@ export interface FileRoutesByTo {
   '/api/platform/storage/$ref/vector-buckets/$id': typeof ApiPlatformStorageRefVectorBucketsIdIndexRoute
   '/api/v1/projects/$ref/functions/$slug': typeof ApiV1ProjectsRefFunctionsSlugIndexRoute
   '/project/$ref/integrations/$id/$pageId/$childId': typeof ProjectRefIntegrationsIdPageIdChildIdIndexRoute
-  '/api/v1/projects/$ref/config/auth/signing-keys/$id': typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRoute
   '/api/platform/storage/$ref/buckets/$id/objects/download': typeof ApiPlatformStorageRefBucketsIdObjectsDownloadRoute
   '/api/platform/storage/$ref/buckets/$id/objects/list': typeof ApiPlatformStorageRefBucketsIdObjectsListRoute
   '/api/platform/storage/$ref/buckets/$id/objects/move': typeof ApiPlatformStorageRefBucketsIdObjectsMoveRoute
@@ -2704,6 +2712,7 @@ export interface FileRoutesByTo {
   '/api/platform/storage/$ref/buckets/$id/objects/sign': typeof ApiPlatformStorageRefBucketsIdObjectsSignRoute
   '/api/platform/storage/$ref/buckets/$id/objects/sign-multi': typeof ApiPlatformStorageRefBucketsIdObjectsSignMultiRoute
   '/api/platform/storage/$ref/vector-buckets/$id/indexes/$indexName': typeof ApiPlatformStorageRefVectorBucketsIdIndexesIndexNameRoute
+  '/api/v1/projects/$ref/config/auth/signing-keys/$id': typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRoute
   '/api/v1/projects/$ref/config/auth/signing-keys/legacy': typeof ApiV1ProjectsRefConfigAuthSigningKeysLegacyRoute
   '/api/platform/storage/$ref/buckets/$id/objects': typeof ApiPlatformStorageRefBucketsIdObjectsIndexRoute
   '/api/platform/storage/$ref/vector-buckets/$id/indexes': typeof ApiPlatformStorageRefVectorBucketsIdIndexesIndexRoute
@@ -2985,6 +2994,7 @@ export interface FileRoutesById {
   '/api/platform/storage/$ref/credentials/$id': typeof ApiPlatformStorageRefCredentialsIdRoute
   '/api/v1/projects/$ref/api-keys/$id': typeof ApiV1ProjectsRefApiKeysIdRoute
   '/api/v1/projects/$ref/database/migrations': typeof ApiV1ProjectsRefDatabaseMigrationsRoute
+  '/api/v1/projects/$ref/functions/deploy': typeof ApiV1ProjectsRefFunctionsDeployRoute
   '/api/v1/projects/$ref/types/typescript': typeof ApiV1ProjectsRefTypesTypescriptRoute
   '/project/$ref/database/replication/replica/$replicaId': typeof ProjectRefDatabaseReplicationReplicaReplicaIdRoute
   '/project/$ref/storage/analytics/buckets/$bucketId': typeof ProjectRefStorageAnalyticsBucketsBucketIdRoute
@@ -3014,7 +3024,6 @@ export interface FileRoutesById {
   '/api/platform/storage/$ref/vector-buckets/$id/': typeof ApiPlatformStorageRefVectorBucketsIdIndexRoute
   '/api/v1/projects/$ref/functions/$slug/': typeof ApiV1ProjectsRefFunctionsSlugIndexRoute
   '/project/$ref/integrations/$id/$pageId/$childId/': typeof ProjectRefIntegrationsIdPageIdChildIdIndexRoute
-  '/api/v1/projects/$ref/config/auth/signing-keys/$id': typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRoute
   '/api/platform/storage/$ref/buckets/$id/objects/download': typeof ApiPlatformStorageRefBucketsIdObjectsDownloadRoute
   '/api/platform/storage/$ref/buckets/$id/objects/list': typeof ApiPlatformStorageRefBucketsIdObjectsListRoute
   '/api/platform/storage/$ref/buckets/$id/objects/move': typeof ApiPlatformStorageRefBucketsIdObjectsMoveRoute
@@ -3022,6 +3031,7 @@ export interface FileRoutesById {
   '/api/platform/storage/$ref/buckets/$id/objects/sign': typeof ApiPlatformStorageRefBucketsIdObjectsSignRoute
   '/api/platform/storage/$ref/buckets/$id/objects/sign-multi': typeof ApiPlatformStorageRefBucketsIdObjectsSignMultiRoute
   '/api/platform/storage/$ref/vector-buckets/$id/indexes/$indexName': typeof ApiPlatformStorageRefVectorBucketsIdIndexesIndexNameRoute
+  '/api/v1/projects/$ref/config/auth/signing-keys/$id': typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRoute
   '/api/v1/projects/$ref/config/auth/signing-keys/legacy': typeof ApiV1ProjectsRefConfigAuthSigningKeysLegacyRoute
   '/api/platform/storage/$ref/buckets/$id/objects/': typeof ApiPlatformStorageRefBucketsIdObjectsIndexRoute
   '/api/platform/storage/$ref/vector-buckets/$id/indexes/': typeof ApiPlatformStorageRefVectorBucketsIdIndexesIndexRoute
@@ -3302,6 +3312,7 @@ export interface FileRouteTypes {
     | '/api/platform/storage/$ref/credentials/$id'
     | '/api/v1/projects/$ref/api-keys/$id'
     | '/api/v1/projects/$ref/database/migrations'
+    | '/api/v1/projects/$ref/functions/deploy'
     | '/api/v1/projects/$ref/types/typescript'
     | '/project/$ref/database/replication/replica/$replicaId'
     | '/project/$ref/storage/analytics/buckets/$bucketId'
@@ -3331,7 +3342,6 @@ export interface FileRouteTypes {
     | '/api/platform/storage/$ref/vector-buckets/$id/'
     | '/api/v1/projects/$ref/functions/$slug/'
     | '/project/$ref/integrations/$id/$pageId/$childId/'
-    | '/api/v1/projects/$ref/config/auth/signing-keys/$id'
     | '/api/platform/storage/$ref/buckets/$id/objects/download'
     | '/api/platform/storage/$ref/buckets/$id/objects/list'
     | '/api/platform/storage/$ref/buckets/$id/objects/move'
@@ -3339,6 +3349,7 @@ export interface FileRouteTypes {
     | '/api/platform/storage/$ref/buckets/$id/objects/sign'
     | '/api/platform/storage/$ref/buckets/$id/objects/sign-multi'
     | '/api/platform/storage/$ref/vector-buckets/$id/indexes/$indexName'
+    | '/api/v1/projects/$ref/config/auth/signing-keys/$id'
     | '/api/v1/projects/$ref/config/auth/signing-keys/legacy'
     | '/api/platform/storage/$ref/buckets/$id/objects/'
     | '/api/platform/storage/$ref/vector-buckets/$id/indexes/'
@@ -3605,6 +3616,7 @@ export interface FileRouteTypes {
     | '/api/platform/storage/$ref/credentials/$id'
     | '/api/v1/projects/$ref/api-keys/$id'
     | '/api/v1/projects/$ref/database/migrations'
+    | '/api/v1/projects/$ref/functions/deploy'
     | '/api/v1/projects/$ref/types/typescript'
     | '/project/$ref/database/replication/replica/$replicaId'
     | '/project/$ref/storage/analytics/buckets/$bucketId'
@@ -3634,7 +3646,6 @@ export interface FileRouteTypes {
     | '/api/platform/storage/$ref/vector-buckets/$id'
     | '/api/v1/projects/$ref/functions/$slug'
     | '/project/$ref/integrations/$id/$pageId/$childId'
-    | '/api/v1/projects/$ref/config/auth/signing-keys/$id'
     | '/api/platform/storage/$ref/buckets/$id/objects/download'
     | '/api/platform/storage/$ref/buckets/$id/objects/list'
     | '/api/platform/storage/$ref/buckets/$id/objects/move'
@@ -3642,6 +3653,7 @@ export interface FileRouteTypes {
     | '/api/platform/storage/$ref/buckets/$id/objects/sign'
     | '/api/platform/storage/$ref/buckets/$id/objects/sign-multi'
     | '/api/platform/storage/$ref/vector-buckets/$id/indexes/$indexName'
+    | '/api/v1/projects/$ref/config/auth/signing-keys/$id'
     | '/api/v1/projects/$ref/config/auth/signing-keys/legacy'
     | '/api/platform/storage/$ref/buckets/$id/objects'
     | '/api/platform/storage/$ref/vector-buckets/$id/indexes'
@@ -3922,6 +3934,7 @@ export interface FileRouteTypes {
     | '/api/platform/storage/$ref/credentials/$id'
     | '/api/v1/projects/$ref/api-keys/$id'
     | '/api/v1/projects/$ref/database/migrations'
+    | '/api/v1/projects/$ref/functions/deploy'
     | '/api/v1/projects/$ref/types/typescript'
     | '/project/$ref/database/replication/replica/$replicaId'
     | '/project/$ref/storage/analytics/buckets/$bucketId'
@@ -3951,7 +3964,6 @@ export interface FileRouteTypes {
     | '/api/platform/storage/$ref/vector-buckets/$id/'
     | '/api/v1/projects/$ref/functions/$slug/'
     | '/project/$ref/integrations/$id/$pageId/$childId/'
-    | '/api/v1/projects/$ref/config/auth/signing-keys/$id'
     | '/api/platform/storage/$ref/buckets/$id/objects/download'
     | '/api/platform/storage/$ref/buckets/$id/objects/list'
     | '/api/platform/storage/$ref/buckets/$id/objects/move'
@@ -3959,6 +3971,7 @@ export interface FileRouteTypes {
     | '/api/platform/storage/$ref/buckets/$id/objects/sign'
     | '/api/platform/storage/$ref/buckets/$id/objects/sign-multi'
     | '/api/platform/storage/$ref/vector-buckets/$id/indexes/$indexName'
+    | '/api/v1/projects/$ref/config/auth/signing-keys/$id'
     | '/api/v1/projects/$ref/config/auth/signing-keys/legacy'
     | '/api/platform/storage/$ref/buckets/$id/objects/'
     | '/api/platform/storage/$ref/vector-buckets/$id/indexes/'
@@ -4059,6 +4072,7 @@ export interface RootRouteChildren {
   ApiPlatformPropsProjectRefApiRoute: typeof ApiPlatformPropsProjectRefApiRoute
   ApiPlatformStorageRefCredentialsIdRoute: typeof ApiPlatformStorageRefCredentialsIdRoute
   ApiV1ProjectsRefDatabaseMigrationsRoute: typeof ApiV1ProjectsRefDatabaseMigrationsRoute
+  ApiV1ProjectsRefFunctionsDeployRoute: typeof ApiV1ProjectsRefFunctionsDeployRoute
   ApiV1ProjectsRefTypesTypescriptRoute: typeof ApiV1ProjectsRefTypesTypescriptRoute
   ApiPlatformAuthRefUsersIndexRoute: typeof ApiPlatformAuthRefUsersIndexRoute
   ApiPlatformPgMetaRefQueryIndexRoute: typeof ApiPlatformPgMetaRefQueryIndexRoute
@@ -4081,7 +4095,6 @@ export interface RootRouteChildren {
   ApiPlatformStorageRefBucketsIdIndexRoute: typeof ApiPlatformStorageRefBucketsIdIndexRoute
   ApiPlatformStorageRefVectorBucketsIdIndexRoute: typeof ApiPlatformStorageRefVectorBucketsIdIndexRoute
   ApiV1ProjectsRefFunctionsSlugIndexRoute: typeof ApiV1ProjectsRefFunctionsSlugIndexRoute
-  ApiV1ProjectsRefConfigAuthSigningKeysIdRoute: typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRoute
   ApiPlatformStorageRefBucketsIdObjectsDownloadRoute: typeof ApiPlatformStorageRefBucketsIdObjectsDownloadRoute
   ApiPlatformStorageRefBucketsIdObjectsListRoute: typeof ApiPlatformStorageRefBucketsIdObjectsListRoute
   ApiPlatformStorageRefBucketsIdObjectsMoveRoute: typeof ApiPlatformStorageRefBucketsIdObjectsMoveRoute
@@ -4089,6 +4102,7 @@ export interface RootRouteChildren {
   ApiPlatformStorageRefBucketsIdObjectsSignRoute: typeof ApiPlatformStorageRefBucketsIdObjectsSignRoute
   ApiPlatformStorageRefBucketsIdObjectsSignMultiRoute: typeof ApiPlatformStorageRefBucketsIdObjectsSignMultiRoute
   ApiPlatformStorageRefVectorBucketsIdIndexesIndexNameRoute: typeof ApiPlatformStorageRefVectorBucketsIdIndexesIndexNameRoute
+  ApiV1ProjectsRefConfigAuthSigningKeysIdRoute: typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRoute
   ApiV1ProjectsRefConfigAuthSigningKeysLegacyRoute: typeof ApiV1ProjectsRefConfigAuthSigningKeysLegacyRoute
   ApiPlatformStorageRefBucketsIdObjectsIndexRoute: typeof ApiPlatformStorageRefBucketsIdObjectsIndexRoute
   ApiPlatformStorageRefVectorBucketsIdIndexesIndexRoute: typeof ApiPlatformStorageRefVectorBucketsIdIndexesIndexRoute
@@ -6015,6 +6029,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1ProjectsRefTypesTypescriptRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/projects/$ref/functions/deploy': {
+      id: '/api/v1/projects/$ref/functions/deploy'
+      path: '/api/v1/projects/$ref/functions/deploy'
+      fullPath: '/api/v1/projects/$ref/functions/deploy'
+      preLoaderRoute: typeof ApiV1ProjectsRefFunctionsDeployRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/projects/$ref/database/migrations': {
       id: '/api/v1/projects/$ref/database/migrations'
       path: '/api/v1/projects/$ref/database/migrations'
@@ -6218,13 +6239,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPlatformAuthRefUsersIdFactorsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/v1/projects/$ref/config/auth/signing-keys/$id': {
-      id: '/api/v1/projects/$ref/config/auth/signing-keys/$id'
-      path: '/api/v1/projects/$ref/config/auth/signing-keys/$id'
-      fullPath: '/api/v1/projects/$ref/config/auth/signing-keys/$id'
-      preLoaderRoute: typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/v1/projects/$ref/config/auth/signing-keys/': {
       id: '/api/v1/projects/$ref/config/auth/signing-keys/'
       path: '/api/v1/projects/$ref/config/auth/signing-keys'
@@ -6251,6 +6265,13 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/projects/$ref/config/auth/signing-keys/legacy'
       fullPath: '/api/v1/projects/$ref/config/auth/signing-keys/legacy'
       preLoaderRoute: typeof ApiV1ProjectsRefConfigAuthSigningKeysLegacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/projects/$ref/config/auth/signing-keys/$id': {
+      id: '/api/v1/projects/$ref/config/auth/signing-keys/$id'
+      path: '/api/v1/projects/$ref/config/auth/signing-keys/$id'
+      fullPath: '/api/v1/projects/$ref/config/auth/signing-keys/$id'
+      preLoaderRoute: typeof ApiV1ProjectsRefConfigAuthSigningKeysIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/platform/storage/$ref/vector-buckets/$id/indexes/$indexName': {
@@ -7092,6 +7113,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPlatformStorageRefCredentialsIdRoute,
   ApiV1ProjectsRefDatabaseMigrationsRoute:
     ApiV1ProjectsRefDatabaseMigrationsRoute,
+  ApiV1ProjectsRefFunctionsDeployRoute: ApiV1ProjectsRefFunctionsDeployRoute,
   ApiV1ProjectsRefTypesTypescriptRoute: ApiV1ProjectsRefTypesTypescriptRoute,
   ApiPlatformAuthRefUsersIndexRoute: ApiPlatformAuthRefUsersIndexRoute,
   ApiPlatformPgMetaRefQueryIndexRoute: ApiPlatformPgMetaRefQueryIndexRoute,
@@ -7143,6 +7165,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPlatformStorageRefBucketsIdObjectsSignMultiRoute,
   ApiPlatformStorageRefVectorBucketsIdIndexesIndexNameRoute:
     ApiPlatformStorageRefVectorBucketsIdIndexesIndexNameRoute,
+  ApiV1ProjectsRefConfigAuthSigningKeysIdRoute:
+    ApiV1ProjectsRefConfigAuthSigningKeysIdRoute,
   ApiV1ProjectsRefConfigAuthSigningKeysLegacyRoute:
     ApiV1ProjectsRefConfigAuthSigningKeysLegacyRoute,
   ApiPlatformStorageRefBucketsIdObjectsIndexRoute:
@@ -7151,8 +7175,6 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPlatformStorageRefVectorBucketsIdIndexesIndexRoute,
   ApiV1ProjectsRefConfigAuthSigningKeysIndexRoute:
     ApiV1ProjectsRefConfigAuthSigningKeysIndexRoute,
-  ApiV1ProjectsRefConfigAuthSigningKeysIdRoute:
-    ApiV1ProjectsRefConfigAuthSigningKeysIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

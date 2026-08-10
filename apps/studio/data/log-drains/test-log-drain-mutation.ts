@@ -10,8 +10,9 @@ export type LogDrainTestVariables = {
 }
 
 export async function testLogDrain({ projectRef, token }: LogDrainTestVariables) {
-  const { data, error } = await post('/platform/projects/{ref}/analytics/log-drains/{token}/test', {
+  const { data, error } = await post('/platform/projects/{ref}/analytics/log-drains/{token}', {
     params: { path: { ref: projectRef, token } },
+    body: { action: 'test' },
   })
 
   if (error) handleError(error)

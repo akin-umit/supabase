@@ -14,10 +14,12 @@ describe('project log drain hooks', () => {
   it('tests a log drain connection by token at the project-scoped path', async () => {
     let receivedRef: string | undefined
     let receivedToken: string | undefined
+    let receivedAction: unknown
     mswServer.use(
-      http.post(`${BASE}/:token/test`, ({ params }) => {
+      http.post(`${BASE}/:token`, async ({ params, request }) => {
         receivedRef = params.ref as string
         receivedToken = params.token as string
+        receivedAction = await request.json()
         return HttpResponse.json({})
       })
     )
@@ -29,5 +31,6 @@ describe('project log drain hooks', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(receivedRef).toBe(REF)
     expect(receivedToken).toBe('tok-1')
+    expect(receivedAction).toEqual({ action: 'test' })
   })
 })

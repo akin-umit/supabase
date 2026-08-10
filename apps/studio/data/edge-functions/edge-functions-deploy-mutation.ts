@@ -9,6 +9,7 @@ import {
   getStaticPatterns,
 } from '@/components/interfaces/EdgeFunctions/EdgeFunctions.utils'
 import { handleError, post } from '@/data/fetchers'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
 type EdgeFunctionsDeployBodyMetadata = components['schemas']['FunctionDeployBody']['metadata']
@@ -39,23 +40,30 @@ export async function deployEdgeFunction({
   const { data, error } = await post(`/v1/projects/{ref}/functions/deploy`, {
     params: { path: { ref: projectRef }, query: { slug: slug } },
     ...(authorization && { headers: { Authorization: authorization } }),
-    body: {
-      file: files as any,
-      metadata: metadata as EdgeFunctionsDeployBodyMetadata,
-    },
-    bodySerializer(body) {
-      const formData = new FormData()
+    body: IS_PLATFORM
+      ? {
+          file: files as any,
+          metadata: metadata as EdgeFunctionsDeployBodyMetadata,
+        }
+      : {
+          files,
+          metadata,
+        },
+    ...(IS_PLATFORM && {
+      bodySerializer(body) {
+        const formData = new FormData()
 
-      formData.append('metadata', JSON.stringify(body.metadata))
+        formData.append('metadata', JSON.stringify(body.metadata))
 
-      body?.file?.forEach((f: any) => {
-        const file = f as { name: string; content: string }
-        const blob = new Blob([file.content], { type: 'text/plain' })
-        formData.append('file', blob, file.name)
-      })
+        body?.file?.forEach((f: any) => {
+          const file = f as { name: string; content: string }
+          const blob = new Blob([file.content], { type: 'text/plain' })
+          formData.append('file', blob, file.name)
+        })
 
-      return formData
-    },
+        return formData
+      },
+    }),
   })
 
   if (error) handleError(error)

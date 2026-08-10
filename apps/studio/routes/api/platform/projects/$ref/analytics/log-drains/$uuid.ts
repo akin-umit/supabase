@@ -6,5 +6,5 @@ import nextHandler from '@/pages/api/platform/projects/[ref]/analytics/log-drain
 const handler = toWebHandler(nextHandler)
 
 export const Route = createFileRoute('/api/platform/projects/$ref/analytics/log-drains/$uuid')({
-  server: { handlers: { GET: handler, PUT: handler, DELETE: handler } },
+  server: { handlers: { GET: handler, POST: handler, PUT: handler, DELETE: handler } },
 })

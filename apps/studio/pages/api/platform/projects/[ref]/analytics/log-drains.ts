@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
 import { apiWrapper } from '@/lib/api/apiWrapper'
+import { IS_PLATFORM } from '@/lib/constants'
 import { PROJECT_ANALYTICS_URL } from '@/lib/constants/api'
 
 export default (req: NextApiRequest, res: NextApiResponse) => apiWrapper(req, res, handler)
@@ -12,13 +13,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (missingEnvVars !== true) {
     return res
-      .status(500)
+      .status(IS_PLATFORM ? 500 : 503)
       .json({ error: { message: `${missingEnvVars.join(', ')} env variables are not set` } })
   }
 
   const baseUrl = PROJECT_ANALYTICS_URL
   if (!baseUrl) {
-    return res.status(500).json({ error: { message: `LOGFLARE_URL env variable is not set` } })
+    return res
+      .status(IS_PLATFORM ? 500 : 503)
+      .json({ error: { message: `LOGFLARE_URL env variable is not set` } })
   }
 
   switch (method) {
@@ -39,9 +42,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       })
 
       if (!upstream.ok) {
-        return res
-          .status(500)
-          .json({ error: { message: 'Failed to fetch log drains from upstream' } })
+        const message = await upstream.text().catch(() => '')
+        return res.status(upstream.status).json({
+          error: { message: message || 'Failed to fetch log drains from Logflare' },
+        })
       }
 
       const resp = await upstream.json()
@@ -57,7 +61,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // create the log drain
       const postUrl = new URL(baseUrl)
       postUrl.pathname = '/api/backends'
-      const postResult = await fetch(postUrl, {
+      const postResponse = await fetch(postUrl, {
         body: JSON.stringify({
           ...req.body,
           config: req.body.config,
@@ -71,18 +75,30 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-      }).then(async (r) => await r.json())
+      })
+      const postResult = await postResponse.json().catch(() => undefined)
+      if (!postResponse.ok || !postResult) {
+        return res.status(postResponse.status).json({
+          error: { message: postResult?.error ?? 'Failed to create log drain in Logflare' },
+        })
+      }
 
       const sourcesGetUrl = new URL(baseUrl)
       sourcesGetUrl.pathname = '/api/sources'
-      const sources = await fetch(sourcesGetUrl, {
+      const sourcesResponse = await fetch(sourcesGetUrl, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${process.env.LOGFLARE_PRIVATE_ACCESS_TOKEN}`,
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-      }).then((r) => r.json())
+      })
+      const sources = await sourcesResponse.json().catch(() => undefined)
+      if (!sourcesResponse.ok || !Array.isArray(sources)) {
+        return res.status(sourcesResponse.status).json({
+          error: { message: 'Log drain was created, but Logflare sources could not be loaded' },
+        })
+      }
 
       const params = sources
         .filter((source: { name: string; metadata: { type: string } }) =>
@@ -103,7 +119,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         })
       const rulesPostUrl = new URL(baseUrl)
       rulesPostUrl.pathname = '/api/rules'
-      await Promise.all(
+      const ruleResponses = await Promise.all(
         params.map((param: any) =>
           fetch(rulesPostUrl, {
             method: 'POST',
@@ -116,6 +132,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           })
         )
       )
+      const failedRule = ruleResponses.find((response) => !response.ok)
+      if (failedRule) {
+        return res.status(failedRule.status).json({
+          error: { message: 'Log drain was created, but Logflare source routing failed' },
+        })
+      }
       return res.status(201).json(postResult)
 
     default:

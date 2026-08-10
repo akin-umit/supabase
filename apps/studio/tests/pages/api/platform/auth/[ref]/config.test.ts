@@ -37,8 +37,8 @@ describe('/api/platform/auth/[ref]/config', () => {
 
     await handler(req, res)
 
-    expect(res._getStatusCode()).toBe(501)
-    expect(JSON.parse(res._getData()).error.message).toContain('not implemented')
+    expect(res._getStatusCode()).toBe(503)
+    expect(JSON.parse(res._getData()).error.message).toContain('Management API is not configured')
   })
 
   it('returns 405 for unsupported methods', async () => {
