@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 
 import { organizationKeys } from './keys'
 import { handleError, patch } from '@/data/fetchers'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
 export type OrganizationMfaToggleVariables = {
@@ -14,6 +15,8 @@ export async function toggleOrganizationMfa({ slug, setEnforced }: OrganizationM
   if (!slug) {
     throw new Error('Slug is required')
   }
+  if (!IS_PLATFORM) return { enforced: setEnforced }
+
   const { data, error } = await patch('/platform/organizations/{slug}/members/mfa/enforcement', {
     params: { path: { slug } },
     body: { enforced: setEnforced },

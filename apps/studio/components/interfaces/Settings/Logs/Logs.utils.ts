@@ -219,9 +219,15 @@ limit ${limitLit}
 
     case 'function_edge_logs':
       if (!IS_PLATFORM) {
+        const selfHostedWhere = genWhereStatement(table, filters, {
+          ...SQL_FILTER_TEMPLATES[table],
+          'metadata.function_id': (value: string) =>
+            safeSql`function_id = ${analyticsLiteral(value)}`,
+        })
         return safeSql`
-select id, function_edge_logs.timestamp, event_message
+select id, function_edge_logs.timestamp, event_message, function_id
 from function_edge_logs
+${selfHostedWhere}
 ${orderBy}
 limit ${limitLit}
 `

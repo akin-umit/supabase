@@ -11,6 +11,7 @@ export type OrgSSOConfigVariables = {
 
 export async function getOrgSSOConfig({ orgSlug }: OrgSSOConfigVariables, signal?: AbortSignal) {
   if (!orgSlug) throw new Error('Organization slug is required')
+  if (!IS_PLATFORM) return null
 
   const { data, error } = await get('/platform/organizations/{slug}/sso', {
     params: { path: { slug: orgSlug } },
@@ -44,7 +45,7 @@ export const useOrgSSOConfigQuery = <TData = OrgSSOConfigData>(
   return useQuery<OrgSSOConfigData, OrgSSOConfigError, TData>({
     queryKey: orgSSOKeys.orgSSOConfig(orgSlug),
     queryFn: ({ signal }) => getOrgSSOConfig({ orgSlug }, signal),
-    enabled: enabled && IS_PLATFORM && typeof orgSlug !== 'undefined',
+    enabled: enabled && typeof orgSlug !== 'undefined',
     ...options,
   })
 }

@@ -20,6 +20,7 @@ import { useOrganizationMfaToggleMutation } from '@/data/organizations/organizat
 import { useOrganizationMfaQuery } from '@/data/organizations/organization-mfa-query'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { IS_PLATFORM } from '@/lib/constants'
 import { useProfile } from '@/lib/profile'
 import { useTrack } from '@/lib/telemetry/track'
 
@@ -84,9 +85,11 @@ export const SecuritySettings = () => {
   }, [mfaConfig, form])
 
   const hasMFAEnabled =
-    members?.find((member) => member.primary_email == profile?.primary_email)?.mfa_enabled ?? false
+    !IS_PLATFORM ||
+    (members?.find((member) => member.primary_email == profile?.primary_email)?.mfa_enabled ??
+      false)
 
-  const requiresPersonalMfa = isSuccessMembers && canUpdateMfaConfig && !hasMFAEnabled
+  const requiresPersonalMfa = IS_PLATFORM && isSuccessMembers && canUpdateMfaConfig && !hasMFAEnabled
 
   const isLoadingMfaEnforcementSettings =
     isLoadingMfa || isLoadingPermissions || isLoadingEntitlement || isLoadingMembers

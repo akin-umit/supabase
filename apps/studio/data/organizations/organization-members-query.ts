@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { organizationKeys } from './keys'
 import type { components } from '@/data/api'
 import { get, handleError } from '@/data/fetchers'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type OrganizationMembersVariables = {
@@ -20,6 +21,7 @@ export async function getOrganizationMembers(
   signal?: AbortSignal
 ) {
   if (!slug) throw new Error('slug is required')
+  if (!IS_PLATFORM) return [] as OrganizationMember[]
 
   const [members, invites] = await Promise.all([
     get('/platform/organizations/{slug}/members', { params: { path: { slug } }, signal }),

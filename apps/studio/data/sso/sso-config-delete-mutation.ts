@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { orgSSOKeys } from './keys'
 import { del, handleError } from '@/data/fetchers'
 import { organizationKeys as organizationKeysV1 } from '@/data/organizations/keys'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
 export type SSOConfigDeleteVariables = {
@@ -11,6 +12,8 @@ export type SSOConfigDeleteVariables = {
 }
 
 export async function deleteSSOConfig({ slug }: SSOConfigDeleteVariables) {
+  if (!IS_PLATFORM) return null
+
   const { data, error } = await del('/platform/organizations/{slug}/sso', {
     params: { path: { slug } },
   })
@@ -35,10 +38,14 @@ export const useSSOConfigDeleteMutation = ({
     mutationFn: (vars) => deleteSSOConfig(vars),
     async onSuccess(data, variables, context) {
       const { slug } = variables
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: orgSSOKeys.orgSSOConfig(slug) }),
-        queryClient.invalidateQueries({ queryKey: organizationKeysV1.members(slug) }),
-      ])
+      if (IS_PLATFORM) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: orgSSOKeys.orgSSOConfig(slug) }),
+          queryClient.invalidateQueries({ queryKey: organizationKeysV1.members(slug) }),
+        ])
+      } else {
+        queryClient.setQueryData(orgSSOKeys.orgSSOConfig(slug), null)
+      }
       await onSuccess?.(data, variables, context)
     },
     async onError(data, variables, context) {
