@@ -8,6 +8,8 @@ import { IS_PLATFORM } from '@/lib/constants'
 
 const SAFE_NAME = /^[a-z][a-z0-9_-]{2,62}$/
 
+type UnknownRecord = Record<string, unknown>
+
 function nameFromDescription(description: unknown) {
   const base = String(description ?? 'studio-key')
     .toLowerCase()
@@ -17,11 +19,18 @@ function nameFromDescription(description: unknown) {
   return SAFE_NAME.test(base) ? base : `studio-key-${Date.now().toString(36)}`
 }
 
-function normalizeKey(key: any) {
+function getRecord(value: unknown): UnknownRecord {
+  return typeof value === 'object' && value !== null ? (value as UnknownRecord) : {}
+}
+
+function normalizeKey(value: unknown) {
+  const key = getRecord(value)
+  const accessKey =
+    key.access_key ?? key.accessKey ?? key.accessKeyId ?? key.access_key_id ?? key.keyId ?? key.id
   return {
     id: key.id,
     description: key.description ?? key.name ?? 'Self-hosted runtime credential',
-    access_key: key.access_key ?? key.accessKeyId ?? key.keyId ?? '',
+    access_key: accessKey,
     created_at: key.created_at ?? key.createdAt ?? null,
     status: key.status ?? 'standby',
   }
@@ -51,15 +60,64 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
 
     if (req.method === 'POST') {
-      const key = normalizeKey((data as any)?.key ?? data)
+      const payload = getRecord(data)
+      const operation = getRecord(payload.operation)
+
+      if (operation.status === 'failed') {
+        const operationError = getRecord(operation.error)
+        const message =
+          typeof operationError.message === 'string'
+            ? operationError.message
+            : typeof payload.message === 'string'
+              ? payload.message
+              : 'S3 access key activation failed'
+
+        return res.status(502).json({
+          error: {
+            message,
+            code: operation.code ?? operationError.code ?? 's3_key_activation_failed',
+            operation,
+          },
+        })
+      }
+
+      const keyPayload = getRecord(payload.key ?? payload.credential ?? data)
+      const key = normalizeKey(keyPayload)
+      const secretKey =
+        payload.secretAccessKey ??
+        payload.secret_access_key ??
+        payload.secretKey ??
+        payload.secret_key ??
+        keyPayload.secretAccessKey ??
+        keyPayload.secret_access_key ??
+        keyPayload.secretKey ??
+        keyPayload.secret_key
+
+      if (!key.access_key || !secretKey) {
+        return res.status(502).json({
+          error: {
+            message: 'S3 access key response did not include the created credentials',
+            code: 's3_key_response_invalid',
+          },
+        })
+      }
+
       return res.status(201).json({
         ...key,
-        secret_key: (data as any)?.secretAccessKey ?? (data as any)?.secret_key,
-        operation: (data as any)?.operation,
+        secret_key: secretKey,
+        operation: payload.operation,
       })
     }
 
-    return res.status(200).json({ data: ((data as any)?.keys ?? []).map(normalizeKey) })
+    const payload = getRecord(data)
+    const keys = Array.isArray(payload.keys)
+      ? payload.keys
+      : Array.isArray(payload.data)
+        ? payload.data
+        : Array.isArray(data)
+          ? data
+          : []
+    return res.status(200).json({ data: keys.map(normalizeKey) })
   } catch (error) {
     const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
     const message = error instanceof Error ? error.message : 'Unable to manage S3 credentials'

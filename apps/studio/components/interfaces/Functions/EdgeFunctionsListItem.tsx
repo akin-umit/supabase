@@ -1,4 +1,4 @@
-import { useFlag } from 'common'
+import { IS_PLATFORM, useFlag } from 'common'
 import { useParams } from 'common/hooks'
 import dayjs from 'dayjs'
 import { Check, Copy } from 'lucide-react'
@@ -16,6 +16,7 @@ import {
   type EdgeFunctionsResponse,
 } from '@/data/edge-functions/edge-functions-query'
 import { normalizeFunctionIds } from '@/data/edge-functions/keys'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { createNavigationHandler } from '@/lib/navigation'
 
 interface EdgeFunctionsListItemProps {
@@ -28,6 +29,8 @@ export const EdgeFunctionsListItem = ({ function: item }: EdgeFunctionsListItemP
   const [isCopied, setIsCopied] = useState(false)
 
   const showLastHourStats = useFlag('edgeFunctionsRequestMetrics')
+  const { isSelfHosted } = useDeploymentMode()
+  const isSelfHostedLike = !IS_PLATFORM || isSelfHosted
 
   const { data: endpoint } = useProjectApiUrl({ projectRef: ref })
   const functionUrl = `${endpoint}/functions/v1/${item.slug}`
@@ -37,8 +40,12 @@ export const EdgeFunctionsListItem = ({ function: item }: EdgeFunctionsListItemP
   const { data: functions } = useEdgeFunctionsQuery({ projectRef: ref })
   const functionIds = useMemo(() => {
     if (!showLastHourStats || !functions) return []
-    return normalizeFunctionIds(functions.map((item) => item.id))
-  }, [functions, showLastHourStats])
+    return normalizeFunctionIds(
+      functions.flatMap((item) =>
+        isSelfHostedLike ? [item.id, item.slug].filter(Boolean) : [item.id]
+      )
+    )
+  }, [functions, isSelfHostedLike, showLastHourStats])
 
   // [Joshen] We may be paginating the edge functions query in the future
   // So this will eventually need to be a list of visibleFunctionIds instead + debounced
@@ -50,7 +57,7 @@ export const EdgeFunctionsListItem = ({ function: item }: EdgeFunctionsListItemP
     { projectRef: ref, functionIds },
     { enabled: showLastHourStats }
   )
-  const lastHourStats = lastHourStatsAll?.[item.id]
+  const lastHourStats = lastHourStatsAll?.[item.id] ?? lastHourStatsAll?.[item.slug]
 
   return (
     <TableRow

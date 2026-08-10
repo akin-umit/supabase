@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useFlag } from 'common'
+import { IS_PLATFORM, useFlag } from 'common'
 import dayjs from 'dayjs'
 
 import { edgeFunctionsKeys } from './keys'
@@ -145,7 +145,8 @@ export const useEdgeFunctionsLastHourStatsQuery = <TData = EdgeFunctionsLastHour
     TData
   > = {}
 ) => {
-  const useOtel = useFlag('otelLegacyLogs')
+  const useOtelLegacyLogs = useFlag('otelLegacyLogs')
+  const useOtel = IS_PLATFORM && useOtelLegacyLogs
 
   return useQuery<EdgeFunctionsLastHourStatsData, EdgeFunctionsLastHourStatsError, TData>({
     queryKey: edgeFunctionsKeys.lastHourStats(projectRef, functionIds, useOtel),

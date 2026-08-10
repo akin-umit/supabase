@@ -74,16 +74,19 @@ export const FeaturePreviewModal = () => {
   ).filter((x) => x.enabled)
 
   const selectedFeature =
-    allFeaturePreviews.find((preview) => preview.key === selectedFeatureKey) ??
-    allFeaturePreviews[0]
-  const isSelectedFeatureEnabled = flags[selectedFeature?.key]
+    allFeaturePreviews.length > 0
+      ? (allFeaturePreviews.find((preview) => preview.key === selectedFeatureKey) ??
+        allFeaturePreviews[0])
+      : undefined
+  const isSelectedFeatureEnabled =
+    selectedFeature !== undefined ? flags[selectedFeature.key] : false
 
   const selectedFeatureRoute = selectedFeature?.getRoute?.(ref)
   const hasRoute = selectedFeatureRoute !== undefined && ref !== undefined
 
-  const toggleFeature = () => {
-    if (!selectedFeature) return
+  if (!selectedFeature) return null
 
+  const toggleFeature = () => {
     const isEnabling = !isSelectedFeatureEnabled
 
     onUpdateFlag(selectedFeature.key, isEnabling)

@@ -1,5 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
@@ -30,11 +30,14 @@ import {
 import { useEdgeFunctionQuery } from '@/data/edge-functions/edge-function-query'
 import { useFillTimeseriesSorted } from '@/hooks/analytics/useFillTimeseriesSorted'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 
 export const EdgeFunctionOverview = () => {
   const router = useRouter()
   const { ref: projectRef, functionSlug } = useParams()
   const { isEnabled: isUnifiedLogsEnabled } = useUnifiedLogsPreview()
+  const { isSelfHosted } = useDeploymentMode()
+  const isSelfHostedLike = !IS_PLATFORM || isSelfHosted
 
   const [interval, setInterval] = useState<string>('15min')
   const selectedInterval =
@@ -50,14 +53,17 @@ export const EdgeFunctionOverview = () => {
     slug: functionSlug,
   })
   const id = selectedFunction?.id
+  const functionLogId = isSelfHostedLike
+    ? (selectedFunction?.slug ?? (functionSlug as string | undefined) ?? id)
+    : id
   const combinedStatsResults = useFunctionsCombinedStatsQuery(
     {
       projectRef,
-      functionId: id,
+      functionId: functionLogId,
       interval: selectedInterval.key as FunctionsCombinedStatsVariables['interval'],
     },
     {
-      enabled: Boolean(projectRef && id),
+      enabled: Boolean(projectRef && functionLogId),
     }
   )
 
@@ -205,7 +211,7 @@ export const EdgeFunctionOverview = () => {
       />
 
       <EdgeFunctionRecentErrors
-        functionId={id}
+        functionId={functionLogId}
         functionSlug={functionSlug as string}
         projectRef={projectRef as string}
         updatedAt={selectedFunction?.updated_at}

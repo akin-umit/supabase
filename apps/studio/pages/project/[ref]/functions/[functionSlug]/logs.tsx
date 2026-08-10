@@ -1,13 +1,16 @@
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 
 import { LogsPreviewer } from '@/components/interfaces/Settings/Logs/LogsPreviewer'
 import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import EdgeFunctionDetailsLayout from '@/components/layouts/EdgeFunctionsLayout/EdgeFunctionDetailsLayout'
 import { useEdgeFunctionQuery } from '@/data/edge-functions/edge-function-query'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import type { NextPageWithLayout } from '@/types'
 
 export const LogPage: NextPageWithLayout = () => {
   const { ref, functionSlug } = useParams()
+  const { isSelfHosted } = useDeploymentMode()
+  const isSelfHostedLike = !IS_PLATFORM || isSelfHosted
 
   const { data: selectedFunction, isPending: isLoading } = useEdgeFunctionQuery({
     projectRef: ref,
@@ -34,7 +37,9 @@ export const LogPage: NextPageWithLayout = () => {
         condensedLayout
         projectRef={ref as string}
         queryType="functions"
-        filterOverride={{ 'metadata.function_id': selectedFunction.id }}
+        filterOverride={{
+          'metadata.function_id': isSelfHostedLike ? selectedFunction.slug : selectedFunction.id,
+        }}
       />
     </div>
   )

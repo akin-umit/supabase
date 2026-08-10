@@ -7,6 +7,17 @@ type DatabaseSettingsOperationVariables = {
   operationId?: string
 }
 
+function isDatabaseSettingsOperation(value: unknown): value is DatabaseSettingsOperation {
+  if (!value || typeof value !== 'object') return false
+  const operation = value as Partial<DatabaseSettingsOperation>
+  return (
+    typeof operation.id === 'string' &&
+    ['queued', 'accepted', 'running', 'succeeded', 'failed', 'cancelled'].includes(
+      operation.status ?? ''
+    )
+  )
+}
+
 export async function getDatabaseSettingsOperation({
   projectRef,
   operationId,
@@ -20,15 +31,15 @@ export async function getDatabaseSettingsOperation({
 
   if (!response.ok) throw new Error('Failed to retrieve database settings operation')
 
-  const payload = (await response.json()) as DatabaseSettingsOperation
-  if (
-    payload.id !== operationId ||
-    !['queued', 'accepted', 'running', 'succeeded', 'failed', 'cancelled'].includes(payload.status)
-  ) {
+  const payload = (await response.json()) as
+    | DatabaseSettingsOperation
+    | { operation?: DatabaseSettingsOperation }
+  const operation = 'operation' in payload && payload.operation ? payload.operation : payload
+  if (!isDatabaseSettingsOperation(operation) || operation.id !== operationId) {
     throw new Error('Invalid database settings operation response')
   }
 
-  return payload
+  return operation
 }
 
 export const databaseSettingsOperationQueryOptions = (

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { useFlag } from 'common'
+import { IS_PLATFORM, useFlag } from 'common'
 import { toast } from 'sonner'
 
 import { logsAllEndpointUrl, pickLogsQueryBuilder } from './logs-endpoint'
@@ -83,7 +83,8 @@ export const useGetUnifiedLogsMutation = ({
   UseCustomMutationOptions<LogDrainCreateData, ResponseError, getUnifiedLogsVariables>,
   'mutationFn'
 > = {}) => {
-  const useOtel = useFlag('otelUnifiedLogs')
+  const otelUnifiedLogsFlag = useFlag('otelUnifiedLogs')
+  const useOtel = IS_PLATFORM && otelUnifiedLogsFlag
   return useMutation<LogDrainCreateData, ResponseError, getUnifiedLogsVariables>({
     mutationFn: (vars) => retrieveUnifiedLogs({ ...vars, useOtel: vars.useOtel ?? useOtel }),
     async onSuccess(data, variables, context) {

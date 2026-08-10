@@ -4,6 +4,7 @@ import { IS_PLATFORM, useParams } from 'common'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import {
   Button,
   Dialog,
@@ -67,7 +68,12 @@ export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentia
     mutate: createS3AccessKey,
     isPending: isCreating,
   } = useS3AccessKeyCreateMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (!data?.access_key || !data?.secret_key) {
+        toast.error('Failed to create S3 access key: created credentials were not returned')
+        return
+      }
+
       setShowSuccess(true)
       form.reset()
     },

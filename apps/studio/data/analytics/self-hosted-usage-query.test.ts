@@ -52,20 +52,28 @@ describe('mergeSelfHostedUsageRows', () => {
 
 describe('SELF_HOSTED_USAGE_SERVICE_QUERIES', () => {
   it('splits API Gateway and PostgREST counts instead of double-counting edge logs', () => {
-    expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_api_requests).toContain('from logs')
+    expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_api_requests).toContain('from edge_logs as el')
     expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_api_requests).toContain(
-      "source = 'edge_logs'"
+      'cross join unnest(el.metadata) as m'
     )
     expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_api_requests).toContain(
-      "log_attributes['request.path'] not like '/rest/v1%'"
+      "request.path not like '/rest/v1%'"
     )
 
-    expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_rest_requests).toContain('from logs')
+    expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_rest_requests).toContain('from edge_logs as el')
     expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_rest_requests).toContain(
-      "source = 'edge_logs'"
+      'cross join unnest(m.request) as request'
     )
     expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_rest_requests).toContain(
-      "log_attributes['request.path'] like '/rest/v1%'"
+      "request.path like '/rest/v1%'"
+    )
+
+    expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_functions_requests).toContain(
+      'from function_edge_logs'
+    )
+    expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_auth_requests).toContain('from auth_logs')
+    expect(SELF_HOSTED_USAGE_SERVICE_QUERIES.total_realtime_requests).toContain(
+      'from realtime_logs'
     )
   })
 })

@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useFlag } from 'common'
+import { IS_PLATFORM, useFlag } from 'common'
 
 import { executeAnalyticsSql } from './execute-analytics-sql'
 import { logsKeys } from './keys'
@@ -163,7 +163,8 @@ export const useUnifiedLogsChartQuery = <TData = UnifiedLogsChartData>(
     ...options
   }: UseCustomQueryOptions<UnifiedLogsChartData, UnifiedLogsChartError, TData> = {}
 ) => {
-  const useOtel = useFlag('otelUnifiedLogs')
+  const otelUnifiedLogsFlag = useFlag('otelUnifiedLogs')
+  const useOtel = IS_PLATFORM && otelUnifiedLogsFlag
   return useQuery<UnifiedLogsChartData, UnifiedLogsChartError, TData>({
     queryKey: [...logsKeys.unifiedLogsChart(projectRef, search), { otel: useOtel }],
     queryFn: ({ signal }) => getUnifiedLogsChart({ projectRef, search, useOtel }, signal),

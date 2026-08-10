@@ -13,11 +13,13 @@ import OrganizationLayout from '@/components/layouts/OrganizationLayout'
 import { OrganizationSettingsLayout } from '@/components/layouts/ProjectLayout/OrganizationSettingsLayout'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const OrgSecuritySettings: NextPageWithLayout = () => {
   const { slug } = useParams()
-  const showSecuritySettings = useIsFeatureEnabled('organization:show_security_settings')
+  const securitySettingsEnabled = useIsFeatureEnabled('organization:show_security_settings')
+  const showSecuritySettings = !IS_PLATFORM || securitySettingsEnabled
 
   if (!showSecuritySettings) {
     return <UnknownInterface urlBack={`/org/${slug}`} />

@@ -13,11 +13,11 @@ export type RetrieveAnalyticsDataOptions = {
 }
 
 export type AnalyticsResult = {
-  result?: any[]
+  result?: unknown[]
   error?: {
     message: string
   }
-  [key: string]: any
+  [key: string]: unknown
 }
 
 /**
@@ -82,15 +82,17 @@ export function getLogQuery(service: LogsService, limit: number = 100): string {
     case 'api': {
       return stripIndent`
         select
-          id,
-          timestamp,
-          event_message,
-          log_attributes['request.method'] as method,
-          log_attributes['request.path'] as path,
-          log_attributes['request.search'] as search,
-          log_attributes['response.status_code'] as status_code
-        from logs
-        where source = 'edge_logs'
+          el.id,
+          el.timestamp,
+          el.event_message,
+          request.method as method,
+          request.path as path,
+          request.search as search,
+          response.status_code as status_code
+        from edge_logs as el
+        cross join unnest(el.metadata) as m
+        cross join unnest(m.request) as request
+        cross join unnest(m.response) as response
         order by timestamp desc
         limit ${limit};
       `
@@ -101,14 +103,15 @@ export function getLogQuery(service: LogsService, limit: number = 100): string {
     case 'postgres': {
       return stripIndent`
         select
-          timestamp,
-          id,
-          event_message,
-          log_attributes['parsed.error_severity'] as error_severity,
-          log_attributes['parsed.detail'] as detail,
-          log_attributes['parsed.hint'] as hint
-        from logs
-        where source = 'postgres_logs'
+          pgl.timestamp,
+          pgl.id,
+          pgl.event_message,
+          parsed.error_severity as error_severity,
+          parsed.detail as detail,
+          parsed.hint as hint
+        from postgres_logs as pgl
+        cross join unnest(pgl.metadata) as m
+        cross join unnest(m.parsed) as parsed
         order by timestamp desc
         limit ${limit};
       `
@@ -116,8 +119,7 @@ export function getLogQuery(service: LogsService, limit: number = 100): string {
     case 'edge-function': {
       return stripIndent`
         select id, timestamp, event_message
-        from logs
-        where source = 'function_edge_logs'
+        from function_edge_logs
         order by timestamp desc
         limit ${limit}
       `
@@ -125,16 +127,16 @@ export function getLogQuery(service: LogsService, limit: number = 100): string {
     case 'auth': {
       return stripIndent`
         select
-          id,
-          timestamp,
-          event_message,
-          log_attributes['level'] as level,
-          log_attributes['status'] as status,
-          log_attributes['path'] as path,
-          log_attributes['msg'] as msg,
-          log_attributes['error'] as error
-        from logs
-        where source = 'auth_logs'
+          al.id,
+          al.timestamp,
+          al.event_message,
+          m.level as level,
+          m.status as status,
+          m.path as path,
+          m.msg as msg,
+          m.error as error
+        from auth_logs as al
+        cross join unnest(al.metadata) as m
         order by timestamp desc
         limit ${limit};
       `
@@ -142,8 +144,7 @@ export function getLogQuery(service: LogsService, limit: number = 100): string {
     case 'storage': {
       return stripIndent`
         select id, timestamp, event_message
-        from logs
-        where source = 'storage_logs'
+        from storage_logs
         order by timestamp desc
         limit ${limit};
       `
@@ -151,8 +152,7 @@ export function getLogQuery(service: LogsService, limit: number = 100): string {
     case 'realtime': {
       return stripIndent`
         select id, timestamp, event_message
-        from logs
-        where source = 'realtime_logs'
+        from realtime_logs
         order by timestamp desc
         limit ${limit};
       `

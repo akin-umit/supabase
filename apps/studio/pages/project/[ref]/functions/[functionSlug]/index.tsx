@@ -59,6 +59,19 @@ const CHART_INTERVALS: ChartIntervals[] = [
   },
 ]
 
+type CombinedStatsChartDatum = {
+  timestamp: string
+  success_count?: number | string
+  redirect_count?: number | string
+  client_err_count?: number | string
+  server_err_count?: number | string
+  log_error_count?: number | string
+  log_info_count?: number | string
+  log_warn_count?: number | string
+  avg_heap_memory_used?: number | string
+  avg_external_memory_used?: number | string
+}
+
 const LegacyEdgeFunctionOverview = () => {
   const router = useRouter()
   const { ref: projectRef, functionSlug } = useParams()
@@ -70,16 +83,19 @@ const LegacyEdgeFunctionOverview = () => {
     slug: functionSlug,
   })
   const id = selectedFunction?.id
+  const { isSelfHosted } = useDeploymentMode()
+  const isSelfHostedLike = !IS_PLATFORM || isSelfHosted
+  const functionLogId = isSelfHostedLike
+    ? (selectedFunction?.slug ?? (functionSlug as string | undefined) ?? id)
+    : id
   const combinedStatsResults = useFunctionsCombinedStatsQuery({
     projectRef,
-    functionId: id,
+    functionId: functionLogId,
     interval: selectedInterval.key as FunctionsCombinedStatsVariables['interval'],
   })
 
   const combinedStatsData = useMemo(() => {
-    const result = combinedStatsResults.data?.result as
-      | Record<string, string | number>[]
-      | undefined
+    const result = combinedStatsResults.data?.result as CombinedStatsChartDatum[] | undefined
     return result || []
   }, [combinedStatsResults.data])
 
@@ -134,10 +150,10 @@ const LegacyEdgeFunctionOverview = () => {
     <PageContainer size="full">
       <PageSection>
         <PageSectionContent>
-          {id && (
+          {functionLogId && (
             <div className="mb-8">
               <EdgeFunctionRecentInvocations
-                functionId={id}
+                functionId={functionLogId}
                 functionSlug={functionSlug as string}
               />
             </div>
@@ -234,7 +250,7 @@ const LegacyEdgeFunctionOverview = () => {
                     )
                   } else {
                     const requestData = props.data
-                      .map((d: any) => [
+                      .map((d: CombinedStatsChartDatum) => [
                         {
                           status: '2xx',
                           count: d.success_count,
@@ -259,7 +275,7 @@ const LegacyEdgeFunctionOverview = () => {
                       .flat()
 
                     const logsData = props.data
-                      .map((d: any) => [
+                      .map((d: CombinedStatsChartDatum) => [
                         {
                           status: 'error',
                           count: d.log_error_count,
@@ -376,7 +392,7 @@ const LegacyEdgeFunctionOverview = () => {
                   }
 
                   const memoryData = props.data
-                    .map((d: any) => [
+                    .map((d: CombinedStatsChartDatum) => [
                       {
                         type: 'heap',
                         count: d.avg_heap_memory_used,

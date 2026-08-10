@@ -143,21 +143,27 @@ export const useFeaturePreviewModal = () => {
   const featurePreviews = useFeaturePreviews()
   const [featurePreviewModal, setFeaturePreviewModal] = useQueryState('featurePreviewModal')
   const [localFeaturePreviewModal, setLocalFeaturePreviewModal] = useState<string | null>(null)
+  const availableFeaturePreviews = useMemo(
+    () => (IS_PLATFORM ? featurePreviews : featurePreviews.filter((x) => !x.isPlatformOnly)),
+    [featurePreviews]
+  )
 
   const selectedFeatureKeyFromQuery = IS_PLATFORM
     ? featurePreviewModal?.trim() ?? null
     : localFeaturePreviewModal
-  const showFeaturePreviewModal = selectedFeatureKeyFromQuery !== null
+  const selectedFeatureFromQuery = availableFeaturePreviews.find(
+    (preview) => preview.key === selectedFeatureKeyFromQuery
+  )
+  const fallbackFeaturePreview = availableFeaturePreviews[0]
+  const selectedFeatureKey = selectedFeatureFromQuery?.key ?? fallbackFeaturePreview?.key
+  const showFeaturePreviewModal =
+    selectedFeatureKeyFromQuery !== null && selectedFeatureKey !== undefined
 
   useEffect(() => {
     if (!IS_PLATFORM && featurePreviewModal !== null) {
       setFeaturePreviewModal(null)
     }
   }, [featurePreviewModal, setFeaturePreviewModal])
-
-  const selectedFeatureKey = (
-    !selectedFeatureKeyFromQuery ? featurePreviews[0].key : selectedFeatureKeyFromQuery
-  ) as (typeof featurePreviews)[number]['key']
 
   const selectFeaturePreview = useCallback(
     (featureKey: (typeof featurePreviews)[number]['key']) => {
@@ -178,7 +184,7 @@ export const useFeaturePreviewModal = () => {
         } else {
           setLocalFeaturePreviewModal(null)
         }
-      } else {
+      } else if (selectedFeatureKey !== undefined) {
         selectFeaturePreview(selectedFeatureKey)
       }
     },

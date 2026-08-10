@@ -1,4 +1,5 @@
 import { BookOpen, Check, ExternalLink, Eye } from 'lucide-react'
+import { IS_PLATFORM } from 'common'
 import { useRouter } from 'next/router'
 import { Fragment, useMemo } from 'react'
 import {
@@ -74,6 +75,7 @@ export const EdgeFunctionRecentErrors = ({
     'Runtime errors since the last deploy will appear here when this function returns a 5xx response.'
 
   const isQueryEnabled = Boolean(projectRef && functionId && isoTimestampStart)
+  const useOtel = IS_PLATFORM
   const recentErrorInvocationsSql = useMemo(
     () => getRecentErrorInvocationsSql(functionId),
     [functionId]
@@ -95,7 +97,7 @@ export const EdgeFunctionRecentErrors = ({
       iso_timestamp_end: isoTimestampEnd,
     },
     enabled: isQueryEnabled,
-    options: { useOtel: true },
+    options: { useOtel },
   })
 
   const recentErrorGroupsBase = useMemo(
@@ -114,7 +116,7 @@ export const EdgeFunctionRecentErrors = ({
       iso_timestamp_end: isoTimestampEnd,
     },
     enabled: Boolean(projectRef && sinceLastDeployInvocationCountSql && isoTimestampStart),
-    options: { useOtel: true },
+    options: { useOtel },
   })
 
   const relatedExecutionIds = useMemo(
@@ -139,7 +141,7 @@ export const EdgeFunctionRecentErrors = ({
       iso_timestamp_end: isoTimestampEnd,
     },
     enabled: Boolean(projectRef && functionRuntimeLogsSql && isoTimestampStart),
-    options: { useOtel: true },
+    options: { useOtel },
   })
   const queryError =
     toAlertError(recentErrorInvocationsError) ?? toAlertError(functionRuntimeLogsError)

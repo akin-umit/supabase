@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { IS_PLATFORM, useParams } from 'common'
 import { useEffect, useMemo, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
@@ -31,6 +31,7 @@ import { AlertError } from '@/components/ui/AlertError'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { DocsButton } from '@/components/ui/DocsButton'
 import { databaseSettingsOperationQueryOptions } from '@/data/config/database-settings-operation-query'
+import { configKeys } from '@/data/config/keys'
 import { usePostgresConfigurationUpdateMutation } from '@/data/config/postgres-config-mutation'
 import { postgresConfigurationQueryOptions } from '@/data/config/postgres-config-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
@@ -53,6 +54,7 @@ type DatabaseSettingSummary = {
 
 export const ConnectionLogging = () => {
   const { ref: projectRef } = useParams()
+  const queryClient = useQueryClient()
   const { data: project } = useSelectedProjectQuery()
   const { can: canUpdatePostgresConfiguration } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
@@ -113,10 +115,17 @@ export const ConnectionLogging = () => {
   useEffect(() => {
     if (operation?.status === 'succeeded') {
       toast('Successfully applied logging settings')
+      queryClient.invalidateQueries({
+        queryKey: configKeys.postgresConfig(projectRef),
+      })
     } else if (operation?.status === 'failed') {
-      toast.error('Failed to apply logging settings')
+      toast.error(
+        operation.code
+          ? `Failed to apply logging settings: ${operation.code}`
+          : 'Failed to apply logging settings'
+      )
     }
-  }, [operation?.status])
+  }, [operation?.code, operation?.status, projectRef, queryClient])
 
   return (
     <PageSection id="log-connections">

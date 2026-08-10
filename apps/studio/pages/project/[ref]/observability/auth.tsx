@@ -39,6 +39,7 @@ import {
   createUsageReportConfig,
 } from '@/data/reports/v2/auth.config'
 import { useRefreshHandler, useReportDateRange } from '@/hooks/misc/useReportDateRange'
+import { IS_PLATFORM } from '@/lib/constants'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import { useShortcut } from '@/state/shortcuts/useShortcut'
 import type { NextPageWithLayout } from '@/types'
@@ -242,7 +243,7 @@ const AuthUsage = () => {
                 shortcutId={SHORTCUT_IDS.OBSERVABILITY_TOGGLE_DATE_PICKER}
               />
               <UpgradePrompt
-                show={showUpgradePrompt}
+                show={IS_PLATFORM && showUpgradePrompt}
                 setShowUpgradePrompt={setShowUpgradePrompt}
                 title="Report date range"
                 description="Report data can be stored for a maximum of 3 months depending on the plan that your project is on."

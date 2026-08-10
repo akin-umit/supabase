@@ -20,6 +20,18 @@ export type SelfHostedRealtimeConfig = {
 
 type RealtimeManagementResponse = {
   settings?: Partial<SelfHostedRealtimeConfig>
+  job?: {
+    id?: string
+    status?: string
+    code?: string
+  }
+  operation?: {
+    id?: string
+    status?: string
+    code?: string
+  }
+  error?: string
+  message?: string
 }
 
 const DEFAULT_SELF_HOSTED_REALTIME_CONFIG: SelfHostedRealtimeConfig = {
@@ -87,15 +99,32 @@ function readNumber(value: unknown, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-function validateManagementSettings(payload: RealtimeManagementResponse) {
-  const settings = payload.settings
+function isRealtimeConfigPayload(payload: unknown): payload is Partial<SelfHostedRealtimeConfig> {
+  return (
+    !!payload &&
+    typeof payload === 'object' &&
+    ('suspend' in payload ||
+      'private_only' in payload ||
+      'connection_pool' in payload ||
+      'max_concurrent_users' in payload)
+  )
+}
+
+function validateManagementSettings(
+  payload: RealtimeManagementResponse | Partial<SelfHostedRealtimeConfig>
+) {
+  const settings: Partial<SelfHostedRealtimeConfig> =
+    'settings' in payload ? (payload.settings ?? {}) : (payload as Partial<SelfHostedRealtimeConfig>)
   if (!settings || typeof settings !== 'object') {
     throw new RealtimeManagementApiError('Realtime management API response was invalid', 502)
   }
 
   return {
     suspend: readBoolean(settings.suspend, DEFAULT_SELF_HOSTED_REALTIME_CONFIG.suspend),
-    private_only: readBoolean(settings.private_only, DEFAULT_SELF_HOSTED_REALTIME_CONFIG.private_only),
+    private_only: readBoolean(
+      settings.private_only,
+      DEFAULT_SELF_HOSTED_REALTIME_CONFIG.private_only
+    ),
     connection_pool: readNumber(
       settings.connection_pool,
       DEFAULT_SELF_HOSTED_REALTIME_CONFIG.connection_pool
@@ -131,6 +160,29 @@ function validateManagementSettings(payload: RealtimeManagementResponse) {
   }
 }
 
+async function readManagementError(response: Response) {
+  let payload: RealtimeManagementResponse | undefined
+
+  try {
+    payload = (await response.json()) as RealtimeManagementResponse
+  } catch {
+    payload = undefined
+  }
+
+  const code = payload?.error
+  if (response.status === 404 || response.status === 405) {
+    return new RealtimeManagementApiError('Realtime management API is not configured', 503)
+  }
+  if (response.status === 503 && code === 'realtime_admin_not_configured') {
+    return new RealtimeManagementApiError('Realtime admin API is not configured', 503)
+  }
+
+  return new RealtimeManagementApiError(
+    payload?.message ?? 'Realtime settings could not be applied',
+    response.status >= 500 ? 502 : response.status
+  )
+}
+
 async function requestManagedRealtimeConfig(
   projectRef: string,
   method: 'GET' | 'PATCH',
@@ -162,16 +214,20 @@ async function requestManagedRealtimeConfig(
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })
 
-    if (!response.ok) {
-      throw new RealtimeManagementApiError(
-        response.status === 404 || response.status === 405
-          ? 'Realtime management API is not configured'
-          : 'Realtime settings could not be applied',
-        response.status === 404 || response.status === 405 ? 503 : 502
-      )
-    }
+    if (!response.ok) throw await readManagementError(response)
 
-    const settings = validateManagementSettings((await response.json()) as RealtimeManagementResponse)
+    const payload = (await response.json()) as
+      | RealtimeManagementResponse
+      | Partial<SelfHostedRealtimeConfig>
+    const settings = validateManagementSettings(
+      isRealtimeConfigPayload(payload)
+        ? payload
+        : (payload as RealtimeManagementResponse).settings
+          ? payload
+          : {
+              settings: payload as Partial<SelfHostedRealtimeConfig>,
+            }
+    )
     return settings
   } catch (error) {
     if (error instanceof RealtimeManagementApiError) throw error

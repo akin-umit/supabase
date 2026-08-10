@@ -55,6 +55,42 @@ describe('api/self-hosted/jwt-signing-keys', () => {
     })
   })
 
+  it('keeps current keys visible when management uses alternate list and timestamp shapes', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      Response.json({
+        data: [
+          {
+            id: 'current-key',
+            algorithm: 'ES256',
+            status: 'current',
+            public_jwk: { kty: 'EC' },
+          },
+          {
+            id: 'previous-key',
+            algorithm: 'ES256',
+            status: 'previous',
+            created_at: '2026-08-05T12:00:00.000Z',
+            updated_at: '2026-08-05T12:00:00.000Z',
+          },
+        ],
+      })
+    )
+
+    await expect(listSelfHostedSigningKeys('default')).resolves.toEqual({
+      keys: [
+        expect.objectContaining({
+          id: 'current-key',
+          status: 'in_use',
+          created_at: expect.any(String),
+        }),
+        expect.objectContaining({
+          id: 'previous-key',
+          status: 'previously_used',
+        }),
+      ],
+    })
+  })
+
   it('creates a server-generated standby key with write-only authorization and idempotency', async () => {
     const standby = { ...firstKey, status: 'standby' }
     const fetchMock = vi

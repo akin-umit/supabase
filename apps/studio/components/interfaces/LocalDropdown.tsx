@@ -86,10 +86,10 @@ export const LocalDropdown = ({
         <DropdownMenuItem
           className="flex gap-2 cursor-pointer"
           onClick={() => {
-            window.location.assign('/_auth/logout')
+            router.push('/logout')
           }}
           onSelect={() => {
-            window.location.assign('/_auth/logout')
+            router.push('/logout')
           }}
         >
           <LogOut size={14} strokeWidth={1.5} className="text-foreground-lighter" />

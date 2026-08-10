@@ -14,6 +14,7 @@ const LogoutPage: NextPageWithLayout = () => {
   useEffect(() => {
     const logout = async () => {
       if (!IS_PLATFORM) {
+        await signOut()
         window.location.assign('/_auth/logout')
         return
       }
@@ -23,7 +24,7 @@ const LogoutPage: NextPageWithLayout = () => {
       await router.push('/sign-in')
     }
     logout()
-  }, [])
+  }, [router, signOut])
 
   return (
     <div className="w-full h-screen flex items-center justify-center">

@@ -5,14 +5,13 @@ import { assertSelfHosted } from './util'
 
 const REQUEST_TIMEOUT_MS = 10_000
 const projectRefSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/)
-const keyIdSchema = z.string().uuid()
 
 const managementKeySchema = z
   .object({
-    id: keyIdSchema,
+    id: z.string().min(1),
     kid: z.string().optional(),
     algorithm: z.enum(['EdDSA', 'ES256', 'RS256', 'HS256']),
-    status: z.enum(['active', 'standby', 'previous', 'previously_used', 'revoked']),
+    status: z.enum(['active', 'current', 'standby', 'previous', 'previously_used', 'revoked']),
     publicJwk: z.unknown().optional(),
     public_jwk: z.unknown().optional(),
     createdAt: z.string().datetime().optional(),
@@ -22,7 +21,17 @@ const managementKeySchema = z
   })
   .strip()
 
-const managementListSchema = z.object({ keys: z.array(managementKeySchema) }).strip()
+const managementListSchema = z
+  .union([
+    z.object({ keys: z.array(managementKeySchema) }).strip(),
+    z.object({ data: z.array(managementKeySchema) }).strip(),
+    z.array(managementKeySchema),
+  ])
+  .transform((value) => {
+    if (Array.isArray(value)) return { keys: value }
+    if ('data' in value) return { keys: value.data }
+    return value
+  })
 const managementItemSchema = z.object({ key: managementKeySchema }).strip()
 
 export type SelfHostedSigningKey = {
@@ -51,9 +60,10 @@ function projectPath(projectRef: string) {
 }
 
 function keyPath(projectRef: string, keyId: string) {
-  const parsed = keyIdSchema.safeParse(keyId)
-  if (!parsed.success) throw new JwtSigningKeysManagementApiError('Invalid signing key id', 400)
-  return `${projectPath(projectRef)}/${encodeURIComponent(parsed.data)}`
+  if (!keyId || typeof keyId !== 'string') {
+    throw new JwtSigningKeysManagementApiError('Invalid signing key id', 400)
+  }
+  return `${projectPath(projectRef)}/${encodeURIComponent(keyId)}`
 }
 
 async function managementRequest(pathname: string, init: RequestInit) {
@@ -112,14 +122,27 @@ function toStudioKey(input: z.infer<typeof managementKeySchema>): SelfHostedSign
   const createdAt = input.created_at ?? input.createdAt ?? input.updated_at ?? input.updatedAt
   const updatedAt = input.updated_at ?? input.updatedAt ?? createdAt
   if (!createdAt || !updatedAt) {
-    throw new JwtSigningKeysManagementApiError('JWT signing key response has no timestamps', 502)
+    const timestamp = new Date().toISOString()
+    return {
+      id: input.id,
+      algorithm: input.algorithm,
+      status:
+        input.status === 'active' || input.status === 'current'
+          ? 'in_use'
+          : input.status === 'previous'
+            ? 'previously_used'
+            : input.status,
+      public_jwk: input.public_jwk ?? input.publicJwk,
+      created_at: timestamp,
+      updated_at: timestamp,
+    }
   }
 
   return {
     id: input.id,
     algorithm: input.algorithm,
     status:
-      input.status === 'active'
+      input.status === 'active' || input.status === 'current'
         ? 'in_use'
         : input.status === 'previous'
           ? 'previously_used'

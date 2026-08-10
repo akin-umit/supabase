@@ -32,6 +32,10 @@ describe('api/self-hosted/database-settings', () => {
 
     await expect(getDatabaseSettings('default')).resolves.toEqual({
       settings: { log_connections: true, log_disconnections: false },
+      settingsList: [
+        { name: 'log_connections', value: 'on', pendingRestart: false },
+        { name: 'log_disconnections', value: 'off', pendingRestart: false },
+      ],
       operation: undefined,
     })
     expect(fetchMock.mock.calls[0][1]?.headers).toMatchObject({

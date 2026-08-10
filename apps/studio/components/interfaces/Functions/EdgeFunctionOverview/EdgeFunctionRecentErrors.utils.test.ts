@@ -52,15 +52,15 @@ describe('EdgeFunctionRecentErrors.utils', () => {
 select
   toUnixTimestamp64Micro(timestamp) as timestamp,
   event_message,
-  log_attributes['level'] as level,
-  log_attributes['event_type'] as event_type,
-  log_attributes['function_id'] as function_id,
-  log_attributes['execution_id'] as execution_id
-from logs
+  m.level as level,
+  m.event_type as event_type,
+  m.function_id as function_id,
+  m.execution_id as execution_id
+from function_logs
+cross join unnest(metadata) as m
 where
-  source = 'function_logs'
-  and log_attributes['function_id'] = 'fn_''123'
-  and log_attributes['execution_id'] in ('exec_1', 'exec_''2')
+  m.function_id = 'fn_''123'
+  and m.execution_id in ('exec_1', 'exec_''2')
 order by timestamp desc
 limit 25`)
   })
@@ -70,15 +70,17 @@ limit 25`)
 select
   toUnixTimestamp64Micro(timestamp) as timestamp,
   event_message,
-  log_attributes['request.method'] as method,
-  log_attributes['response.status_code'] as status_code,
-  toFloat64OrZero(log_attributes['execution_time_ms']) as execution_time_ms,
-  log_attributes['execution_id'] as execution_id
-from logs
+  request.method as method,
+  response.status_code as status_code,
+  response.execution_time_ms as execution_time_ms,
+  m.execution_id as execution_id
+from function_edge_logs
+cross join unnest(metadata) as m
+cross join unnest(m.request) as request
+cross join unnest(m.response) as response
 where
-  source = 'function_edge_logs'
-  and log_attributes['function_id'] = 'fn_''123'
-  and toInt32OrZero(log_attributes['response.status_code']) >= 500
+  function_id = 'fn_''123'
+  and response.status_code >= 500
 order by timestamp desc
 limit 25`)
   })
@@ -111,10 +113,7 @@ limit 25`)
 
   it('builds the since-deploy invocation count query and empty-state message', () => {
     expect(getSinceLastDeployInvocationCountSql()).toContain(
-      "select count() as count from logs where source = 'function_edge_logs'"
-    )
-    expect(getSinceLastDeployInvocationCountSql()).toContain(
-      "log_attributes['function_id'] = '__pending__'"
+      "select count() as count from function_edge_logs where function_id = '__pending__'"
     )
 
     expect(

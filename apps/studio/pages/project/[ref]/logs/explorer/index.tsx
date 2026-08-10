@@ -96,7 +96,8 @@ export const LogsExplorerPage: NextPageWithLayout = () => {
   const router = useRouter()
   const { profile } = useProfile()
   const { ref: projectRef, q, queryId } = useParams()
-  const useOtelEndpoint = useFlag('otelLegacyLogs')
+  const otelLegacyLogsFlag = useFlag('otelLegacyLogs')
+  const useOtelEndpoint = IS_PLATFORM && otelLegacyLogsFlag
   const { logsShowMetadataIpTemplate } = useIsFeatureEnabled(['logs:show_metadata_ip_template'])
 
   const { data: project } = useSelectedProjectQuery()

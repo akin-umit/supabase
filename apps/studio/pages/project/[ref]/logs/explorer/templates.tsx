@@ -1,4 +1,4 @@
-import { useFlag, useParams } from 'common'
+import { IS_PLATFORM, useFlag, useParams } from 'common'
 import { CodeIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Button, cn, Popover, PopoverContent, PopoverTrigger } from 'ui'
@@ -17,7 +17,8 @@ export const LogsTemplatesPage: NextPageWithLayout = () => {
   const { ref: projectRef } = useParams()
   const { logsTemplates: isTemplatesEnabled, logsShowMetadataIpTemplate: showMetadataIpTemplate } =
     useIsFeatureEnabled(['logs:templates', 'logs:show_metadata_ip_template'])
-  const useOtelEndpoint = useFlag('otelLegacyLogs')
+  const otelLegacyLogsFlag = useFlag('otelLegacyLogs')
+  const useOtelEndpoint = IS_PLATFORM && otelLegacyLogsFlag
 
   if (!isTemplatesEnabled) {
     return <UnknownInterface urlBack={`/project/${projectRef}/logs/explorer`} />

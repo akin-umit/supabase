@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useFlag } from 'common'
+import { IS_PLATFORM, useFlag } from 'common'
 
 import { executeAnalyticsSql } from './execute-analytics-sql'
 import { logsKeys } from './keys'
@@ -255,7 +255,8 @@ export const useUnifiedLogInspectionQuery = <TData = UnifiedLogInspectionData>(
     ...options
   }: UseCustomQueryOptions<UnifiedLogInspectionData, UnifiedLogInspectionError, TData> = {}
 ) => {
-  const useOtel = !!useFlag('otelUnifiedLogs')
+  const otelUnifiedLogsFlag = useFlag('otelUnifiedLogs')
+  const useOtel = IS_PLATFORM && !!otelUnifiedLogsFlag
   return useQuery<UnifiedLogInspectionData, UnifiedLogInspectionError, TData>({
     queryKey: [...logsKeys.serviceFlow(projectRef, search, logId), { otel: useOtel }],
     queryFn: ({ signal }) =>

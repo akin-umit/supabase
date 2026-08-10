@@ -13,11 +13,13 @@ import OrganizationLayout from '@/components/layouts/OrganizationLayout'
 import { OrganizationSettingsLayout } from '@/components/layouts/ProjectLayout/OrganizationSettingsLayout'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const OrgSSO: NextPageWithLayout = () => {
   const { slug } = useParams()
-  const showSsoSettings = useIsFeatureEnabled('organization:show_sso_settings')
+  const ssoSettingsEnabled = useIsFeatureEnabled('organization:show_sso_settings')
+  const showSsoSettings = !IS_PLATFORM || ssoSettingsEnabled
 
   if (!showSsoSettings) {
     return <UnknownInterface urlBack={`/org/${slug}/general`} />

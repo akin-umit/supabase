@@ -1,4 +1,4 @@
-import { useFlag, useParams } from 'common'
+import { IS_PLATFORM, useFlag, useParams } from 'common'
 import { BookOpen, Check, ChevronDown, ChevronsUpDown, Copy, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { ReactNode, useEffect, useState } from 'react'
@@ -114,7 +114,8 @@ export const LogsQueryPanel = ({
   const [open, setOpen] = useState(false)
 
   const showMultigresLogs = useShowMultigresLogs()
-  const useOtel = useFlag('otelLegacyLogs')
+  const otelLegacyLogsFlag = useFlag('otelLegacyLogs')
+  const useOtel = IS_PLATFORM && otelLegacyLogsFlag
   const baseSchemas = logConstants.schemas.filter(
     (schema) => schema.reference !== 'multigres_logs' || showMultigresLogs
   )

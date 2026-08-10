@@ -6,6 +6,7 @@ import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import OrganizationLayout from '@/components/layouts/OrganizationLayout'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import {
   ORG_SETTINGS_PANEL_KEYS,
   useOrgSettingsPageStateSnapshot,
@@ -16,7 +17,8 @@ const OrgBillingSettings: NextPageWithLayout = () => {
   const { panel, slug } = useParams()
   const snap = useOrgSettingsPageStateSnapshot()
 
-  const showBilling = useIsFeatureEnabled('billing:all')
+  const billingEnabled = useIsFeatureEnabled('billing:all')
+  const showBilling = !IS_PLATFORM || billingEnabled
 
   useEffect(() => {
     const allowedValues = ['subscriptionPlan', 'costControl']
