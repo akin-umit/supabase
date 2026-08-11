@@ -56,6 +56,25 @@ describe('/api/platform/auth/[ref]/config', () => {
     expect(JSON.parse(res._getData()).SITE_URL).toBe('https://managed.example.com')
   })
 
+  it('falls back to environment auth config when the management API is unavailable', async () => {
+    vi.stubEnv('SITE_URL', 'https://fallback.example.com')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_TOKEN', 'read-token')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: 'upstream unavailable' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    )
+
+    const { req, res } = createMocks({ method: 'GET', query: { ref: 'default' } })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(200)
+    expect(JSON.parse(res._getData()).SITE_URL).toBe('https://fallback.example.com')
+  })
+
   it('does not pretend runtime auth config updates are supported', async () => {
     const { req, res } = createMocks({ method: 'PATCH', query: { ref: 'default' } })
 

@@ -23,7 +23,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         })
         return res.status(200).json(data)
       } catch (error) {
-        if (error instanceof SelfHostedManagementError && error.statusCode === 503) {
+        if (error instanceof SelfHostedManagementError) {
           return res.status(200).json(getSelfHostedAuthConfig())
         }
         const status = error instanceof SelfHostedManagementError ? error.statusCode : 500

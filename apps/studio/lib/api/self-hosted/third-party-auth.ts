@@ -34,6 +34,7 @@ export async function listSelfHostedThirdPartyAuthIntegrations(projectRef: strin
     }
     return []
   } catch (error) {
+    if (error instanceof SelfHostedManagementError) return []
     throw normalizeError(error, 'Unable to list third-party auth integrations')
   }
 }

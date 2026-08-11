@@ -15,7 +15,12 @@ const LogoutPage: NextPageWithLayout = () => {
     const logout = async () => {
       if (!IS_PLATFORM) {
         await signOut()
-        window.location.assign('/_auth/logout')
+        try {
+          await fetch('/_auth/logout', { credentials: 'include', redirect: 'manual' })
+        } catch {
+          // The gateway logout endpoint is best-effort here; local state is already cleared.
+        }
+        window.location.replace('/_auth/login')
         return
       }
 

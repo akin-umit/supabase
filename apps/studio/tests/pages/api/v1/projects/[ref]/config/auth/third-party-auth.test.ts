@@ -18,13 +18,31 @@ describe('/api/v1/projects/[ref]/config/auth/third-party-auth', () => {
     vi.restoreAllMocks()
   })
 
-  it('returns a precise local control-plane error when listing is not configured', async () => {
+  it('returns an empty list when listing is not configured', async () => {
     const { req, res } = createMocks({ method: 'GET', query: { ref: 'default' } })
 
     await listHandler(req, res)
 
-    expect(res._getStatusCode()).toBe(503)
-    expect(JSON.parse(res._getData()).message).toContain('Management API is not configured')
+    expect(res._getStatusCode()).toBe(200)
+    expect(JSON.parse(res._getData())).toEqual([])
+  })
+
+  it('falls back to an empty list when listing through the management API fails', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_TOKEN', 'read-token')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: 'upstream unavailable' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    )
+
+    const { req, res } = createMocks({ method: 'GET', query: { ref: 'default' } })
+
+    await listHandler(req, res)
+
+    expect(res._getStatusCode()).toBe(200)
+    expect(JSON.parse(res._getData())).toEqual([])
   })
 
   it('lists integrations through the self-host management API', async () => {

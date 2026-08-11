@@ -289,6 +289,7 @@ export const EmailTemplates = () => {
                               <Link
                                 href={`/project/${projectRef}/auth/templates/${templateSlug}`}
                                 className="py-6 pr-6"
+                                aria-label={`Open ${template.title} email template`}
                               >
                                 <ChevronRight size={16} className="text-foreground-muted" />
                               </Link>
