@@ -27,6 +27,8 @@ export type ServiceHealthData = {
   okCount: number
   eventChartData: LogsBarChartDatum[]
   isLoading: boolean
+  isDegraded: boolean
+  degradedReason?: string
   error: unknown | null
   refresh: () => void
 }

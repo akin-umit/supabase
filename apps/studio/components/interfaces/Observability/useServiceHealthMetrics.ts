@@ -39,6 +39,8 @@ export type ServiceHealthData = {
   okCount: number
   eventChartData: LogsBarChartDatum[]
   isLoading: boolean
+  isDegraded: boolean
+  degradedReason?: string
   error: unknown | null
   refresh: () => void
 }
@@ -135,6 +137,8 @@ const useServiceHealthQuery = ({
     ...metrics,
     eventChartData,
     isLoading: queryResult.isLoading,
+    isDegraded: !!queryResult.data?.self_hosted?.degraded,
+    degradedReason: queryResult.data?.self_hosted?.reason,
     error: queryResult.error,
     refresh: queryResult.refetch,
   }

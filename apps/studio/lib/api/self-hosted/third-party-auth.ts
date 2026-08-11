@@ -1,7 +1,4 @@
-import {
-  requestSelfHostedManagement,
-  SelfHostedManagementError,
-} from './management'
+import { requestSelfHostedManagement, SelfHostedManagementError } from './management'
 
 export class ThirdPartyAuthManagementApiError extends Error {
   constructor(
@@ -13,9 +10,15 @@ export class ThirdPartyAuthManagementApiError extends Error {
   }
 }
 
+const MANAGEMENT_UNAVAILABLE_MESSAGE =
+  'Third-party auth integrations require a configured self-host management API'
+
 function normalizeError(error: unknown, fallback: string): ThirdPartyAuthManagementApiError {
   if (error instanceof SelfHostedManagementError) {
-    return new ThirdPartyAuthManagementApiError(error.message, error.statusCode)
+    if (error.statusCode === 503) {
+      return new ThirdPartyAuthManagementApiError(MANAGEMENT_UNAVAILABLE_MESSAGE, 503)
+    }
+    return new ThirdPartyAuthManagementApiError(fallback, error.statusCode)
   }
   return new ThirdPartyAuthManagementApiError(error instanceof Error ? error.message : fallback)
 }
@@ -39,10 +42,7 @@ export async function listSelfHostedThirdPartyAuthIntegrations(projectRef: strin
   }
 }
 
-export async function createSelfHostedThirdPartyAuthIntegration(
-  projectRef: string,
-  body: unknown
-) {
+export async function createSelfHostedThirdPartyAuthIntegration(projectRef: string, body: unknown) {
   try {
     return await requestSelfHostedManagement({
       projectRef,

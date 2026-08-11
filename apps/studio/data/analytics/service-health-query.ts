@@ -27,6 +27,10 @@ export type ServiceHealthResultRow = {
 export type ProjectServiceHealthResponse = {
   error?: string | null
   result?: ServiceHealthResultRow[]
+  self_hosted?: {
+    degraded?: boolean
+    reason?: string
+  }
 }
 
 export type ServiceHealthVariables = {

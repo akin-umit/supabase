@@ -95,11 +95,38 @@ async function fetchSelfHostedAddonRuntimeStatus(projectRef: string, signal?: Ab
 export function getSelfHostedServiceBadge(status: RuntimeConfigStatus | undefined): {
   label: string
   variant: 'success' | 'warning' | 'default'
+  description: string
 } {
-  if (!status) return { label: 'Unavailable', variant: 'default' }
-  if (status.status === 'configured') return { label: 'Configured', variant: 'success' }
-  if (status.status === 'incomplete') return { label: 'Operator managed', variant: 'success' }
-  return { label: 'Unavailable', variant: 'default' }
+  if (!status) {
+    return {
+      label: 'Unavailable',
+      variant: 'default',
+      description: 'Studio could not read this service status from the management API.',
+    }
+  }
+
+  if (status.status === 'configured') {
+    return {
+      label: 'Configured',
+      variant: 'success',
+      description: 'Runtime settings were reported by the self-host management API.',
+    }
+  }
+
+  if (status.status === 'incomplete') {
+    return {
+      label: 'Operator managed',
+      variant: 'warning',
+      description:
+        'Some runtime settings are missing from Studio and must be managed by the operator.',
+    }
+  }
+
+  return {
+    label: 'Unavailable',
+    variant: 'default',
+    description: 'The management API reported this service as unavailable.',
+  }
 }
 
 const SelfHostedAddons = () => {
@@ -180,6 +207,7 @@ const SelfHostedAddons = () => {
                 <div className="space-y-1">
                   <div>{service.title}</div>
                   <p className="m-0 text-foreground-light text-sm">{service.description}</p>
+                  <p className="m-0 text-foreground-light text-sm">{service.badge.description}</p>
                   <InlineLink className="text-foreground-light" href={service.href}>
                     {service.linkLabel}
                   </InlineLink>

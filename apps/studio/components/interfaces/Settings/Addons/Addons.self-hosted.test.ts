@@ -16,14 +16,23 @@ describe('getSelfHostedServiceBadge', () => {
     expect(getSelfHostedServiceBadge(status('configured'))).toEqual({
       label: 'Configured',
       variant: 'success',
+      description: 'Runtime settings were reported by the self-host management API.',
     })
     expect(getSelfHostedServiceBadge(status('incomplete'))).toEqual({
       label: 'Operator managed',
-      variant: 'success',
+      variant: 'warning',
+      description:
+        'Some runtime settings are missing from Studio and must be managed by the operator.',
     })
     expect(getSelfHostedServiceBadge(undefined)).toEqual({
       label: 'Unavailable',
       variant: 'default',
+      description: 'Studio could not read this service status from the management API.',
+    })
+    expect(getSelfHostedServiceBadge(status('unavailable'))).toEqual({
+      label: 'Unavailable',
+      variant: 'default',
+      description: 'The management API reported this service as unavailable.',
     })
   })
 })

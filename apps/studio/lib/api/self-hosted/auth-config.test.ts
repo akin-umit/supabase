@@ -11,6 +11,22 @@ vi.mock('@/lib/constants/api', () => ({
   PROJECT_ENDPOINT_PROTOCOL: 'https',
 }))
 
+const authTemplateIds = [
+  'CONFIRMATION',
+  'INVITE',
+  'MAGIC_LINK',
+  'EMAIL_CHANGE',
+  'RECOVERY',
+  'REAUTHENTICATION',
+  'PASSWORD_CHANGED_NOTIFICATION',
+  'EMAIL_CHANGED_NOTIFICATION',
+  'PHONE_CHANGED_NOTIFICATION',
+  'IDENTITY_LINKED_NOTIFICATION',
+  'IDENTITY_UNLINKED_NOTIFICATION',
+  'MFA_FACTOR_ENROLLED_NOTIFICATION',
+  'MFA_FACTOR_UNENROLLED_NOTIFICATION',
+]
+
 describe('api/self-hosted/auth-config', () => {
   beforeEach(() => {
     vi.unstubAllEnvs()
@@ -35,6 +51,22 @@ describe('api/self-hosted/auth-config', () => {
     expect(config.SAML_ENABLED).toBe(false)
     expect(config.EXTERNAL_GITHUB_ENABLED).toBe(false)
     expect(config.REFRESH_TOKEN_ROTATION_ENABLED).toBe(true)
+    expect(config.API_MAX_REQUEST_DURATION).toBe(10)
+    expect(config.DB_MAX_POOL_SIZE).toBe(10)
+    expect(config.DB_MAX_POOL_SIZE_UNIT).toBe('connections')
+    expect(config.SECURITY_CAPTCHA_PROVIDER).toBe('hcaptcha')
+    expect(config.SECURITY_CAPTCHA_SECRET).toBe('')
+    expect(config.OAUTH_SERVER_ENABLED).toBe(false)
+    expect(config.OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION).toBe(false)
+    expect(config.OAUTH_SERVER_AUTHORIZATION_PATH).toBe('/oauth/consent')
+    expect(config.MAILER_SUBJECTS_CUSTOM_CONTENTS).toEqual({})
+    expect(config.MAILER_TEMPLATES_CUSTOM_CONTENTS).toEqual({})
+    authTemplateIds.forEach((id) => {
+      expect(config[`MAILER_SUBJECTS_${id}` as keyof typeof config]).toEqual(expect.any(String))
+      expect(config[`MAILER_TEMPLATES_${id}_CONTENT` as keyof typeof config]).toEqual(
+        expect.any(String)
+      )
+    })
   })
 
   it('maps supported self-host env vars into the Studio config shape', () => {
@@ -78,6 +110,14 @@ describe('api/self-hosted/auth-config', () => {
     vi.stubEnv('GOTRUE_MFA_MAX_ENROLLED_FACTORS', '5')
     vi.stubEnv('GOTRUE_HOOK_SEND_EMAIL_ENABLED', 'true')
     vi.stubEnv('GOTRUE_HOOK_SEND_EMAIL_URI', 'http://functions:9000/email')
+    vi.stubEnv('GOTRUE_API_MAX_REQUEST_DURATION', '25s')
+    vi.stubEnv('GOTRUE_DB_MAX_POOL_SIZE', '25')
+    vi.stubEnv('GOTRUE_DB_MAX_POOL_SIZE_UNIT', 'percent')
+    vi.stubEnv('GOTRUE_SECURITY_CAPTCHA_PROVIDER', 'turnstile')
+    vi.stubEnv('GOTRUE_SECURITY_CAPTCHA_SECRET', 'captcha-secret')
+    vi.stubEnv('GOTRUE_OAUTH_SERVER_ENABLED', 'true')
+    vi.stubEnv('GOTRUE_OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION', 'true')
+    vi.stubEnv('GOTRUE_OAUTH_SERVER_AUTHORIZATION_PATH', '/custom/consent')
 
     const config = getSelfHostedAuthConfig()
 
@@ -101,5 +141,23 @@ describe('api/self-hosted/auth-config', () => {
     expect(config.MFA_MAX_ENROLLED_FACTORS).toBe(5)
     expect(config.HOOK_SEND_EMAIL_ENABLED).toBe(true)
     expect(config.HOOK_SEND_EMAIL_URI).toBe('http://functions:9000/email')
+    expect(config.API_MAX_REQUEST_DURATION).toBe(25)
+    expect(config.DB_MAX_POOL_SIZE).toBe(25)
+    expect(config.DB_MAX_POOL_SIZE_UNIT).toBe('percent')
+    expect(config.SECURITY_CAPTCHA_PROVIDER).toBe('turnstile')
+    expect(config.SECURITY_CAPTCHA_SECRET).toBe('captcha-secret')
+    expect(config.OAUTH_SERVER_ENABLED).toBe(true)
+    expect(config.OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION).toBe(true)
+    expect(config.OAUTH_SERVER_AUTHORIZATION_PATH).toBe('/custom/consent')
+  })
+
+  it('falls back to supported enum values for advanced self-host auth settings', () => {
+    vi.stubEnv('GOTRUE_DB_MAX_POOL_SIZE_UNIT', 'invalid')
+    vi.stubEnv('GOTRUE_SECURITY_CAPTCHA_PROVIDER', 'invalid')
+
+    const config = getSelfHostedAuthConfig()
+
+    expect(config.DB_MAX_POOL_SIZE_UNIT).toBe('connections')
+    expect(config.SECURITY_CAPTCHA_PROVIDER).toBe('hcaptcha')
   })
 })

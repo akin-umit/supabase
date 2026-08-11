@@ -45,9 +45,10 @@ export async function getUnifiedLogsCount(
 
   if (data?.result) {
     data.result.forEach((row: any) => {
-      const facet = row.facet
+      const facet = row.facet ?? row.dimension
       const value = row.value
       const count = Number(row.count || 0)
+      if (!facet) return
 
       if (facet === 'total' && value === 'all') {
         totalRowCount = count

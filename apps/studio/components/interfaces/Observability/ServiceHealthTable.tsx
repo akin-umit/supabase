@@ -34,6 +34,8 @@ type ServiceData = {
   warningCount: number
   eventChartData: LogsBarChartDatum[]
   isLoading: boolean
+  isDegraded?: boolean
+  degradedReason?: string
 }
 
 export type ServiceHealthTableProps = {
@@ -70,6 +72,7 @@ const formatPercent = (value: number) =>
   value >= 1 ? `${value.toFixed(1)}%` : `${value.toFixed(2)}%`
 
 const getSubtitle = (data: ServiceData) => {
+  if (data.isDegraded) return 'Metrics unavailable'
   if (data.total === 0) return ''
 
   const errorRate = data.errorRate
@@ -96,7 +99,9 @@ const ServiceCell = ({
   className,
 }: ServiceCellProps) => {
   const reportUrl = service.reportUrl || service.logsUrl
-  const { color } = getHealthStatus(data.errorRate, data.total)
+  const { color } = data.isDegraded
+    ? { color: 'warning' }
+    : getHealthStatus(data.errorRate, data.total)
   const description = SERVICE_DESCRIPTIONS[service.key] || service.description
 
   return (
@@ -174,6 +179,11 @@ const ServiceCell = ({
       <div className="relative z-10 h-16">
         {data.isLoading ? (
           <ChartLoadingState className="h-full" />
+        ) : data.isDegraded ? (
+          <ChartEmptyState
+            className="h-full"
+            description={data.degradedReason ?? 'Analytics data is unavailable'}
+          />
         ) : (
           <LogsBarChart
             isFullHeight

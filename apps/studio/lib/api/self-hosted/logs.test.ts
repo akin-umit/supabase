@@ -78,6 +78,15 @@ describe('self-hosted Logflare queries', () => {
     expect(url.pathname).toBe('/api/endpoints/query/logs.all')
     expect(url.searchParams.get('project')).toBe('default')
     expect(url.searchParams.get('sql')).toContain('from edge_logs as el')
+    expect(url.searchParams.get('sql')).toContain(
+      "el.timestamp >= timestamp('2026-08-11T00:00:00.000Z')"
+    )
+    expect(url.searchParams.get('sql')).toContain(
+      "el.timestamp <= timestamp('2026-08-11T01:00:00.000Z')"
+    )
+    expect(url.searchParams.get('sql')).toContain("request.path not like '%/rest/%'")
+    expect(url.searchParams.get('sql')).toContain("request.path like '%/rest/%'")
+    expect(url.searchParams.get('sql')).toContain("request.path like '%/storage/%'")
     expect(url.searchParams.get('sql')).toContain('postgres_logs')
     expect(url.searchParams.get('sql')).toContain('function_edge_logs')
   })

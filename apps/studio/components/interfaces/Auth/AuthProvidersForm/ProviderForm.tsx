@@ -3,6 +3,7 @@ import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { useParams } from 'common'
 import { Check } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import Link from 'next/link'
 import { useQueryState } from 'nuqs'
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -277,7 +278,16 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
           </Form>
           <SheetFooter className="shrink-0">
             <div className="flex items-center justify-between w-full">
-              <DocsButton href={provider.link} />
+              <div className="flex items-center gap-2">
+                <DocsButton href={provider.link} />
+                {provider.misc.requiresRedirect && projectRef && (
+                  <Button asChild type="button" variant="default">
+                    <Link href={`/project/${projectRef}/auth/url-configuration`}>
+                      URL Configuration
+                    </Link>
+                  </Button>
+                )}
+              </div>
               <div className="flex items-center gap-x-3">
                 <Button
                   variant="default"
@@ -300,8 +310,8 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
                     content: {
                       side: 'bottom',
                       text: !canUpdateConfig
-                          ? 'You need additional permissions to update provider settings'
-                          : undefined,
+                        ? 'You need additional permissions to update provider settings'
+                        : undefined,
                     },
                   }}
                 >

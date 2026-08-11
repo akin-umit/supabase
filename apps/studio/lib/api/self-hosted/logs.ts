@@ -148,6 +148,14 @@ export function getServiceHealthQuery(params: Record<string, string | string[] |
     oneQueryParam(params.granularity) ?? 'hour',
     'granularity'
   )
+  const start = analyticsIdentifier(
+    oneQueryParam(params.iso_timestamp_start) ?? oneQueryParam(params.startDate),
+    'iso_timestamp_start'
+  )
+  const end = analyticsIdentifier(
+    oneQueryParam(params.iso_timestamp_end) ?? oneQueryParam(params.endDate),
+    'iso_timestamp_end'
+  )
 
   return stripIndent`
     with service_events as (
@@ -160,7 +168,30 @@ export function getServiceHealthQuery(params: Record<string, string | string[] |
         count(el.id) as total
       from edge_logs as el
       cross join unnest(el.metadata) as m
+      cross join unnest(m.request) as request
       cross join unnest(m.response) as response
+      where el.timestamp >= timestamp('${start}')
+        and el.timestamp <= timestamp('${end}')
+        and request.path not like '%/rest/%'
+        and request.path not like '%/storage/%'
+      group by timestamp
+
+      union all
+
+      select
+        timestamp_trunc(el.timestamp, ${granularity}) as timestamp,
+        'postgrest_logs' as source,
+        countif(response.status_code >= 500) as error,
+        countif(response.status_code between 400 and 499) as warning,
+        countif(response.status_code < 400) as ok,
+        count(el.id) as total
+      from edge_logs as el
+      cross join unnest(el.metadata) as m
+      cross join unnest(m.request) as request
+      cross join unnest(m.response) as response
+      where el.timestamp >= timestamp('${start}')
+        and el.timestamp <= timestamp('${end}')
+        and request.path like '%/rest/%'
       group by timestamp
 
       union all
@@ -175,30 +206,47 @@ export function getServiceHealthQuery(params: Record<string, string | string[] |
       from postgres_logs as pgl
       cross join unnest(pgl.metadata) as m
       cross join unnest(m.parsed) as parsed
+      where pgl.timestamp >= timestamp('${start}')
+        and pgl.timestamp <= timestamp('${end}')
       group by timestamp
 
       union all
 
       select timestamp_trunc(timestamp, ${granularity}) as timestamp, 'auth_logs' as source, 0 as error, 0 as warning, count(id) as ok, count(id) as total
       from auth_logs
+      where timestamp >= timestamp('${start}') and timestamp <= timestamp('${end}')
       group by timestamp
 
       union all
 
       select timestamp_trunc(timestamp, ${granularity}) as timestamp, 'function_edge_logs' as source, 0 as error, 0 as warning, count(id) as ok, count(id) as total
       from function_edge_logs
+      where timestamp >= timestamp('${start}') and timestamp <= timestamp('${end}')
       group by timestamp
 
       union all
 
-      select timestamp_trunc(timestamp, ${granularity}) as timestamp, 'storage_logs' as source, 0 as error, 0 as warning, count(id) as ok, count(id) as total
-      from storage_logs
+      select
+        timestamp_trunc(el.timestamp, ${granularity}) as timestamp,
+        'storage_logs' as source,
+        countif(response.status_code >= 500) as error,
+        countif(response.status_code between 400 and 499) as warning,
+        countif(response.status_code < 400) as ok,
+        count(el.id) as total
+      from edge_logs as el
+      cross join unnest(el.metadata) as m
+      cross join unnest(m.request) as request
+      cross join unnest(m.response) as response
+      where el.timestamp >= timestamp('${start}')
+        and el.timestamp <= timestamp('${end}')
+        and request.path like '%/storage/%'
       group by timestamp
 
       union all
 
       select timestamp_trunc(timestamp, ${granularity}) as timestamp, 'realtime_logs' as source, 0 as error, 0 as warning, count(id) as ok, count(id) as total
       from realtime_logs
+      where timestamp >= timestamp('${start}') and timestamp <= timestamp('${end}')
       group by timestamp
     )
     select

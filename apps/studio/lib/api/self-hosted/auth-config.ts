@@ -30,6 +30,15 @@ const numberEnv = (names: string | string[], defaultValue: number) => {
 const stringEnv = (names: string | string[], defaultValue = '') =>
   envValue(...(Array.isArray(names) ? names : [names])) ?? defaultValue
 
+const enumEnv = <T extends string>(
+  names: string | string[],
+  allowed: readonly T[],
+  defaultValue: T
+) => {
+  const value = stringEnv(names, defaultValue)
+  return allowed.includes(value as T) ? (value as T) : defaultValue
+}
+
 const durationEnvSeconds = (names: string | string[], defaultValue: number) => {
   const value = envValue(...(Array.isArray(names) ? names : [names]))
   if (!value) return defaultValue
@@ -180,6 +189,15 @@ export function getSelfHostedAuthConfig(): SelfHostedAuthConfig {
       'GOTRUE_SECURITY_CAPTCHA_ENABLED',
       'SECURITY_CAPTCHA_ENABLED',
     ]),
+    SECURITY_CAPTCHA_PROVIDER: enumEnv(
+      ['GOTRUE_SECURITY_CAPTCHA_PROVIDER', 'SECURITY_CAPTCHA_PROVIDER'],
+      ['hcaptcha', 'turnstile'] as const,
+      'hcaptcha'
+    ),
+    SECURITY_CAPTCHA_SECRET: stringEnv([
+      'GOTRUE_SECURITY_CAPTCHA_SECRET',
+      'SECURITY_CAPTCHA_SECRET',
+    ]),
     SECURITY_MANUAL_LINKING_ENABLED: boolEnv([
       'GOTRUE_SECURITY_MANUAL_LINKING_ENABLED',
       'SECURITY_MANUAL_LINKING_ENABLED',
@@ -235,6 +253,16 @@ export function getSelfHostedAuthConfig(): SelfHostedAuthConfig {
     ),
     RATE_LIMIT_OTP: numberEnv(['GOTRUE_RATE_LIMIT_OTP', 'RATE_LIMIT_OTP'], 30),
     RATE_LIMIT_WEB3: numberEnv(['GOTRUE_RATE_LIMIT_WEB3', 'RATE_LIMIT_WEB3'], 30),
+    API_MAX_REQUEST_DURATION: durationEnvSeconds(
+      ['GOTRUE_API_MAX_REQUEST_DURATION', 'API_MAX_REQUEST_DURATION'],
+      10
+    ),
+    DB_MAX_POOL_SIZE: numberEnv(['GOTRUE_DB_MAX_POOL_SIZE', 'DB_MAX_POOL_SIZE'], 10),
+    DB_MAX_POOL_SIZE_UNIT: enumEnv(
+      ['GOTRUE_DB_MAX_POOL_SIZE_UNIT', 'DB_MAX_POOL_SIZE_UNIT'],
+      ['percent', 'connections'] as const,
+      'connections'
+    ),
     SECURITY_SB_FORWARDED_FOR_ENABLED: boolEnv([
       'GOTRUE_SECURITY_SB_FORWARDED_FOR_ENABLED',
       'SECURITY_SB_FORWARDED_FOR_ENABLED',
@@ -259,6 +287,15 @@ export function getSelfHostedAuthConfig(): SelfHostedAuthConfig {
     CUSTOM_OAUTH_MAX_PROVIDERS: numberEnv(
       ['GOTRUE_CUSTOM_OAUTH_MAX_PROVIDERS', 'CUSTOM_OAUTH_MAX_PROVIDERS'],
       0
+    ),
+    OAUTH_SERVER_ENABLED: boolEnv(['GOTRUE_OAUTH_SERVER_ENABLED', 'OAUTH_SERVER_ENABLED']),
+    OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION: boolEnv([
+      'GOTRUE_OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION',
+      'OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION',
+    ]),
+    OAUTH_SERVER_AUTHORIZATION_PATH: stringEnv(
+      ['GOTRUE_OAUTH_SERVER_AUTHORIZATION_PATH', 'OAUTH_SERVER_AUTHORIZATION_PATH'],
+      '/oauth/consent'
     ),
     MFA_TOTP_ENROLL_ENABLED: boolEnv(
       ['GOTRUE_MFA_TOTP_ENROLL_ENABLED', 'MFA_TOTP_ENROLL_ENABLED'],
@@ -313,6 +350,10 @@ export function getSelfHostedAuthConfig(): SelfHostedAuthConfig {
     HOOK_PASSWORD_VERIFICATION_ATTEMPT_URI: stringEnv([
       'GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_URI',
       'HOOK_PASSWORD_VERIFICATION_ATTEMPT_URI',
+    ]),
+    AUDIT_LOG_DISABLE_POSTGRES: boolEnv([
+      'GOTRUE_AUDIT_LOG_DISABLE_POSTGRES',
+      'AUDIT_LOG_DISABLE_POSTGRES',
     ]),
   }
 
