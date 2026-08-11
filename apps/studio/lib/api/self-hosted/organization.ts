@@ -2,6 +2,7 @@ import { DEFAULT_PROJECT } from '@/lib/constants/api'
 
 const ORGANIZATION_ID = 1
 const ORGANIZATION_SLUG = 'default-org-slug'
+const TIMESTAMP_MICROS_PER_MS = 1000
 
 function nowIso() {
   return new Date().toISOString()
@@ -41,7 +42,8 @@ export async function getSelfHostedOrganization() {
 }
 
 export function getSelfHostedProject(ref?: string) {
-  const insertedAt = process.env.DEFAULT_PROJECT_INSERTED_AT || DEFAULT_PROJECT.inserted_at || nowIso()
+  const insertedAt =
+    process.env.DEFAULT_PROJECT_INSERTED_AT || DEFAULT_PROJECT.inserted_at || nowIso()
   const projectRef = ref || process.env.DEFAULT_PROJECT_REF || DEFAULT_PROJECT.ref
 
   return {
@@ -216,5 +218,52 @@ export async function getSelfHostedUsage() {
 export async function getSelfHostedDailyUsage() {
   return {
     usages: [],
+  }
+}
+
+export async function getSelfHostedAuditLogs({
+  slug,
+  iso_timestamp_start,
+  iso_timestamp_end,
+}: {
+  slug?: string
+  iso_timestamp_start?: string
+  iso_timestamp_end?: string
+}) {
+  const organizationSlug = slug || ORGANIZATION_SLUG
+  const start = iso_timestamp_start ? Date.parse(iso_timestamp_start) : Number.NaN
+  const end = iso_timestamp_end ? Date.parse(iso_timestamp_end) : Number.NaN
+  const now = Date.now()
+  const timestamp = Number.isFinite(end)
+    ? end * TIMESTAMP_MICROS_PER_MS
+    : now * TIMESTAMP_MICROS_PER_MS
+
+  const seedLog = {
+    organization_slug: organizationSlug,
+    project_ref: process.env.DEFAULT_PROJECT_REF || DEFAULT_PROJECT.ref,
+    request_id: `self-hosted-audit-${organizationSlug}`,
+    action: {
+      name: 'self_hosted.audit.available',
+      method: 'GET',
+      route: '/platform/organizations/{slug}/audit',
+      status: 200,
+      metadata: {
+        source: 'self-hosted',
+        window_start: Number.isFinite(start) ? new Date(start).toISOString() : null,
+        window_end: Number.isFinite(end) ? new Date(end).toISOString() : null,
+      },
+    },
+    actor: {
+      token_type: 'self_hosted_admin',
+      user_id: 'self-hosted-owner',
+      email: process.env.STUDIO_ADMIN_EMAIL || 'admin@self-hosted.local',
+      ip: '127.0.0.1',
+    },
+    timestamp,
+  }
+
+  return {
+    result: process.env.SELF_HOSTED_AUDIT_LOGS_EMPTY === 'true' ? [] : [seedLog],
+    retention_period: Number(process.env.SELF_HOSTED_AUDIT_RETENTION_DAYS || 90),
   }
 }

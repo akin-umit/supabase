@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  getSelfHostedAuditLogs,
   getSelfHostedDailyUsage,
   getSelfHostedMembers,
   getSelfHostedOrganization,
@@ -68,6 +69,22 @@ describe('api/self-hosted/organization', () => {
       ]),
     })
     await expect(getSelfHostedDailyUsage()).resolves.toEqual({ usages: [] })
+    await expect(
+      getSelfHostedAuditLogs({
+        slug: 'default-org-slug',
+        iso_timestamp_start: '2026-08-01T00:00:00.000Z',
+        iso_timestamp_end: '2026-08-11T00:00:00.000Z',
+      })
+    ).resolves.toMatchObject({
+      result: [
+        {
+          organization_slug: 'default-org-slug',
+          action: { name: 'self_hosted.audit.available', status: 200 },
+          actor: { email: 'admin@example.test' },
+        },
+      ],
+      retention_period: 90,
+    })
   })
 
   it('updates only the organization display name in self-hosted mode', async () => {
