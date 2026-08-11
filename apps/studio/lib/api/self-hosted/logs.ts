@@ -25,7 +25,21 @@ const SUPPORTED_ANALYTICS_ENDPOINTS = new Set([
   'logs.all',
   'logs.all.otel',
   'functions.combined-stats',
+  'service-health',
 ])
+
+const SERVICE_HEALTH_SOURCES = [
+  'postgres_logs',
+  'auth_logs',
+  'function_edge_logs',
+  'storage_logs',
+  'realtime_logs',
+  'postgrest_logs',
+  'edge_logs',
+  'supavisor_logs',
+  'function_logs',
+  'etl_replication_logs',
+] as const
 
 const FUNCTION_STATS_INTERVALS: Record<string, string> = {
   '15min': 'minute',
@@ -45,7 +59,9 @@ function analyticsIdentifier(value: string | undefined, label: string) {
   return value.replaceAll("'", "\\'")
 }
 
-export function getFunctionsCombinedStatsQuery(params: Record<string, string | string[] | undefined>) {
+export function getFunctionsCombinedStatsQuery(
+  params: Record<string, string | string[] | undefined>
+) {
   const functionId = analyticsIdentifier(oneQueryParam(params.function_id), 'function_id')
   const interval = oneQueryParam(params.interval) ?? '1hr'
   const granularity = FUNCTION_STATS_INTERVALS[interval] ?? 'hour'
@@ -91,7 +107,146 @@ function normalizeAnalyticsRequest(
     }
   }
 
+  if (name === 'service-health') {
+    return {
+      name: 'logs.all',
+      params: {
+        ...params,
+        sql: getServiceHealthQuery(params),
+      },
+    }
+  }
+
   return { name, params }
+}
+
+function emptyServiceHealthBucket(timestamp: string) {
+  const empty = { ok: 0, warning: 0, error: 0, total: 0 }
+  return Object.fromEntries([
+    ['timestamp', timestamp],
+    ...SERVICE_HEALTH_SOURCES.map((source) => [source, empty]),
+  ])
+}
+
+export function getEmptyAnalyticsResult(
+  name: string,
+  params: Record<string, string | string[] | undefined> = {}
+) {
+  if (name === 'service-health') {
+    const timestamp =
+      oneQueryParam(params.iso_timestamp_start) ??
+      oneQueryParam(params.startDate) ??
+      new Date().toISOString()
+    return { result: [emptyServiceHealthBucket(timestamp)] }
+  }
+
+  return { result: [] }
+}
+
+export function getServiceHealthQuery(params: Record<string, string | string[] | undefined>) {
+  const granularity = analyticsIdentifier(
+    oneQueryParam(params.granularity) ?? 'hour',
+    'granularity'
+  )
+
+  return stripIndent`
+    with service_events as (
+      select
+        timestamp_trunc(el.timestamp, ${granularity}) as timestamp,
+        'edge_logs' as source,
+        countif(response.status_code >= 500) as error,
+        countif(response.status_code between 400 and 499) as warning,
+        countif(response.status_code < 400) as ok,
+        count(el.id) as total
+      from edge_logs as el
+      cross join unnest(el.metadata) as m
+      cross join unnest(m.response) as response
+      group by timestamp
+
+      union all
+
+      select
+        timestamp_trunc(pgl.timestamp, ${granularity}) as timestamp,
+        'postgres_logs' as source,
+        countif(parsed.error_severity in ('ERROR', 'FATAL', 'PANIC')) as error,
+        countif(parsed.error_severity in ('WARNING', 'NOTICE')) as warning,
+        countif(parsed.error_severity is null or parsed.error_severity not in ('ERROR', 'FATAL', 'PANIC', 'WARNING', 'NOTICE')) as ok,
+        count(pgl.id) as total
+      from postgres_logs as pgl
+      cross join unnest(pgl.metadata) as m
+      cross join unnest(m.parsed) as parsed
+      group by timestamp
+
+      union all
+
+      select timestamp_trunc(timestamp, ${granularity}) as timestamp, 'auth_logs' as source, 0 as error, 0 as warning, count(id) as ok, count(id) as total
+      from auth_logs
+      group by timestamp
+
+      union all
+
+      select timestamp_trunc(timestamp, ${granularity}) as timestamp, 'function_edge_logs' as source, 0 as error, 0 as warning, count(id) as ok, count(id) as total
+      from function_edge_logs
+      group by timestamp
+
+      union all
+
+      select timestamp_trunc(timestamp, ${granularity}) as timestamp, 'storage_logs' as source, 0 as error, 0 as warning, count(id) as ok, count(id) as total
+      from storage_logs
+      group by timestamp
+
+      union all
+
+      select timestamp_trunc(timestamp, ${granularity}) as timestamp, 'realtime_logs' as source, 0 as error, 0 as warning, count(id) as ok, count(id) as total
+      from realtime_logs
+      group by timestamp
+    )
+    select
+      timestamp,
+      struct(
+        sum(if(source = 'postgres_logs', ok, 0)) as ok,
+        sum(if(source = 'postgres_logs', warning, 0)) as warning,
+        sum(if(source = 'postgres_logs', error, 0)) as error,
+        sum(if(source = 'postgres_logs', total, 0)) as total
+      ) as postgres_logs,
+      struct(
+        sum(if(source = 'auth_logs', ok, 0)) as ok,
+        sum(if(source = 'auth_logs', warning, 0)) as warning,
+        sum(if(source = 'auth_logs', error, 0)) as error,
+        sum(if(source = 'auth_logs', total, 0)) as total
+      ) as auth_logs,
+      struct(
+        sum(if(source = 'function_edge_logs', ok, 0)) as ok,
+        sum(if(source = 'function_edge_logs', warning, 0)) as warning,
+        sum(if(source = 'function_edge_logs', error, 0)) as error,
+        sum(if(source = 'function_edge_logs', total, 0)) as total
+      ) as function_edge_logs,
+      struct(
+        sum(if(source = 'storage_logs', ok, 0)) as ok,
+        sum(if(source = 'storage_logs', warning, 0)) as warning,
+        sum(if(source = 'storage_logs', error, 0)) as error,
+        sum(if(source = 'storage_logs', total, 0)) as total
+      ) as storage_logs,
+      struct(
+        sum(if(source = 'realtime_logs', ok, 0)) as ok,
+        sum(if(source = 'realtime_logs', warning, 0)) as warning,
+        sum(if(source = 'realtime_logs', error, 0)) as error,
+        sum(if(source = 'realtime_logs', total, 0)) as total
+      ) as realtime_logs,
+      struct(0 as ok, 0 as warning, 0 as error, 0 as total) as postgrest_logs,
+      struct(
+        sum(if(source = 'edge_logs', ok, 0)) as ok,
+        sum(if(source = 'edge_logs', warning, 0)) as warning,
+        sum(if(source = 'edge_logs', error, 0)) as error,
+        sum(if(source = 'edge_logs', total, 0)) as total
+      ) as edge_logs,
+      struct(0 as ok, 0 as warning, 0 as error, 0 as total) as supavisor_logs,
+      struct(0 as ok, 0 as warning, 0 as error, 0 as total) as function_logs,
+      struct(0 as ok, 0 as warning, 0 as error, 0 as total) as etl_replication_logs
+    from service_events
+    group by timestamp
+    order by timestamp asc
+  `
 }
 
 /**
@@ -137,7 +292,7 @@ export async function retrieveAnalyticsData({
       signal: controller.signal,
     })
 
-    const result = await response.json()
+    const result = await response.json().catch(() => ({}))
 
     if (!response.ok) {
       const error = new Error(

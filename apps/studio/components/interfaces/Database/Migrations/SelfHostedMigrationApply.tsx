@@ -1,13 +1,16 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'common'
 import { Play } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button, Card, Input, TextArea } from 'ui'
 
+import { databaseKeys } from '@/data/database/keys'
 import { useSelfHostedManagementMutation } from '@/data/self-hosted/management'
 
 export function SelfHostedMigrationApply() {
   const { ref } = useParams()
+  const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const [sql, setSql] = useState('')
   const apply = useSelfHostedManagementMutation<unknown, { name: string; sql: string }>({
@@ -20,7 +23,8 @@ export function SelfHostedMigrationApply() {
       <div>
         <h3 className="text-lg">Apply migration</h3>
         <p className="text-sm text-foreground-light">
-          Apply one audited transaction and record it in migration history.
+          Apply one audited transaction and record it in the local
+          supabase_migrations.schema_migrations history table.
         </p>
       </div>
       <Input
@@ -44,7 +48,7 @@ export function SelfHostedMigrationApply() {
             toast.success('Migration applied')
             setName('')
             setSql('')
-            window.location.reload()
+            await queryClient.invalidateQueries({ queryKey: databaseKeys.migrations(ref) })
           } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Migration failed')
           }

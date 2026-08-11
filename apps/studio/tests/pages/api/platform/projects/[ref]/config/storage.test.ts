@@ -15,7 +15,9 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
   })
 
   it('returns self-host storage config with runtime bridge status', async () => {
-    vi.stubEnv('STORAGE_FILE_SIZE_LIMIT', String(100 * 1024 * 1024))
+    vi.stubEnv('FILE_SIZE_LIMIT', String(100 * 1024 * 1024))
+    vi.stubEnv('ENABLE_IMAGE_TRANSFORMATION', 'false')
+    vi.stubEnv('ENABLE_S3_PROTOCOL', 'true')
     vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
     vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
 
@@ -26,6 +28,8 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
     expect(res._getStatusCode()).toBe(200)
     const data = JSON.parse(res._getData())
     expect(data.fileSizeLimit).toBe(100 * 1024 * 1024)
+    expect(data.features.imageTransformation.enabled).toBe(false)
+    expect(data.features.s3Protocol.enabled).toBe(true)
     expect(data.external.selfHosted.managementApi).toMatchObject({
       configured: true,
       writable: true,
@@ -78,6 +82,67 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
       },
     })
     expect(JSON.parse(res._getData()).features.imageTransformation.enabled).toBe(false)
+  })
+
+  it('falls back to the self-host runtime storage endpoint when the storage config route is operator-managed', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
+    const fetchMock = vi
+      .spyOn(global, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'not_found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            projectRef: 'default',
+            service: 'storage',
+            applied: ['fileSizeLimit', 'imageProxyAutoWebp'],
+            restarted: true,
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+      )
+
+    const { req, res } = createMocks({
+      method: 'PATCH',
+      query: { ref: 'default' },
+      body: {
+        fileSizeLimit: 64 * 1024 * 1024,
+        features: {
+          imageTransformation: { enabled: false },
+          s3Protocol: { enabled: true },
+        },
+      },
+    })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(200)
+    expect(String(fetchMock.mock.calls[0][0])).toBe(
+      'http://management.internal/v1/projects/default/storage/config'
+    )
+    expect(String(fetchMock.mock.calls[1][0])).toBe(
+      'http://management.internal/v1/projects/default/runtime/storage'
+    )
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({
+      fileSizeLimit: 64 * 1024 * 1024,
+      imageProxyAutoWebp: false,
+    })
+    const data = JSON.parse(res._getData())
+    expect(data.fileSizeLimit).toBe(64 * 1024 * 1024)
+    expect(data.features.imageTransformation.enabled).toBe(false)
+    expect(data.external.operation).toMatchObject({
+      projectRef: 'default',
+      service: 'storage',
+      restarted: true,
+    })
   })
 
   it('returns an exact operator-managed reason when the write bridge is absent', async () => {

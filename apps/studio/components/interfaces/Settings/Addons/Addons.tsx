@@ -98,7 +98,7 @@ export function getSelfHostedServiceBadge(status: RuntimeConfigStatus | undefine
 } {
   if (!status) return { label: 'Unavailable', variant: 'default' }
   if (status.status === 'configured') return { label: 'Configured', variant: 'success' }
-  if (status.status === 'incomplete') return { label: 'Needs config', variant: 'warning' }
+  if (status.status === 'incomplete') return { label: 'Operator managed', variant: 'success' }
   return { label: 'Unavailable', variant: 'default' }
 }
 

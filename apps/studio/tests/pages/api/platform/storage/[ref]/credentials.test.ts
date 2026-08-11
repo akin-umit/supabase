@@ -69,4 +69,46 @@ describe('/api/platform/storage/[ref]/credentials', () => {
       'self-host management API write bridge is not configured'
     )
   })
+
+  it('surfaces the self-host operator activation failure instead of a generic API error', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          key: {
+            id: 'key-1',
+            accessKeyId: 'access-key-1',
+            name: 'studio-key',
+            createdAt: '2026-08-11T00:00:00Z',
+          },
+          secretAccessKey: 'secret-key-1',
+          operation: {
+            id: 'key-1',
+            status: 'failed',
+            code: 's3_key_activation_failed',
+            message: 'Coolify rejected the storage env update',
+          },
+        }),
+        {
+          status: 202,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    )
+
+    const { req, res } = createMocks({
+      method: 'POST',
+      query: { ref: 'default' },
+      body: { description: 'Studio key' },
+    })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(502)
+    expect(JSON.parse(res._getData()).error).toMatchObject({
+      message: 'Coolify rejected the storage env update',
+      code: 's3_key_activation_failed',
+    })
+  })
 })

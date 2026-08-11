@@ -23,7 +23,7 @@ export async function getSelfHostedOrganization() {
     billing_partner: null,
     has_oriole_project: false,
     id: ORGANIZATION_ID,
-    integration_source: null,
+    integration_source: 'self-hosted',
     is_owner: true,
     name: process.env.DEFAULT_ORGANIZATION_NAME || 'Aqenta',
     opt_in_tags: [],
@@ -130,7 +130,7 @@ export async function getSelfHostedMembers() {
 
 export function getSelfHostedRoles() {
   return {
-    roles: [
+    org_scoped_roles: [
       {
         description: 'Full access to this self-hosted organization.',
         id: 1,
@@ -144,6 +144,7 @@ export function getSelfHostedRoles() {
         permissions: ['*'],
       },
     ],
+    project_scoped_roles: [],
   }
 }
 
@@ -174,7 +175,41 @@ export async function getSelfHostedSubscription() {
 
 export async function getSelfHostedUsage() {
   return {
-    usages: [],
+    usages: [
+      {
+        available_in_plan: true,
+        included_in_plan: true,
+        metric: 'COMPUTE_HOURS_SM',
+        pricing_free_units: 0,
+        pricing_unit: 'hour',
+        project_ref: null,
+        quota: null,
+        unlimited: true,
+        usage: 0,
+      },
+      {
+        available_in_plan: true,
+        included_in_plan: true,
+        metric: 'DATABASE_SIZE',
+        pricing_free_units: 0,
+        pricing_unit: 'GB',
+        project_ref: null,
+        quota: null,
+        unlimited: true,
+        usage: 0,
+      },
+      {
+        available_in_plan: true,
+        included_in_plan: true,
+        metric: 'STORAGE_SIZE',
+        pricing_free_units: 0,
+        pricing_unit: 'GB',
+        project_ref: null,
+        quota: null,
+        unlimited: true,
+        usage: 0,
+      },
+    ],
   }
 }
 

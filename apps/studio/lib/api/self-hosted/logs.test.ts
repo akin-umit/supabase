@@ -53,6 +53,35 @@ describe('self-hosted Logflare queries', () => {
     expect(url.searchParams.get('sql')).toContain('requests_count')
   })
 
+  it('maps self-hosted service health to a local Logflare logs query', async () => {
+    vi.stubEnv('LOGFLARE_PRIVATE_ACCESS_TOKEN', 'private-token')
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ result: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    )
+    vi.stubGlobal('fetch', fetch)
+
+    const { retrieveAnalyticsData } = await import('./logs')
+    await retrieveAnalyticsData({
+      name: 'service-health',
+      projectRef: 'default',
+      params: {
+        iso_timestamp_start: '2026-08-11T00:00:00.000Z',
+        iso_timestamp_end: '2026-08-11T01:00:00.000Z',
+        granularity: 'hour',
+      },
+    })
+
+    const url = fetch.mock.calls[0][0] as URL
+    expect(url.pathname).toBe('/api/endpoints/query/logs.all')
+    expect(url.searchParams.get('project')).toBe('default')
+    expect(url.searchParams.get('sql')).toContain('from edge_logs as el')
+    expect(url.searchParams.get('sql')).toContain('postgres_logs')
+    expect(url.searchParams.get('sql')).toContain('function_edge_logs')
+  })
+
   it('rejects unsupported self-hosted analytics endpoint names', async () => {
     vi.stubEnv('LOGFLARE_PRIVATE_ACCESS_TOKEN', 'private-token')
 

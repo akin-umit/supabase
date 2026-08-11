@@ -69,9 +69,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const message =
           typeof operationError.message === 'string'
             ? operationError.message
-            : typeof payload.message === 'string'
-              ? payload.message
-              : 'S3 access key activation failed'
+            : typeof operation.message === 'string'
+              ? operation.message
+              : typeof payload.message === 'string'
+                ? payload.message
+                : 'S3 access key activation failed'
 
         return res.status(502).json({
           error: {

@@ -70,9 +70,30 @@ describe('api/self-hosted/database-settings', () => {
     )
   })
 
+  it('accepts operation-only update responses from async self-hosted operators', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      Response.json({
+        operation: { id: '123e4567-e89b-12d3-a456-426614174000', status: 'accepted' },
+      })
+    )
+
+    await expect(
+      updateDatabaseSettings('default', {
+        log_connections: true,
+        log_disconnections: false,
+      })
+    ).resolves.toEqual({
+      settings: { log_connections: true, log_disconnections: false },
+      settingsList: [],
+      operation: { id: '123e4567-e89b-12d3-a456-426614174000', status: 'accepted' },
+    })
+  })
+
   it('unwraps operation status and never exposes upstream error bodies', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      Response.json({ operation: { id: '123e4567-e89b-12d3-a456-426614174000', status: 'succeeded' } })
+      Response.json({
+        operation: { id: '123e4567-e89b-12d3-a456-426614174000', status: 'succeeded' },
+      })
     )
     await expect(
       getDatabaseSettingsOperation('default', '123e4567-e89b-12d3-a456-426614174000')

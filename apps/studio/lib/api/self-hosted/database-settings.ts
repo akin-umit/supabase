@@ -42,7 +42,7 @@ const managementSettingSchema = z
 
 const managementResponseSchema = z
   .object({
-    settings: z.array(managementSettingSchema),
+    settings: z.array(managementSettingSchema).optional(),
     operation: operationSchema.optional(),
   })
   .strip()
@@ -185,13 +185,13 @@ export async function getDatabaseSettings(projectRef: string): Promise<DatabaseS
   }
 
   const values = Object.fromEntries(
-    result.data.settings
+    (result.data.settings ?? [])
       .filter((setting) => setting.name in databaseSettingsSchema.shape)
       .map((setting) => [setting.name, setting.value === 'on'])
   )
   return {
     settings: databaseSettingsSchema.parse({ ...DEFAULT_DATABASE_SETTINGS, ...values }),
-    settingsList: result.data.settings,
+    settingsList: result.data.settings ?? [],
     operation: result.data.operation,
   }
 }
@@ -226,13 +226,17 @@ export async function updateDatabaseSettings(
   }
 
   const values = Object.fromEntries(
-    result.data.settings
+    (result.data.settings ?? [])
       .filter((setting) => setting.name in databaseSettingsSchema.shape)
       .map((setting) => [setting.name, setting.value === 'on'])
   )
   return {
-    settings: databaseSettingsSchema.parse({ ...DEFAULT_DATABASE_SETTINGS, ...values }),
-    settingsList: result.data.settings,
+    settings: databaseSettingsSchema.parse({
+      ...DEFAULT_DATABASE_SETTINGS,
+      ...update.data,
+      ...values,
+    }),
+    settingsList: result.data.settings ?? [],
     operation: result.data.operation,
   }
 }

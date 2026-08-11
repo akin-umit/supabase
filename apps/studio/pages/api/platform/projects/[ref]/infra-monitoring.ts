@@ -4,7 +4,10 @@ import { apiWrapper } from '@/lib/api/apiWrapper'
 import { retrieveAnalyticsData } from '@/lib/api/self-hosted/logs'
 import { IS_PLATFORM } from '@/lib/constants'
 
-export default (req: NextApiRequest, res: NextApiResponse) => apiWrapper(req, res, handler)
+const infraMonitoringHandler = (req: NextApiRequest, res: NextApiResponse) =>
+  apiWrapper(req, res, handler)
+
+export default infraMonitoringHandler
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req
@@ -64,6 +67,27 @@ const LOCAL_LOG_DERIVED_ATTRIBUTES = new Set([
   'realtime_write_authorization_rls_execution_time',
 ])
 
+function emptyInfraMonitoringResponse(attributes: string[], reason?: string) {
+  return {
+    data: [],
+    series: Object.fromEntries(
+      attributes.map((attribute) => [
+        attribute,
+        {
+          yAxisLimit: 0,
+          format: '',
+          total: 0,
+          totalAverage: 0,
+        },
+      ])
+    ),
+    self_hosted: {
+      degraded: Boolean(reason),
+      reason,
+    },
+  }
+}
+
 const handleGetAll = async (req: NextApiRequest, res: NextApiResponse) => {
   if (IS_PLATFORM) {
     // Platform specific endpoint
@@ -84,13 +108,14 @@ const handleGetAll = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   if (unsupported.length > 0) {
-    return res.status(501).json({
-      error: {
-        message:
-          'This self-hosted Studio can only derive product activity metrics from local Logflare logs. Host-level CPU, RAM, disk, and pooler infra metrics require a local metrics collector backend.',
-        unsupported,
-      },
-    })
+    return res
+      .status(200)
+      .json(
+        emptyInfraMonitoringResponse(
+          attributes,
+          `Unsupported self-hosted infra metrics: ${unsupported.join(', ')}. Host-level CPU, RAM, disk, and pooler metrics require a local metrics collector backend.`
+        )
+      )
   }
 
   const projectRef = getString(req.query.ref)
@@ -115,7 +140,15 @@ const handleGetAll = async (req: NextApiRequest, res: NextApiResponse) => {
   })
 
   if (error) {
-    return res.status(500).json({ error: { message: error.message } })
+    return res
+      .status(200)
+      .json(
+        emptyInfraMonitoringResponse(
+          attributes,
+          error.message ||
+            'Self-hosted infra monitoring data is unavailable. Check Logflare and Vector runtime configuration.'
+        )
+      )
   }
 
   const rows = (data?.result ?? []) as Array<{ period_start: string; value: number | string }>
@@ -134,7 +167,9 @@ const handleGetAll = async (req: NextApiRequest, res: NextApiResponse) => {
   const response = {
     data: rows.map((row) => ({
       period_start: row.period_start,
-      values: Object.fromEntries(attributes.map((attribute) => [attribute, String(row.value ?? 0)])),
+      values: Object.fromEntries(
+        attributes.map((attribute) => [attribute, String(row.value ?? 0)])
+      ),
     })),
     series,
   }

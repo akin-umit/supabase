@@ -1,17 +1,54 @@
+import type { components } from 'api-types'
 import { NextApiRequest, NextApiResponse } from 'next'
 
 import { apiWrapper } from '@/lib/api/apiWrapper'
 import {
-  getSelfHostedStorageConfig,
-  STORAGE_OPERATOR_MANAGED_REASON,
-} from '@/lib/api/self-hosted/storage'
-import {
   requestSelfHostedManagement,
   SelfHostedManagementError,
 } from '@/lib/api/self-hosted/management'
+import {
+  getSelfHostedStorageConfig,
+  STORAGE_OPERATOR_MANAGED_REASON,
+} from '@/lib/api/self-hosted/storage'
 import { IS_PLATFORM } from '@/lib/constants'
 
 export default (req: NextApiRequest, res: NextApiResponse) => apiWrapper(req, res, handler)
+
+type StorageConfigResponse = components['schemas']['StorageConfigResponse']
+
+function buildStorageConfigPatchBody(req: NextApiRequest) {
+  return {
+    fileSizeLimit: req.body?.fileSizeLimit,
+    features: {
+      imageTransformation: req.body?.features?.imageTransformation,
+      s3Protocol: req.body?.features?.s3Protocol,
+    },
+  }
+}
+
+function buildRuntimeStoragePatchBody(req: NextApiRequest) {
+  const body: Record<string, unknown> = {}
+
+  if (req.body?.fileSizeLimit !== undefined) body.fileSizeLimit = req.body.fileSizeLimit
+  if (req.body?.features?.imageTransformation?.enabled !== undefined) {
+    body.imageProxyAutoWebp = req.body.features.imageTransformation.enabled
+  }
+
+  return body
+}
+
+function buildAppliedStorageConfig(req: NextApiRequest, managementPayload: unknown = {}) {
+  return getSelfHostedStorageConfig({
+    ...(typeof managementPayload === 'object' && managementPayload !== null
+      ? (managementPayload as Partial<StorageConfigResponse>)
+      : {}),
+    fileSizeLimit: req.body?.fileSizeLimit,
+    features: {
+      imageTransformation: req.body?.features?.imageTransformation,
+      s3Protocol: req.body?.features?.s3Protocol,
+    },
+  })
+}
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req
@@ -45,21 +82,36 @@ const handlePatch = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
+    const storageConfigBody = buildStorageConfigPatchBody(req)
     const data = await requestSelfHostedManagement({
       projectRef: String(req.query.ref ?? ''),
       resource: ['storage', 'config'],
       method: 'PATCH',
-      body: {
-        fileSizeLimit: req.body?.fileSizeLimit,
-        features: {
-          imageTransformation: req.body?.features?.imageTransformation,
-          s3Protocol: req.body?.features?.s3Protocol,
-        },
-      },
+      body: storageConfigBody,
     })
 
-    return res.status(200).json(getSelfHostedStorageConfig(data))
+    return res.status(200).json(buildAppliedStorageConfig(req, data))
   } catch (error) {
+    if (error instanceof SelfHostedManagementError && error.statusCode === 503) {
+      try {
+        const runtimeBody = buildRuntimeStoragePatchBody(req)
+        if (Object.keys(runtimeBody).length === 0) throw error
+
+        const data = await requestSelfHostedManagement({
+          projectRef: String(req.query.ref ?? ''),
+          resource: ['runtime', 'storage'],
+          method: 'PATCH',
+          body: runtimeBody,
+        })
+
+        return res
+          .status(200)
+          .json(buildAppliedStorageConfig(req, { external: { operation: data } }))
+      } catch (fallbackError) {
+        error = fallbackError
+      }
+    }
+
     const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
     const message =
       error instanceof SelfHostedManagementError && error.statusCode === 503

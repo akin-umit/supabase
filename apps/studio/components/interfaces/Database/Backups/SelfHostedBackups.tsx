@@ -30,6 +30,17 @@ type BackupResponse = {
 const formatBytes = (value?: number) =>
   value === undefined ? 'Size pending' : `${(value / 1024 / 1024).toFixed(1)} MB`
 
+const formatManagementError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : 'Operation failed'
+  if (message === 'upstream_operation_failed' || message.includes('upstream_operation_failed')) {
+    return 'The self-hosted backup job runner rejected the operation. Check the VPS/Coolify backup worker and storage credentials, then retry.'
+  }
+  if (message.includes('Management API is not configured')) {
+    return 'The self-hosted management API is not configured for backup operations.'
+  }
+  return message
+}
+
 export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'restore' }) {
   const { ref } = useParams()
   const [restoreAt, setRestoreAt] = useState('')
@@ -57,7 +68,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
       toast.success(message)
       await refetch()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Operation failed')
+      toast.error(formatManagementError(error))
     }
   }
 
@@ -75,10 +86,14 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
               Restore the database from archived WAL to an exact timestamp.
             </p>
           </div>
-          <span className="text-sm text-brand">
-            {pitrEnabled ? 'Enabled' : 'Unavailable'}
-          </span>
+          <span className="text-sm text-brand">{pitrEnabled ? 'Enabled' : 'Unavailable'}</span>
         </div>
+        {!pitrEnabled && (
+          <div className="rounded border border-warning/40 bg-warning-200 px-4 py-3 text-sm">
+            PITR requires WAL archiving and a restore job runner in the self-hosted runtime. Studio
+            will enable the restore form as soon as the management API reports PITR as configured.
+          </div>
+        )}
         <div className="flex flex-col gap-3 sm:flex-row">
           <Input
             type="datetime-local"
@@ -174,7 +189,13 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
           </Card>
         ))
       ) : (
-        <Card className="p-6 text-sm text-foreground-light">No backups have been created yet.</Card>
+        <Card className="p-6 space-y-2 text-sm text-foreground-light">
+          <p>No backups have been created yet.</p>
+          <p>
+            Configure the self-hosted backup job runner and storage target in your VPS operator,
+            then use Back up now to create the first recovery point.
+          </p>
+        </Card>
       )}
     </div>
   )

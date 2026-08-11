@@ -10,8 +10,20 @@ import {
   useSelfHostedManagementQuery,
 } from '@/data/self-hosted/management'
 
-type Publication = { name: string; tables: string[]; allTables?: boolean; all_tables?: boolean }
-type Slot = { name: string; plugin: string; active: boolean; retainedBytes?: number }
+type PublicationTable = string | { schema?: string; name?: string }
+type Publication = {
+  name: string
+  tables: PublicationTable[]
+  allTables?: boolean
+  all_tables?: boolean
+}
+type Slot = {
+  name: string
+  plugin: string
+  active: boolean
+  retainedBytes?: number
+  retained_bytes?: number
+}
 type Destination = {
   id: string
   name: string
@@ -22,12 +34,31 @@ type Destination = {
 }
 type ReplicationState = {
   walLevel?: string
+  wal_level?: string
   configured?: boolean
   status?: 'configured' | 'operator_managed' | 'unsupported' | 'unavailable'
   message?: string
   publications?: Publication[]
   slots?: Slot[]
   destinations?: Destination[]
+}
+type NormalizedReplicationState = Omit<
+  ReplicationState,
+  'publications' | 'slots' | 'destinations'
+> & {
+  walLevel: string
+  configured: boolean
+  status: NonNullable<ReplicationState['status']>
+  message: string
+  publications: Array<Omit<Publication, 'tables'> & { tables: string[] }>
+  slots: Array<Omit<Slot, 'retained_bytes'>>
+  destinations: Destination[]
+}
+
+const tableLabel = (table: PublicationTable) => {
+  if (typeof table === 'string') return table
+  if (table.schema && table.name) return `${table.schema}.${table.name}`
+  return table.name ?? table.schema ?? ''
 }
 
 const destinationStatuses = new Set<Destination['status']>([
@@ -37,13 +68,13 @@ const destinationStatuses = new Set<Destination['status']>([
   'configured',
 ])
 
-function normalizeReplicationState(data: ReplicationState | undefined): Required<ReplicationState> {
+function normalizeReplicationState(data: ReplicationState | undefined): NormalizedReplicationState {
   const publications = Array.isArray(data?.publications)
     ? data.publications.map((item) => ({
         name: String(item?.name ?? 'unnamed_publication'),
         allTables: Boolean(item?.allTables ?? item?.all_tables),
         all_tables: Boolean(item?.allTables ?? item?.all_tables),
-        tables: Array.isArray(item?.tables) ? item.tables.filter(Boolean).map(String) : [],
+        tables: Array.isArray(item?.tables) ? item.tables.map(tableLabel).filter(Boolean) : [],
       }))
     : []
 
@@ -52,7 +83,12 @@ function normalizeReplicationState(data: ReplicationState | undefined): Required
         name: String(slot?.name ?? 'unnamed_slot'),
         plugin: String(slot?.plugin ?? 'unknown'),
         active: Boolean(slot?.active),
-        retainedBytes: typeof slot?.retainedBytes === 'number' ? slot.retainedBytes : undefined,
+        retainedBytes:
+          typeof slot?.retainedBytes === 'number'
+            ? slot.retainedBytes
+            : typeof slot?.retained_bytes === 'number'
+              ? slot.retained_bytes
+              : undefined,
       }))
     : []
 
@@ -68,7 +104,7 @@ function normalizeReplicationState(data: ReplicationState | undefined): Required
     : []
 
   return {
-    walLevel: data?.walLevel ? String(data.walLevel) : '',
+    walLevel: (data?.walLevel ?? data?.wal_level) ? String(data?.walLevel ?? data?.wal_level) : '',
     configured: data?.configured ?? true,
     status: data?.status ?? 'configured',
     message: data?.message ?? '',
@@ -151,7 +187,7 @@ export function SelfHostedReplication() {
             <h3 className="text-lg">Publications</h3>
           </div>
           <div className="flex items-center gap-2 text-xs text-foreground-light">
-            <span>WAL level: {replication.walLevel || 'not reported'}</span>
+            <span>WAL level: {replication.walLevel || 'not reported by operator'}</span>
             {hasLogicalWal ? (
               <Badge variant="success">Logical</Badge>
             ) : (
@@ -172,7 +208,10 @@ export function SelfHostedReplication() {
               </div>
             ))
           ) : (
-            <p className="text-sm text-foreground-light">No logical publications.</p>
+            <p className="text-sm text-foreground-light">
+              No logical publications reported. Create a publication from Database &gt; Publications
+              or SQL Editor, then refresh this page.
+            </p>
           )}
         </Card>
         <Card className="p-5 space-y-3">
@@ -195,7 +234,9 @@ export function SelfHostedReplication() {
               </div>
             ))
           ) : (
-            <p className="text-sm text-foreground-light">No logical replication slots.</p>
+            <p className="text-sm text-foreground-light">
+              No logical replication slots reported by the local Postgres runtime.
+            </p>
           )}
         </Card>
       </div>
@@ -230,7 +271,12 @@ export function SelfHostedReplication() {
           icon={<Plus />}
           loading={create.isPending}
           disabled={
-            isUnavailable || !hasLogicalWal || !name || !publication || !endpoint || !publicationExists
+            isUnavailable ||
+            !hasLogicalWal ||
+            !name ||
+            !publication ||
+            !endpoint ||
+            !publicationExists
           }
           onClick={submit}
         >

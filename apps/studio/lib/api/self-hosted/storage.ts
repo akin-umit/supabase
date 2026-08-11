@@ -29,12 +29,12 @@ export function getSelfHostedStorageConfig(
     managementApiConfigured && Boolean(process.env.INTERNAL_MANAGEMENT_API_WRITE_TOKEN)
 
   const s3ProtocolEnabled = parseBoolean(
-    process.env.STORAGE_S3_PROTOCOL_ENABLED,
+    process.env.STORAGE_S3_PROTOCOL_ENABLED ?? process.env.ENABLE_S3_PROTOCOL,
     Boolean(
       process.env.S3_PROTOCOL_ACCESS_KEY_ID ||
-        process.env.S3_PROTOCOL_ACCESS_KEY_SECRET ||
-        process.env.STORAGE_S3_PROTOCOL_ACCESS_KEY_ID ||
-        process.env.STORAGE_S3_PROTOCOL_ACCESS_KEY_SECRET
+      process.env.S3_PROTOCOL_ACCESS_KEY_SECRET ||
+      process.env.STORAGE_S3_PROTOCOL_ACCESS_KEY_ID ||
+      process.env.STORAGE_S3_PROTOCOL_ACCESS_KEY_SECRET
     )
   )
 
@@ -66,7 +66,12 @@ export function getSelfHostedStorageConfig(
         maxTables: parseNumber(process.env.STORAGE_ICEBERG_MAX_TABLES, 0),
       },
       imageTransformation: {
-        enabled: parseBoolean(process.env.IMGPROXY_ENABLE_WEBP_DETECTION, true),
+        enabled: parseBoolean(
+          process.env.ENABLE_IMAGE_TRANSFORMATION ??
+            process.env.IMGPROXY_AUTO_WEBP ??
+            process.env.IMGPROXY_ENABLE_WEBP_DETECTION,
+          true
+        ),
       },
       s3Protocol: {
         enabled: s3ProtocolEnabled,
@@ -77,7 +82,10 @@ export function getSelfHostedStorageConfig(
         maxIndexes: parseNumber(process.env.STORAGE_VECTOR_BUCKETS_MAX_INDEXES, 100),
       },
     },
-    fileSizeLimit: parseNumber(process.env.STORAGE_FILE_SIZE_LIMIT, DEFAULT_FILE_SIZE_LIMIT),
+    fileSizeLimit: parseNumber(
+      process.env.STORAGE_FILE_SIZE_LIMIT ?? process.env.FILE_SIZE_LIMIT,
+      DEFAULT_FILE_SIZE_LIMIT
+    ),
     migrationVersion: process.env.STORAGE_MIGRATION_VERSION ?? 'self-hosted',
   }
 

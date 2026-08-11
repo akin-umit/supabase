@@ -18,8 +18,8 @@ describe('getSelfHostedServiceBadge', () => {
       variant: 'success',
     })
     expect(getSelfHostedServiceBadge(status('incomplete'))).toEqual({
-      label: 'Needs config',
-      variant: 'warning',
+      label: 'Operator managed',
+      variant: 'success',
     })
     expect(getSelfHostedServiceBadge(undefined)).toEqual({
       label: 'Unavailable',
