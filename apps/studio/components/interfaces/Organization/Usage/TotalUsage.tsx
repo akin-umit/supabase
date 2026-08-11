@@ -50,6 +50,7 @@ export const TotalUsage = ({
 }: ComputeProps) => {
   const isMobile = useBreakpoint('md')
   const isUsageBillingEnabled = subscription?.usage_billing_enabled
+  const isSelfHostedUsage = subscription?.payment_method_type === 'self-hosted'
   const { billingAll } = useIsFeatureEnabled(['billing:all'])
   const { data: org } = useSelectedOrganizationQuery()
   const hasActiveRestriction = Boolean(org?.restriction_status)
@@ -128,10 +129,12 @@ export const TotalUsage = ({
       <SectionContent
         section={{
           name: 'Usage Summary',
-          description: isUsageBillingEnabled
-            ? `Your plan includes a limited amount of usage. If exceeded, you will be charged for the overages. It may take up to 1 hour to refresh.`
-            : `Your plan includes a limited amount of usage. If exceeded, you may experience restrictions, as you are currently not billed for overages. It may take up to 1 hour to refresh.`,
-          links: billingAll
+          description: isSelfHostedUsage
+            ? `Self-hosted Studio reads local project and organization resource telemetry. Billing and payment quotas are not used in VPS mode.`
+            : isUsageBillingEnabled
+              ? `Your plan includes a limited amount of usage. If exceeded, you will be charged for the overages. It may take up to 1 hour to refresh.`
+              : `Your plan includes a limited amount of usage. If exceeded, you may experience restrictions, as you are currently not billed for overages. It may take up to 1 hour to refresh.`,
+          links: billingAll && !isSelfHostedUsage
             ? [
                 {
                   name: 'How billing works',

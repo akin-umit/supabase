@@ -13,15 +13,21 @@ export interface DatabaseLayoutProps {
 
 export const DatabaseProductMenu = () => {
   const router = useRouter()
-  const page = router.pathname.split('/')[4]
+  const page = getActiveDatabasePage(router.asPath || router.pathname)
   const menu = useGenerateDatabaseMenu()
 
   return <ProductMenu page={page} menu={menu} />
 }
 
+function getActiveDatabasePage(pathname: string) {
+  const path = pathname.split('?')[0]
+  const databaseIndex = path.split('/').findIndex((segment) => segment === 'database')
+  return databaseIndex >= 0 ? path.split('/')[databaseIndex + 1] : undefined
+}
+
 const DatabaseLayout = ({ children, title }: PropsWithChildren<DatabaseLayoutProps>) => {
   const router = useRouter()
-  const page = router.pathname.split('/')[4]
+  const page = getActiveDatabasePage(router.asPath || router.pathname)
   const menu = useGenerateDatabaseMenu()
 
   return (

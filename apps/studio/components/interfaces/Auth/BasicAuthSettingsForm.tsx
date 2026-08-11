@@ -95,7 +95,7 @@ export const BasicAuthSettingsForm = () => {
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
-  const canManageConfig = IS_PLATFORM && canUpdateConfig
+  const canManageConfig = canUpdateConfig
   const effectiveAuthConfig = authConfig
   const shouldShowError = isError
   const shouldShowNoPermission = IS_PLATFORM && isPermissionsLoaded && !canReadConfig

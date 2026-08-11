@@ -4,6 +4,7 @@ import {
   requestSelfHostedManagement,
   SelfHostedManagementError,
 } from '@/lib/api/self-hosted/management'
+import { STORAGE_OPERATOR_MANAGED_REASON } from '@/lib/api/self-hosted/storage'
 import { IS_PLATFORM } from '@/lib/constants'
 
 const SAFE_NAME = /^[a-z][a-z0-9_-]{2,62}$/
@@ -120,7 +121,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ data: keys.map(normalizeKey) })
   } catch (error) {
     const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
-    const message = error instanceof Error ? error.message : 'Unable to manage S3 credentials'
+    const message =
+      error instanceof SelfHostedManagementError && error.statusCode === 503
+        ? STORAGE_OPERATOR_MANAGED_REASON
+        : error instanceof Error
+          ? error.message
+          : 'Unable to manage S3 credentials'
     return res.status(status).json({ error: { message } })
   }
 }

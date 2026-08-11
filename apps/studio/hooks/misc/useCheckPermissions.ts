@@ -159,9 +159,7 @@ export function useAsyncCheckPermissions(
 
   const can = useMemo(() => {
     if (!IS_PLATFORM) {
-      const isSelfHostedAuthConfigWrite =
-        resource === 'custom_config_gotrue' && action.toLowerCase() === 'update'
-      return !isSelfHostedAuthConfigWrite
+      return true
     }
     if (!isLoggedIn) return false
     if (!isPermissionsSuccess || !allPermissions) return false

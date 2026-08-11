@@ -56,6 +56,20 @@ import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useIsProjectActive, useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { DOCS_URL } from '@/lib/constants'
 
+const DEFAULT_OPERATOR_MANAGED_REASON =
+  'Storage runtime settings are operator-managed because the self-host management API write bridge is not configured. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
+
+type SelfHostedStorageConfig = {
+  external?: {
+    selfHosted?: {
+      managementApi?: {
+        writable?: boolean
+        reason?: string
+      }
+    }
+  }
+}
+
 export const S3Connection = () => {
   const { ref: projectRef } = useParams()
   const { isPlatform, isSelfHosted } = useDeploymentMode()
@@ -82,7 +96,7 @@ export const S3Connection = () => {
     error: configError,
     isSuccess: isSuccessStorageConfig,
     isError: isErrorStorageConfig,
-  } = useProjectStorageConfigQuery({ projectRef }, { enabled: isPlatform })
+  } = useProjectStorageConfigQuery({ projectRef })
   const {
     data: storageCreds,
     error: storageCredsError,
@@ -113,7 +127,13 @@ export const S3Connection = () => {
     ? getConnectionURL(projectRef ?? '', protocol, endpoint)
     : undefined
   const canReadS3CredentialsSurface = isSelfHosted || canReadS3Credentials
-  const canUpdateStorageSettingsSurface = isSelfHosted || canUpdateStorageSettings
+  const selfHostedManagementApi = (config as SelfHostedStorageConfig | undefined)?.external
+    ?.selfHosted?.managementApi
+  const selfHostedSettingsWritable = Boolean(selfHostedManagementApi?.writable)
+  const operatorManagedReason = selfHostedManagementApi?.reason ?? DEFAULT_OPERATOR_MANAGED_REASON
+  const canUpdateStorageSettingsSurface = isSelfHosted
+    ? selfHostedSettingsWritable
+    : canUpdateStorageSettings
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = async (data) => {
     if (!projectRef) return console.error('Project ref is required')
@@ -150,7 +170,7 @@ export const S3Connection = () => {
           </PageSectionMeta>
 
           <PageSectionContent>
-            {isPlatform && isErrorStorageConfig && (
+            {(isPlatform || isSelfHosted) && isErrorStorageConfig && (
               <AlertError
                 className="mb-4"
                 subject="Failed to retrieve storage configuration"
@@ -164,7 +184,7 @@ export const S3Connection = () => {
                   <GenericSkeletonLoader />
                 ) : isProjectActive || isSelfHosted ? (
                   <Card>
-                    {isPlatform && (
+                    {(isPlatform || isSelfHosted) && (
                       <CardContent>
                         <FormField
                           name="s3ConnectionEnabled"
@@ -191,6 +211,16 @@ export const S3Connection = () => {
                             </FormItemLayout>
                           )}
                         />
+                      </CardContent>
+                    )}
+
+                    {isSelfHosted && !selfHostedSettingsWritable && (
+                      <CardContent>
+                        <Alert variant="warning">
+                          <WarningIcon />
+                          <AlertTitle>Operator-managed S3 runtime settings</AlertTitle>
+                          <AlertDescription>{operatorManagedReason}</AlertDescription>
+                        </Alert>
                       </CardContent>
                     )}
 
@@ -226,7 +256,7 @@ export const S3Connection = () => {
                       </FormItemLayout>
                     </CardContent>
 
-                    {isPlatform && (
+                    {(isPlatform || isSelfHosted) && (
                       <CardFooter className="justify-end space-x-2">
                         {form.formState.isDirty && (
                           <Button

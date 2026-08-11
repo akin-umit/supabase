@@ -67,6 +67,11 @@ export type DatabaseSettingSummary = z.infer<typeof managementSettingSchema>
 export type DatabaseSettingsOperation = z.infer<typeof operationSchema>
 export type DatabaseSettingsResponse = z.infer<typeof databaseSettingsResponseSchema>
 
+const DEFAULT_DATABASE_SETTINGS: DatabaseSettings = {
+  log_connections: false,
+  log_disconnections: false,
+}
+
 export class DatabaseSettingsManagementApiError extends Error {
   constructor(
     message: string,
@@ -185,7 +190,7 @@ export async function getDatabaseSettings(projectRef: string): Promise<DatabaseS
       .map((setting) => [setting.name, setting.value === 'on'])
   )
   return {
-    settings: databaseSettingsSchema.parse(values),
+    settings: databaseSettingsSchema.parse({ ...DEFAULT_DATABASE_SETTINGS, ...values }),
     settingsList: result.data.settings,
     operation: result.data.operation,
   }
@@ -226,7 +231,7 @@ export async function updateDatabaseSettings(
       .map((setting) => [setting.name, setting.value === 'on'])
   )
   return {
-    settings: databaseSettingsSchema.parse(values),
+    settings: databaseSettingsSchema.parse({ ...DEFAULT_DATABASE_SETTINGS, ...values }),
     settingsList: result.data.settings,
     operation: result.data.operation,
   }

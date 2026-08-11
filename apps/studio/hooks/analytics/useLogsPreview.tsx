@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useFlag } from 'common'
+import { IS_PLATFORM, useFlag } from 'common'
 import dayjs from 'dayjs'
 import { useCallback, useMemo, useState } from 'react'
 
@@ -65,7 +65,7 @@ function useLogsPreview({
 
   // When on, query the OTEL endpoint instead of BigQuery. logsAllEndpointUrl is
   // inlined in each queryFn (not hoisted) so useOtel stays the only query dep.
-  const useOtel = useFlag('otelLegacyLogs')
+  const useOtel = IS_PLATFORM && useFlag('otelLegacyLogs')
 
   const {
     timestampStart: urlTimestampStart,
@@ -187,7 +187,7 @@ function useLogsPreview({
         projectRef,
         sql: countQuerySql,
         iso_timestamp_start: latestRefresh,
-        iso_timestamp_end: timestampEnd,
+        iso_timestamp_end: 'now',
         table,
         mergedFilters,
         otel: useOtel,
@@ -204,7 +204,7 @@ function useLogsPreview({
         endpoint: logsAllEndpointUrl(useOtel),
         sql: countQuerySql,
         iso_timestamp_start: latestRefresh,
-        iso_timestamp_end: timestampEnd ?? '',
+        iso_timestamp_end: new Date().toISOString(),
         method: 'get',
         signal,
       })

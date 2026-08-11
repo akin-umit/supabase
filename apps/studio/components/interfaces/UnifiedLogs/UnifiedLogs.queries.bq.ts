@@ -24,7 +24,15 @@ const NOT_IN_OP = safeSql`NOT IN`
 const LIKE_OP = safeSql`LIKE`
 const NOT_LIKE_OP = safeSql`NOT LIKE`
 
-const ALL_LOG_TYPES = ['edge', 'postgrest', 'storage', 'postgres', 'edge function', 'auth']
+const ALL_LOG_TYPES = [
+  'edge',
+  'postgrest',
+  'storage',
+  'postgres',
+  'edge function',
+  'auth',
+  'realtime',
+]
 
 /**
  * Computes the log_type set that the CTE should union. With no filter, defaults
@@ -293,33 +301,26 @@ const getEdgeFunctionLogsQuery = (): SafeLogSqlFragment => safeSql`
  */
 const getAuthLogsQuery = (): SafeLogSqlFragment => safeSql`
     select
-      el_in_al.id as id,
-      al.id as source_id,
-      el_in_al.timestamp as timestamp,
+      al.id as id,
+      null as source_id,
+      al.timestamp as timestamp,
       'auth' as log_type,
-      CAST(el_in_al_response.status_code AS STRING) as status,
+      CAST(al_metadata.status AS STRING) as status,
       CASE
-          WHEN el_in_al_response.status_code BETWEEN 200 AND 299 THEN 'success'
-          WHEN el_in_al_response.status_code BETWEEN 400 AND 499 THEN 'warning'
-          WHEN el_in_al_response.status_code >= 500 THEN 'error'
+          WHEN al_metadata.status BETWEEN 200 AND 299 THEN 'success'
+          WHEN al_metadata.status BETWEEN 400 AND 499 THEN 'warning'
+          WHEN al_metadata.status >= 500 THEN 'error'
+          WHEN al_metadata.level = 'error' THEN 'error'
+          WHEN al_metadata.level = 'warn' THEN 'warning'
           ELSE 'success'
       END as level,
-      el_in_al_request.path as pathname,
-      null as event_message,
-      el_in_al_request.method as method,
+      al_metadata.path as pathname,
+      al.event_message as event_message,
+      null as method,
       null as log_count,
       null as logs
     from auth_logs as al
     cross join unnest(metadata) as al_metadata
-    left join (
-    edge_logs as el_in_al
-        cross join unnest (metadata) as el_in_al_metadata
-        cross join unnest (el_in_al_metadata.response) as el_in_al_response
-        cross join unnest (el_in_al_response.headers) as el_in_al_response_headers
-        cross join unnest (el_in_al_metadata.request) as el_in_al_request
-    )
-    on al_metadata.request_id = el_in_al_response_headers.cf_ray
-    WHERE al_metadata.request_id is not null
   `
 
 /**
@@ -351,6 +352,27 @@ const getSupabaseStorageLogsQuery = (): SafeLogSqlFragment => safeSql`
     WHERE edge_logs_request.path LIKE '%/storage/%'
   `
 
+const getRealtimeLogsQuery = (): SafeLogSqlFragment => safeSql`
+    select
+      id,
+      null as source_id,
+      rl.timestamp as timestamp,
+      'realtime' as log_type,
+      null as status,
+      CASE
+          WHEN realtime_metadata.level = 'error' THEN 'error'
+          WHEN realtime_metadata.level = 'warn' THEN 'warning'
+          ELSE 'success'
+      END as level,
+      null as pathname,
+      rl.event_message as event_message,
+      null as method,
+      null as log_count,
+      null as logs
+    from realtime_logs as rl
+    cross join unnest(rl.metadata) as realtime_metadata
+  `
+
 const LOG_TYPE_QUERIES: Record<string, () => SafeLogSqlFragment> = {
   edge: getEdgeLogsQuery,
   postgrest: getPostgrestLogsQuery,
@@ -358,6 +380,7 @@ const LOG_TYPE_QUERIES: Record<string, () => SafeLogSqlFragment> = {
   'edge function': getEdgeFunctionLogsQuery,
   auth: getAuthLogsQuery,
   storage: getSupabaseStorageLogsQuery,
+  realtime: getRealtimeLogsQuery,
 }
 
 /**
@@ -470,7 +493,8 @@ log_type_counts AS (
     COUNTIF(log_type = 'storage') AS storage_count,
     COUNTIF(log_type = 'postgres') AS postgres_count,
     COUNTIF(log_type = 'edge function') AS edge_function_count,
-    COUNTIF(log_type = 'auth') AS auth_count
+    COUNTIF(log_type = 'auth') AS auth_count,
+    COUNTIF(log_type = 'realtime') AS realtime_count
   FROM unified_logs
   ${logTypeWhere}
 ),
@@ -497,6 +521,7 @@ UNION ALL SELECT 'log_type', 'storage', storage_count FROM log_type_counts
 UNION ALL SELECT 'log_type', 'postgres', postgres_count FROM log_type_counts
 UNION ALL SELECT 'log_type', 'edge function', edge_function_count FROM log_type_counts
 UNION ALL SELECT 'log_type', 'auth', auth_count FROM log_type_counts
+UNION ALL SELECT 'log_type', 'realtime', realtime_count FROM log_type_counts
 UNION ALL SELECT 'level', 'success', success_count FROM level_counts
 UNION ALL SELECT 'level', 'warning', warning_count FROM level_counts
 UNION ALL SELECT 'level', 'error', error_count FROM level_counts

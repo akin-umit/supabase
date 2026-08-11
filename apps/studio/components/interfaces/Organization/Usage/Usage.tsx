@@ -53,6 +53,7 @@ export const Usage = () => {
     isError: isErrorSubscription,
     isSuccess: isSuccessSubscription,
   } = useOrgSubscriptionQuery({ orgSlug: slug })
+  const isSelfHostedUsage = subscription?.payment_method_type === 'self-hosted'
 
   const { data: selectedProject } = useProjectDetailQuery({
     ref: selectedProjectRef ?? undefined,
@@ -213,8 +214,11 @@ export const Usage = () => {
 
                 <div className="flex items-center gap-2">
                   <p className={cn('text-sm transition', isLoadingSubscription && 'opacity-50')}>
-                    Organization is on the{' '}
-                    <span className="font-medium text-brand">{subscription.plan.name} Plan</span>
+                    {isSelfHostedUsage ? 'Organization is using the ' : 'Organization is on the '}
+                    <span className="font-medium text-brand">
+                      {subscription.plan.name}
+                      {isSelfHostedUsage ? ' control plane' : ' Plan'}
+                    </span>
                   </p>
                   <span className="text-border-stronger">
                     <svg
@@ -232,6 +236,7 @@ export const Usage = () => {
                     </svg>
                   </span>
                   <p className="text-sm text-foreground-light">
+                    {isSelfHostedUsage ? 'Local usage window: ' : ''}
                     {billingCycleStart.format('DD MMM YYYY')} -{' '}
                     {billingCycleEnd.format('DD MMM YYYY')}
                   </p>
@@ -264,15 +269,26 @@ export const Usage = () => {
                 <span className="font-medium text-foreground">
                   {selectedProject?.name || selectedProjectRef}
                 </span>{' '}
-                project. Supabase uses{' '}
-                <Link
-                  href="/docs/guides/platform/billing-on-supabase#organization-based-billing"
-                  target="_blank"
-                >
-                  organization-level billing
-                </Link>{' '}
-                and quotas. For billing purposes, we sum up usage from all your projects. To view
-                your usage quota, set the project filter above back to "All Projects".
+                project.{' '}
+                {isSelfHostedUsage ? (
+                  <>
+                    Self-hosted Studio aggregates local resource telemetry per project and across
+                    the organization. Set the project filter back to "All Projects" to inspect the
+                    VPS-wide view.
+                  </>
+                ) : (
+                  <>
+                    Supabase uses{' '}
+                    <Link
+                      href="/docs/guides/platform/billing-on-supabase#organization-based-billing"
+                      target="_blank"
+                    >
+                      organization-level billing
+                    </Link>{' '}
+                    and quotas. For billing purposes, we sum up usage from all your projects. To
+                    view your usage quota, set the project filter above back to "All Projects".
+                  </>
+                )}
               </div>
             }
           />

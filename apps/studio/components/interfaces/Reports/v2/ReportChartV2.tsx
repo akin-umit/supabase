@@ -12,6 +12,7 @@ import type { AnalyticsInterval } from '@/data/analytics/constants'
 import type { ReportConfig } from '@/data/reports/v2/reports.types'
 import { useFillTimeseriesSorted } from '@/hooks/analytics/useFillTimeseriesSorted'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 
 export interface ReportChartV2Props {
@@ -74,14 +75,16 @@ export const ReportChartV2 = ({
   queryGroup,
 }: ReportChartV2Props) => {
   const { data: org } = useSelectedOrganizationQuery()
+  const { isSelfHosted } = useDeploymentMode()
   const { getEntitlementSetValues, isLoading: isEntitlementLoading } = useCheckEntitlements(
     'observability.dashboard_advanced_metrics',
     undefined,
-    { enabled: !!report.entitlement }
+    { enabled: !isSelfHosted && !!report.entitlement }
   )
 
   const entitledFeatures = getEntitlementSetValues()
-  const isAvailable = !report.entitlement || entitledFeatures.includes(report.entitlement)
+  const isAvailable =
+    isSelfHosted || !report.entitlement || entitledFeatures.includes(report.entitlement)
 
   const canFetch = isAvailable
 
@@ -138,6 +141,12 @@ export const ReportChartV2 = ({
   }
 
   const isErrorState = error && !isLoadingChart
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message?: unknown }).message)
+        : 'Error loading chart data'
 
   if (report.hide) return null
 
@@ -152,8 +161,8 @@ export const ReportChartV2 = ({
         {isLoadingChart ? (
           <Loader2 className="size-5 animate-spin text-foreground-light" />
         ) : isErrorState ? (
-          <p className="text-sm text-foreground-light text-center h-full flex items-center justify-center">
-            Error loading chart data
+          <p className="text-sm text-foreground-light text-center h-full flex items-center justify-center max-w-xl px-6">
+            {errorMessage}
           </p>
         ) : (
           <div className="w-full relative">

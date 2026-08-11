@@ -40,7 +40,7 @@ export async function deployEdgeFunction({
   const { data, error } = await post(`/v1/projects/{ref}/functions/deploy`, {
     params: { path: { ref: projectRef }, query: { slug: slug } },
     ...(authorization && { headers: { Authorization: authorization } }),
-    body: IS_PLATFORM
+    body: (IS_PLATFORM
       ? {
           file: files as any,
           metadata: metadata as EdgeFunctionsDeployBodyMetadata,
@@ -48,7 +48,7 @@ export async function deployEdgeFunction({
       : {
           files,
           metadata,
-        },
+        }) as any,
     ...(IS_PLATFORM && {
       bodySerializer(body) {
         const formData = new FormData()

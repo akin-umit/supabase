@@ -17,6 +17,54 @@ export const SELF_HOSTED_AUTH_CONFIG_FALLBACK = {
   MAILER_OTP_EXP: 3600,
   MAILER_OTP_LENGTH: 6,
   MAILER_SECURE_EMAIL_CHANGE_ENABLED: true,
+  MAILER_SUBJECTS_CONFIRMATION: 'Confirm your signup',
+  MAILER_TEMPLATES_CONFIRMATION_CONTENT:
+    '<h2>Confirm your signup</h2><p>Follow this link to confirm your user:</p><p><a href="{{ .ConfirmationURL }}">Confirm your mail</a></p>',
+  MAILER_SUBJECTS_INVITE: 'You have been invited',
+  MAILER_TEMPLATES_INVITE_CONTENT:
+    '<h2>You have been invited</h2><p>You have been invited to create a user on {{ .SiteURL }}. Follow this link to accept the invite:</p><p><a href="{{ .ConfirmationURL }}">Accept the invite</a></p>',
+  MAILER_SUBJECTS_MAGIC_LINK: 'Your magic link',
+  MAILER_TEMPLATES_MAGIC_LINK_CONTENT:
+    '<h2>Magic Link</h2><p>Follow this link to login:</p><p><a href="{{ .ConfirmationURL }}">Log In</a></p>',
+  MAILER_SUBJECTS_EMAIL_CHANGE: 'Confirm email change',
+  MAILER_TEMPLATES_EMAIL_CHANGE_CONTENT:
+    '<h2>Confirm Change of Email</h2><p>Follow this link to confirm the update of your email from {{ .Email }} to {{ .NewEmail }}:</p><p><a href="{{ .ConfirmationURL }}">Change Email</a></p>',
+  MAILER_SUBJECTS_RECOVERY: 'Reset your password',
+  MAILER_TEMPLATES_RECOVERY_CONTENT:
+    '<h2>Reset Password</h2><p>Follow this link to reset the password for your user:</p><p><a href="{{ .ConfirmationURL }}">Reset Password</a></p>',
+  MAILER_SUBJECTS_REAUTHENTICATION: 'Confirm reauthentication',
+  MAILER_TEMPLATES_REAUTHENTICATION_CONTENT:
+    '<h2>Confirm reauthentication</h2><p>Enter the code: {{ .Token }}</p>',
+  MAILER_SUBJECTS_PASSWORD_CHANGED_NOTIFICATION: 'Your password has been changed',
+  MAILER_TEMPLATES_PASSWORD_CHANGED_NOTIFICATION_CONTENT:
+    '<h2>Password changed</h2><p>Your password for {{ .SiteURL }} has been changed.</p>',
+  MAILER_NOTIFICATIONS_PASSWORD_CHANGED_ENABLED: true,
+  MAILER_SUBJECTS_EMAIL_CHANGED_NOTIFICATION: 'Your email address has been changed',
+  MAILER_TEMPLATES_EMAIL_CHANGED_NOTIFICATION_CONTENT:
+    '<h2>Email changed</h2><p>Your email address for {{ .SiteURL }} has been changed.</p>',
+  MAILER_NOTIFICATIONS_EMAIL_CHANGED_ENABLED: true,
+  MAILER_SUBJECTS_PHONE_CHANGED_NOTIFICATION: 'Your phone number has been changed',
+  MAILER_TEMPLATES_PHONE_CHANGED_NOTIFICATION_CONTENT:
+    '<h2>Phone changed</h2><p>Your phone number for {{ .SiteURL }} has been changed.</p>',
+  MAILER_NOTIFICATIONS_PHONE_CHANGED_ENABLED: true,
+  MAILER_SUBJECTS_IDENTITY_LINKED_NOTIFICATION: 'A sign-in method has been linked',
+  MAILER_TEMPLATES_IDENTITY_LINKED_NOTIFICATION_CONTENT:
+    '<h2>Sign-in method linked</h2><p>{{ .Provider }} has been linked to your account.</p>',
+  MAILER_NOTIFICATIONS_IDENTITY_LINKED_ENABLED: true,
+  MAILER_SUBJECTS_IDENTITY_UNLINKED_NOTIFICATION: 'A sign-in method has been removed',
+  MAILER_TEMPLATES_IDENTITY_UNLINKED_NOTIFICATION_CONTENT:
+    '<h2>Sign-in method removed</h2><p>{{ .Provider }} has been removed from your account.</p>',
+  MAILER_NOTIFICATIONS_IDENTITY_UNLINKED_ENABLED: true,
+  MAILER_SUBJECTS_MFA_FACTOR_ENROLLED_NOTIFICATION: 'An MFA method has been added',
+  MAILER_TEMPLATES_MFA_FACTOR_ENROLLED_NOTIFICATION_CONTENT:
+    '<h2>MFA method added</h2><p>A {{ .FactorType }} MFA method has been added to your account.</p>',
+  MAILER_NOTIFICATIONS_MFA_FACTOR_ENROLLED_ENABLED: true,
+  MAILER_SUBJECTS_MFA_FACTOR_UNENROLLED_NOTIFICATION: 'An MFA method has been removed',
+  MAILER_TEMPLATES_MFA_FACTOR_UNENROLLED_NOTIFICATION_CONTENT:
+    '<h2>MFA method removed</h2><p>A {{ .FactorType }} MFA method has been removed from your account.</p>',
+  MAILER_NOTIFICATIONS_MFA_FACTOR_UNENROLLED_ENABLED: true,
+  MAILER_SUBJECTS_CUSTOM_CONTENTS: {},
+  MAILER_TEMPLATES_CUSTOM_CONTENTS: {},
   PASSWORD_HIBP_ENABLED: false,
   PASSWORD_MIN_LENGTH: 6,
   PASSWORD_REQUIRED_CHARACTERS: '',

@@ -1,7 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
 import { apiWrapper } from '@/lib/api/apiWrapper'
-import { getSelfHostedStorageConfig } from '@/lib/api/self-hosted/storage'
+import {
+  getSelfHostedStorageConfig,
+  STORAGE_OPERATOR_MANAGED_REASON,
+} from '@/lib/api/self-hosted/storage'
+import {
+  requestSelfHostedManagement,
+  SelfHostedManagementError,
+} from '@/lib/api/self-hosted/management'
 import { IS_PLATFORM } from '@/lib/constants'
 
 export default (req: NextApiRequest, res: NextApiResponse) => apiWrapper(req, res, handler)
@@ -30,17 +37,36 @@ const handleGet = async (res: NextApiResponse) => {
   return res.status(200).json(getSelfHostedStorageConfig())
 }
 
-const handlePatch = async (_req: NextApiRequest, res: NextApiResponse) => {
+const handlePatch = async (req: NextApiRequest, res: NextApiResponse) => {
   if (IS_PLATFORM) {
     return res
       .status(404)
       .json({ error: { message: 'Storage self-hosted config is not available on platform' } })
   }
 
-  return res.status(405).json({
-    error: {
-      message:
-        'Storage settings are managed by the self-hosted runtime environment. Update Compose or your secret manager, then redeploy Storage.',
-    },
-  })
+  try {
+    const data = await requestSelfHostedManagement({
+      projectRef: String(req.query.ref ?? ''),
+      resource: ['storage', 'config'],
+      method: 'PATCH',
+      body: {
+        fileSizeLimit: req.body?.fileSizeLimit,
+        features: {
+          imageTransformation: req.body?.features?.imageTransformation,
+          s3Protocol: req.body?.features?.s3Protocol,
+        },
+      },
+    })
+
+    return res.status(200).json(getSelfHostedStorageConfig(data))
+  } catch (error) {
+    const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
+    const message =
+      error instanceof SelfHostedManagementError && error.statusCode === 503
+        ? STORAGE_OPERATOR_MANAGED_REASON
+        : error instanceof Error
+          ? error.message
+          : 'Unable to update Storage runtime settings'
+    return res.status(status).json({ error: { message } })
+  }
 }

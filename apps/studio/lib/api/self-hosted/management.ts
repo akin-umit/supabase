@@ -15,6 +15,7 @@ const ALLOWED_ROOTS = new Set([
   'integrations',
   'webhooks',
 ])
+const SECRET_FIELD_PATTERN = /password|secret|credential|token/i
 
 export class SelfHostedManagementError extends Error {
   constructor(
@@ -102,9 +103,22 @@ export async function requestSelfHostedManagement({
         response.status === 404 || response.status === 405 ? 503 : response.status
       )
     }
-    return payload
+    return resource[0] === 'replication' || resource[0] === 'backups' || resource[0] === 'pitr'
+      ? sanitizeManagementPayload(payload)
+      : payload
   } catch (error) {
     if (error instanceof SelfHostedManagementError) throw error
     throw new SelfHostedManagementError('Unable to reach management API', 502)
   }
+}
+
+function sanitizeManagementPayload(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sanitizeManagementPayload)
+  if (value === null || typeof value !== 'object') return value
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !SECRET_FIELD_PATTERN.test(key))
+      .map(([key, entry]) => [key, sanitizeManagementPayload(entry)])
+  )
 }

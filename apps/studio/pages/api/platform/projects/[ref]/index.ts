@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
 import { apiWrapper } from '@/lib/api/apiWrapper'
-import { DEFAULT_PROJECT, PROJECT_REST_URL } from '@/lib/constants/api'
+import { getSelfHostedProject } from '@/lib/api/self-hosted/organization'
+import { PROJECT_REST_URL } from '@/lib/constants/api'
 
 export default (req: NextApiRequest, res: NextApiResponse) => apiWrapper(req, res, handler)
 
@@ -17,10 +18,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-const handleGet = async (_req: NextApiRequest, res: NextApiResponse) => {
-  // Platform specific endpoint
+const handleGet = async (req: NextApiRequest, res: NextApiResponse) => {
+  const ref = String(req.query.ref ?? 'default')
   const response = {
-    ...DEFAULT_PROJECT,
+    ...(await getSelfHostedProject(ref)),
     connectionString: '',
     restUrl: PROJECT_REST_URL,
   }

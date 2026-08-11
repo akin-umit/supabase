@@ -1,4 +1,5 @@
 import { IS_PLATFORM, useFlag } from 'common'
+import { Card, CardContent, Badge } from 'ui'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import {
   PageHeader,
@@ -7,6 +8,13 @@ import {
   PageHeaderSummary,
   PageHeaderTitle,
 } from 'ui-patterns/PageHeader'
+import {
+  PageSection,
+  PageSectionContent,
+  PageSectionMeta,
+  PageSectionSummary,
+  PageSectionTitle,
+} from 'ui-patterns/PageSection'
 
 import { useIsJitDbAccessEnabled } from '@/components/interfaces/App/FeaturePreview/FeaturePreviewContext'
 import { DiskManagementPanelForm } from '@/components/interfaces/DiskManagement/DiskManagementPanelForm'
@@ -47,7 +55,10 @@ const DatabaseSettings: NextPageWithLayout = () => {
       </PageHeader>
       <PageContainer size="small" className="flex flex-col gap-8 pb-12">
         {!IS_PLATFORM ? (
-          <ConnectionLogging />
+          <>
+            <ConnectionLogging />
+            <SelfHostedDatabaseSettingsSurface />
+          </>
         ) : (
           <>
             <ResetDbPassword />
@@ -68,6 +79,70 @@ const DatabaseSettings: NextPageWithLayout = () => {
       </PageContainer>
       {IS_PLATFORM && <PoolingModesModal />}
     </>
+  )
+}
+
+const SelfHostedDatabaseSettingsSurface = () => {
+  const sections = [
+    {
+      title: 'Connection pooling',
+      status: 'Operator-managed',
+      description:
+        'Pooler sizing is read from the local Supavisor/PgBouncer runtime. Studio does not write pooler capacity until the self-host management API exposes PATCH /v1/projects/:ref/database/pooling.',
+    },
+    {
+      title: 'SSL enforcement',
+      status: 'Operator-managed',
+      description:
+        'SSL enforcement depends on the local Postgres listener and certificate bundle. Configure it in the VPS runtime, then verify connection behavior from Studio.',
+    },
+    {
+      title: 'Network restrictions',
+      status: 'Local infrastructure',
+      description:
+        'Self-hosted network allow lists are enforced by the VPS firewall, reverse proxy, or pooler allow_list. Billing-only IPv4 add-on flows are intentionally not shown here.',
+    },
+    {
+      title: 'Disk and read-only controls',
+      status: 'Runtime evidence',
+      description:
+        'Disk usage and read-only state must come from the local database/runtime operations API, not Cloud plan limits. Use Infrastructure/operations telemetry for current status.',
+    },
+  ]
+
+  return (
+    <PageSection id="self-hosted-database-operations">
+      <PageSectionMeta>
+        <PageSectionSummary>
+          <PageSectionTitle>Self-hosted database operations</PageSectionTitle>
+        </PageSectionSummary>
+      </PageSectionMeta>
+      <PageSectionContent>
+        <Card>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm">Local database configuration contract</p>
+              <p className="text-sm text-foreground-light">
+                Editable Postgres settings above save through the self-host management API and
+                refetch from Postgres. The remaining Pro database operations below are exposed only
+                when the local VPS backend has a real apply/refetch contract.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {sections.map((section) => (
+                <div key={section.title} className="rounded border p-4">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">{section.title}</p>
+                    <Badge variant="default">{section.status}</Badge>
+                  </div>
+                  <p className="text-sm text-foreground-light">{section.description}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </PageSectionContent>
+    </PageSection>
   )
 }
 

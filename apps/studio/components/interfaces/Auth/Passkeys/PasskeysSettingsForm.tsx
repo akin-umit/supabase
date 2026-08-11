@@ -171,7 +171,7 @@ export const PasskeysSettingsForm = () => {
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
-  const canManageConfig = IS_PLATFORM && canUpdateConfig
+  const canManageConfig = canUpdateConfig
 
   const formValues =
     isSuccess && authConfig ? buildPasskeysFormValues(authConfig, project) : undefined

@@ -1,5 +1,6 @@
 import { getMigrationsSql } from '@supabase/pg-meta'
 import { useQuery } from '@tanstack/react-query'
+import { IS_PLATFORM } from 'common'
 
 import { databaseKeys } from './keys'
 import { executeSql } from '@/data/sql/execute-sql-mutation'
@@ -22,6 +23,24 @@ export async function getMigrations(
   { projectRef, connectionString }: MigrationsVariables,
   signal?: AbortSignal
 ) {
+  if (!projectRef) throw new Error('Project ref is required')
+
+  if (!IS_PLATFORM) {
+    const response = await fetch(`/api/v1/projects/${encodeURIComponent(projectRef)}/database/migrations`, {
+      headers: { Accept: 'application/json' },
+      signal,
+    })
+    const payload = await response.json().catch(() => undefined)
+
+    if (!response.ok) {
+      throw new Error(
+        payload?.formattedError ?? payload?.message ?? 'Unable to read migration history'
+      )
+    }
+
+    return payload as DatabaseMigration[]
+  }
+
   const sql = getMigrationsSql()
 
   try {

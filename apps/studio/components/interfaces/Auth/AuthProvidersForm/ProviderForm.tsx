@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { IS_PLATFORM, useParams } from 'common'
+import { useParams } from 'common'
 import { Check } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useQueryState } from 'nuqs'
@@ -61,7 +61,7 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
-  const canManageConfig = IS_PLATFORM && canUpdateConfig
+  const canManageConfig = canUpdateConfig
 
   const shouldDisableField = (field: string): boolean => {
     const shouldDisableSmsFields =
@@ -299,9 +299,7 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
                   tooltip={{
                     content: {
                       side: 'bottom',
-                      text: !IS_PLATFORM
-                        ? 'Self-hosted provider settings are managed with GoTrue environment variables and require an Auth service redeploy'
-                        : !canUpdateConfig
+                      text: !canUpdateConfig
                           ? 'You need additional permissions to update provider settings'
                           : undefined,
                     },

@@ -31,7 +31,15 @@ export const LOG_TYPES_LABELS = {
 
 type LogType = keyof typeof LOG_TYPES_LABELS
 export const LOG_TYPES = Object.keys(LOG_TYPES_LABELS) as [LogType, ...LogType[]]
-export const DEFAULT_LOG_TYPES = ['postgres', 'edge'] as const
+export const DEFAULT_LOG_TYPES = [
+  'edge',
+  'postgrest',
+  'storage',
+  'postgres',
+  'edge function',
+  'auth',
+  'realtime',
+] as const
 
 const parseAsSort = createParser({
   parse(queryValue: string) {

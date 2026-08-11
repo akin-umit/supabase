@@ -14,7 +14,23 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   switch (method) {
     case 'GET':
-      return res.status(200).json(getSelfHostedAuthConfig())
+      try {
+        const projectRef = String(req.query.ref ?? '')
+        const data = await requestSelfHostedManagement({
+          projectRef,
+          resource: ['auth', 'config'],
+          method: 'GET',
+        })
+        return res.status(200).json(data)
+      } catch (error) {
+        if (error instanceof SelfHostedManagementError && error.statusCode === 503) {
+          return res.status(200).json(getSelfHostedAuthConfig())
+        }
+        const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
+        const message =
+          error instanceof Error ? error.message : 'Unable to retrieve Auth configuration'
+        return res.status(status).json({ data: null, error: { message } })
+      }
     case 'PATCH': {
       const projectRef = String(req.query.ref ?? '')
       try {

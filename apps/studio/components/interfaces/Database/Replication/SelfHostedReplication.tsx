@@ -1,8 +1,8 @@
 import { useParams } from 'common'
-import { Database, Plus, RadioTower, Trash2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Database, Plus, RadioTower, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Button, Card, Input } from 'ui'
+import { Badge, Button, Card, Input } from 'ui'
 
 import { AlertError } from '@/components/ui/AlertError'
 import {
@@ -21,10 +21,13 @@ type Destination = {
   endpoint?: string
 }
 type ReplicationState = {
-  walLevel: string
-  publications: Publication[]
-  slots: Slot[]
-  destinations: Destination[]
+  walLevel?: string
+  configured?: boolean
+  status?: 'configured' | 'operator_managed' | 'unsupported' | 'unavailable'
+  message?: string
+  publications?: Publication[]
+  slots?: Slot[]
+  destinations?: Destination[]
 }
 
 const destinationStatuses = new Set<Destination['status']>([
@@ -34,11 +37,12 @@ const destinationStatuses = new Set<Destination['status']>([
   'configured',
 ])
 
-function normalizeReplicationState(data: ReplicationState | undefined): ReplicationState {
+function normalizeReplicationState(data: ReplicationState | undefined): Required<ReplicationState> {
   const publications = Array.isArray(data?.publications)
     ? data.publications.map((item) => ({
         name: String(item?.name ?? 'unnamed_publication'),
         allTables: Boolean(item?.allTables ?? item?.all_tables),
+        all_tables: Boolean(item?.allTables ?? item?.all_tables),
         tables: Array.isArray(item?.tables) ? item.tables.filter(Boolean).map(String) : [],
       }))
     : []
@@ -64,7 +68,10 @@ function normalizeReplicationState(data: ReplicationState | undefined): Replicat
     : []
 
   return {
-    walLevel: String(data?.walLevel ?? 'unknown'),
+    walLevel: data?.walLevel ? String(data.walLevel) : '',
+    configured: data?.configured ?? true,
+    status: data?.status ?? 'configured',
+    message: data?.message ?? '',
     publications,
     slots,
     destinations,
@@ -90,12 +97,19 @@ export function SelfHostedReplication() {
     method: 'DELETE',
   })
   const replication = normalizeReplicationState(data)
+  const hasLogicalWal = replication.walLevel === 'logical'
+  const isUnavailable =
+    replication.status === 'unsupported' ||
+    replication.status === 'unavailable' ||
+    replication.configured === false
+  const publicationExists = replication.publications.some((item) => item.name === publication)
 
   const submit = async () => {
     try {
-      await create.mutateAsync({ name, publication, endpoint, credential: endpoint, type: 'postgres' })
+      await create.mutateAsync({ name, publication, endpoint, type: 'postgres' })
       setName('')
       setEndpoint('')
+      setPublication('')
       toast.success('Replication destination created')
       await refetch()
     } catch (error) {
@@ -109,13 +123,41 @@ export function SelfHostedReplication() {
 
   return (
     <div className="space-y-6">
+      {(isUnavailable || !hasLogicalWal) && (
+        <Card className="p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 text-warning" />
+            <div>
+              <p className="text-sm font-medium">
+                {isUnavailable
+                  ? 'Replication backend is not fully configured'
+                  : 'Logical replication is not active'}
+              </p>
+              <p className="text-sm text-foreground-light">
+                {replication.message ||
+                  (hasLogicalWal
+                    ? 'The local management API reported replication as unavailable. Configure the VPS replication service, then refresh this page.'
+                    : 'Set Postgres wal_level to logical and restart Postgres before creating logical destinations. Studio reads this value from the local replication backend.')}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5 space-y-3">
           <div className="flex items-center gap-2">
             <Database />
             <h3 className="text-lg">Publications</h3>
           </div>
-          <p className="text-xs text-foreground-light">WAL level: {replication.walLevel}</p>
+          <div className="flex items-center gap-2 text-xs text-foreground-light">
+            <span>WAL level: {replication.walLevel || 'not reported'}</span>
+            {hasLogicalWal ? (
+              <Badge variant="success">Logical</Badge>
+            ) : (
+              <Badge variant="warning">Requires logical</Badge>
+            )}
+          </div>
           {replication.publications.length ? (
             replication.publications.map((item) => (
               <div key={item.name} className="rounded border p-3">
@@ -125,7 +167,7 @@ export function SelfHostedReplication() {
                     ? 'All tables'
                     : item.tables.length > 0
                       ? item.tables.join(', ')
-                      : 'No tables'}
+                      : 'No tables in this publication'}
                 </p>
               </div>
             ))
@@ -162,7 +204,8 @@ export function SelfHostedReplication() {
         <div>
           <h3 className="text-lg">Add destination</h3>
           <p className="text-sm text-foreground-light">
-            Connect a logical publication to a PostgreSQL-compatible destination.
+            Connect a logical publication to a PostgreSQL-compatible destination. Secrets are sent
+            only on submit and are never refetched into the form.
           </p>
         </div>
         <div className="grid gap-3 md:grid-cols-3">
@@ -186,21 +229,43 @@ export function SelfHostedReplication() {
         <Button
           icon={<Plus />}
           loading={create.isPending}
-          disabled={!name || !publication || !endpoint}
+          disabled={
+            isUnavailable || !hasLogicalWal || !name || !publication || !endpoint || !publicationExists
+          }
           onClick={submit}
         >
           Add destination
         </Button>
+        {publication && !publicationExists && (
+          <p className="text-sm text-warning">
+            Publication must match an existing local Postgres publication.
+          </p>
+        )}
       </Card>
 
       <div className="space-y-3">
+        {replication.destinations.length === 0 && (
+          <Card className="p-4 text-sm text-foreground-light">
+            No destinations configured in the local replication backend.
+          </Card>
+        )}
         {replication.destinations.map((destination) => (
           <Card key={destination.id} className="flex items-center gap-4 p-4">
             <div className="min-w-0 flex-1">
-              <p>{destination.name}</p>
+              <div className="flex items-center gap-2">
+                <p>{destination.name}</p>
+                {destination.status === 'active' && (
+                  <CheckCircle2 size={16} className="text-brand" />
+                )}
+              </div>
               <p className="text-xs text-foreground-light">
-                {destination.type} · {destination.publication} · {destination.status}
+                {destination.type} - {destination.publication} - {destination.status}
               </p>
+              {destination.endpoint && (
+                <p className="text-xs text-foreground-lighter">
+                  Endpoint: {destination.endpoint.replace(/\/\/.*@/, '//***@')}
+                </p>
+              )}
             </div>
             <Button
               variant="default"

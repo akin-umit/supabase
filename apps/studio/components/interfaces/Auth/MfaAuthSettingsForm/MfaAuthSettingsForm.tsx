@@ -349,7 +349,7 @@ export const MfaAuthSettingsForm = () => {
     authConfig && !authConfig.MFA_PHONE_VERIFY_ENABLED && phoneMFAIsEnabled
 
   const maybeConfirmPhoneMFAOrSubmit = () => {
-    if (hasUpgradedPhoneMFA) {
+    if (IS_PLATFORM && hasUpgradedPhoneMFA) {
       setIsConfirmationModalVisible(true)
     } else {
       phoneForm.handleSubmit(onSubmitPhoneForm)()
@@ -607,26 +607,28 @@ export const MfaAuthSettingsForm = () => {
         </PageSectionContent>
       </PageSection>
 
-      <ConfirmationModal
-        visible={isConfirmationModalVisible}
-        title="Confirm SMS MFA"
-        confirmLabel="Confirm and save"
-        onCancel={() => setIsConfirmationModalVisible(false)}
-        onConfirm={() => {
-          setIsConfirmationModalVisible(false)
-          phoneForm.handleSubmit(onSubmitPhoneForm)()
-        }}
-        variant="warning"
-      >
-        Enabling SMS MFA will result in an additional charge of <span translate="no">$75</span> per
-        month for the first project in the organization and an additional{' '}
-        <span translate="no">$10</span> per month for additional projects.
-        <p className="mt-2">
-          Billing will start immediately upon enabling this add-on, regardless of whether your
-          customers are using SMS MFA.
-        </p>
-        <TaxDisclaimer className="mt-2" />
-      </ConfirmationModal>
+      {IS_PLATFORM && (
+        <ConfirmationModal
+          visible={isConfirmationModalVisible}
+          title="Confirm SMS MFA"
+          confirmLabel="Confirm and save"
+          onCancel={() => setIsConfirmationModalVisible(false)}
+          onConfirm={() => {
+            setIsConfirmationModalVisible(false)
+            phoneForm.handleSubmit(onSubmitPhoneForm)()
+          }}
+          variant="warning"
+        >
+          Enabling SMS MFA will result in an additional charge of{' '}
+          <span translate="no">$75</span> per month for the first project in the organization and an
+          additional <span translate="no">$10</span> per month for additional projects.
+          <p className="mt-2">
+            Billing will start immediately upon enabling this add-on, regardless of whether your
+            customers are using SMS MFA.
+          </p>
+          <TaxDisclaimer className="mt-2" />
+        </ConfirmationModal>
+      )}
 
       <PageSection>
         <PageSectionMeta>

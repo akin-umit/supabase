@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
   Button,
   Card,
   CardContent,
@@ -20,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
   Switch,
+  WarningIcon,
 } from 'ui'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import { PageContainer } from 'ui-patterns/PageContainer'
@@ -54,11 +58,24 @@ import { DOCS_URL } from '@/lib/constants'
 import { formatBytes } from '@/lib/helpers'
 
 const formId = 'storage-settings-form'
+const DEFAULT_OPERATOR_MANAGED_REASON =
+  'Storage runtime settings are operator-managed because the self-host management API write bridge is not configured. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
 
 interface StorageSettingsState {
   fileSizeLimit: number
   unit: StorageSizeUnits
   imageTransformationEnabled: boolean
+}
+
+type SelfHostedStorageConfig = {
+  external?: {
+    selfHosted?: {
+      managementApi?: {
+        writable?: boolean
+        reason?: string
+      }
+    }
+  }
 }
 
 export const StorageSettings = () => {
@@ -74,7 +91,6 @@ export const StorageSettings = () => {
     '*'
   )
   const canReadStorageSurface = !IS_PLATFORM || canReadStorageSettings
-  const canUpdateStorageSurface = IS_PLATFORM && canUpdateStorageSettings
 
   const {
     data: config,
@@ -113,6 +129,13 @@ export const StorageSettings = () => {
   const canUseImageTransformations = !IS_PLATFORM || hasAccessToImageTransformations
   const hasLimitedStorageAccess =
     IS_PLATFORM && !hasAccessToImageTransformations && !hasAccessToFileSizeConfiguration
+  const selfHostedManagementApi = (config as SelfHostedStorageConfig | undefined)?.external
+    ?.selfHosted?.managementApi
+  const selfHostedSettingsWritable = Boolean(selfHostedManagementApi?.writable)
+  const operatorManagedReason = selfHostedManagementApi?.reason ?? DEFAULT_OPERATOR_MANAGED_REASON
+  const canUpdateStorageSurface = IS_PLATFORM
+    ? canUpdateStorageSettings
+    : selfHostedSettingsWritable
 
   const [isUpdating, setIsUpdating] = useState(false)
   const [initialValues, setInitialValues] = useState<StorageSettingsState>({
@@ -428,11 +451,21 @@ export const StorageSettings = () => {
                         />
                       )}
 
+                      {!IS_PLATFORM && !selfHostedSettingsWritable && (
+                        <CardContent>
+                          <Alert variant="warning">
+                            <WarningIcon />
+                            <AlertTitle>Operator-managed Storage settings</AlertTitle>
+                            <AlertDescription>{operatorManagedReason}</AlertDescription>
+                          </Alert>
+                        </CardContent>
+                      )}
+
                       {!canUpdateStorageSurface && (
                         <CardContent>
                           <p className="text-sm text-foreground-light">
                             {!IS_PLATFORM
-                              ? 'Storage settings are managed by the self-hosted runtime environment.'
+                              ? operatorManagedReason
                               : 'You need additional permissions to update storage settings'}
                           </p>
                         </CardContent>

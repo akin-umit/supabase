@@ -36,6 +36,20 @@ interface CreateCredentialModalProps {
   onOpenChange: (value: boolean) => void
 }
 
+const DEFAULT_OPERATOR_MANAGED_REASON =
+  'Storage runtime settings are operator-managed because the self-host management API write bridge is not configured. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
+
+type SelfHostedStorageConfig = {
+  external?: {
+    selfHosted?: {
+      managementApi?: {
+        writable?: boolean
+        reason?: string
+      }
+    }
+  }
+}
+
 export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentialModalProps) => {
   const { ref: projectRef } = useParams()
   const isProjectActive = useIsProjectActive()
@@ -47,8 +61,12 @@ export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentia
   )
 
   const { data: config } = useProjectStorageConfigQuery({ projectRef })
+  const selfHostedManagementApi = (config as SelfHostedStorageConfig | undefined)?.external
+    ?.selfHosted?.managementApi
+  const selfHostedSettingsWritable = Boolean(selfHostedManagementApi?.writable)
+  const operatorManagedReason = selfHostedManagementApi?.reason ?? DEFAULT_OPERATOR_MANAGED_REASON
   const isS3ConnectionEnabled = !IS_PLATFORM || config?.features.s3Protocol.enabled
-  const canCreateCredentialsSurface = !IS_PLATFORM || canCreateCredentials
+  const canCreateCredentialsSurface = !IS_PLATFORM ? selfHostedSettingsWritable : canCreateCredentials
   const disableCreation = !isProjectActive || !canCreateCredentialsSurface || !isS3ConnectionEnabled
 
   const FormSchema = z.object({
@@ -111,7 +129,9 @@ export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentia
               : !isS3ConnectionEnabled
                 ? 'Connection via S3 protocol is currently disabled'
                 : !canCreateCredentialsSurface
-                  ? 'You need additional permissions to create new access keys'
+                  ? !IS_PLATFORM
+                    ? operatorManagedReason
+                    : 'You need additional permissions to create new access keys'
                   : ''}
           </TooltipContent>
         )}

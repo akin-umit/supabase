@@ -1,6 +1,7 @@
 import { useParams } from 'common'
 import { Activity } from 'lucide-react'
 import { useCallback } from 'react'
+import { Alert, AlertDescription, AlertTitle } from 'ui'
 import { EmptyStatePresentational } from 'ui-patterns/EmptyStatePresentational'
 
 import { OBSERVABILITY_DOCS_HREFS } from '@/components/interfaces/Observability/Observability.constants'
@@ -109,10 +110,6 @@ export const ApiReport: NextPageWithLayout = () => {
     await refreshWithParams()
   }, [datePickerValue, datePickerHelpers, handleDatepickerChangeForRefresh, refreshWithParams])
 
-  if (isSelfHosted && (isLoggingRuntimePending || !loggingReady)) {
-    return null
-  }
-
   const hasAnyData = Object.values(data).some((rows) => (rows?.length ?? 0) > 0)
   const hasAnyError = Object.values(error).some(Boolean)
   const showReportWidgets = isLoading || hasAnyData || hasAnyError
@@ -120,6 +117,16 @@ export const ApiReport: NextPageWithLayout = () => {
   return (
     <ReportPadding>
       <ReportHeader title={REPORT_TITLE} showDatabaseSelector={false} />
+      {isSelfHosted && (isLoggingRuntimePending || !loggingReady) && (
+        <Alert variant="warning" className="mb-4">
+          <AlertTitle>Local logging backend is not ready</AlertTitle>
+          <AlertDescription>
+            API Gateway observability reads local Logflare via LOGFLARE_URL,
+            LOGFLARE_PRIVATE_ACCESS_TOKEN, and the Vector/analytics services. Start the self-hosted
+            logs compose profile and configure those env vars to load real runtime data.
+          </AlertDescription>
+        </Alert>
+      )}
       <ReportStickyNav
         content={
           <div className="flex w-full items-center gap-3">
@@ -148,7 +155,7 @@ export const ApiReport: NextPageWithLayout = () => {
           </div>
         }
       >
-        {showReportWidgets ? (
+        {isSelfHosted && !loggingReady ? null : showReportWidgets ? (
           <>
             <ReportWidget
               isLoading={isLoading}

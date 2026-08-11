@@ -2,6 +2,7 @@ import { paths } from 'api-types'
 import { NextApiRequest, NextApiResponse } from 'next'
 
 import { apiWrapper } from '@/lib/api/apiWrapper'
+import { getSelfHostedSubscription } from '@/lib/api/self-hosted/organization'
 
 export default (req: NextApiRequest, res: NextApiResponse) => apiWrapper(req, res, handler)
 
@@ -21,24 +22,7 @@ type ResponseData =
   paths['/platform/organizations/{slug}/billing/subscription']['get']['responses']['200']['content']['application/json']
 
 const handleGet = async (_req: NextApiRequest, res: NextApiResponse<ResponseData>) => {
-  const response: ResponseData = {
-    billing_cycle_anchor: 0,
-    current_period_end: 0,
-    current_period_start: 0,
-    next_invoice_at: 0,
-    usage_billing_enabled: false,
-    plan: {
-      id: 'enterprise',
-      name: 'Enterprise',
-    },
-    addons: [],
-    project_addons: [],
-    payment_method_type: '',
-    billing_via_partner: false,
-    billing_partner: 'fly',
-    scheduled_plan_change: null,
-    customer_balance: 0,
-  }
+  const response = (await getSelfHostedSubscription()) as unknown as ResponseData
 
   return res.status(200).json(response)
 }

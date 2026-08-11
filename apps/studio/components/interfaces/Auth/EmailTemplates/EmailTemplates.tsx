@@ -80,7 +80,7 @@ export const EmailTemplates = () => {
     },
   })
 
-  const canManageConfig = IS_PLATFORM && canUpdateConfig
+  const canManageConfig = canUpdateConfig
   const effectiveAuthConfig = authConfig
   const shouldShowError = isError
   const shouldShowLoading = isLoading

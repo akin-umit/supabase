@@ -6,10 +6,12 @@ import { PRESET_CONFIG } from '@/components/interfaces/Reports/Reports.constants
 import { ReportFilterItem } from '@/components/interfaces/Reports/Reports.types'
 import { getLogsSql, queriesFactory } from '@/components/interfaces/Reports/Reports.utils'
 import type { LogsEndpointParams } from '@/components/interfaces/Settings/Logs/Logs.types'
+import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useDatabaseSelectorStateSnapshot } from '@/state/database-selector'
 
 export const useStorageReport = () => {
   const { ref: projectRef } = useParams()
+  const { isSelfHosted } = useDeploymentMode()
   const [filters, setFilters] = useState<ReportFilterItem[]>([])
   const state = useDatabaseSelectorStateSnapshot()
 
@@ -78,8 +80,9 @@ export const useStorageReport = () => {
   }
 
   const formattedFilters: ReportFilterItem[] = [
+    { key: 'request.path', value: '/storage', compare: 'matches' },
     ...filters,
-    ...(identifier !== undefined
+    ...(!isSelfHosted && identifier !== undefined
       ? [{ key: 'identifier', value: identifier, compare: 'is' } as ReportFilterItem]
       : []),
   ]

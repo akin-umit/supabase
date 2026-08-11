@@ -4,6 +4,7 @@ import {
   requestSelfHostedManagement,
   SelfHostedManagementError,
 } from '@/lib/api/self-hosted/management'
+import { STORAGE_OPERATOR_MANAGED_REASON } from '@/lib/api/self-hosted/storage'
 import { IS_PLATFORM } from '@/lib/constants'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -25,7 +26,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json(data)
   } catch (error) {
     const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
-    const message = error instanceof Error ? error.message : 'Unable to revoke S3 credential'
+    const message =
+      error instanceof SelfHostedManagementError && error.statusCode === 503
+        ? STORAGE_OPERATOR_MANAGED_REASON
+        : error instanceof Error
+          ? error.message
+          : 'Unable to revoke S3 credential'
     return res.status(status).json({ error: { message } })
   }
 }

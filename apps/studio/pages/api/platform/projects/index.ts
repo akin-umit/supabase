@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
 import { apiWrapper } from '@/lib/api/apiWrapper'
-import { DEFAULT_PROJECT } from '@/lib/constants/api'
+import { getSelfHostedOrganizationProjects } from '@/lib/api/self-hosted/organization'
 
 export default (req: NextApiRequest, res: NextApiResponse) => apiWrapper(req, res, handler)
 
@@ -18,7 +18,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 const handleGetAll = async (_req: NextApiRequest, res: NextApiResponse) => {
-  // Platform specific endpoint
-  const response = [DEFAULT_PROJECT]
+  const response = (await getSelfHostedOrganizationProjects({ limit: 500, offset: 0 })).projects
   return res.status(200).json(response)
 }

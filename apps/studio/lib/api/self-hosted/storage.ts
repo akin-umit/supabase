@@ -6,6 +6,8 @@ type StorageConfigResponse = components['schemas']['StorageConfigResponse']
 type UpdateStorageConfigBody = components['schemas']['UpdateStorageConfigBody']
 
 const DEFAULT_FILE_SIZE_LIMIT = 50 * 1024 * 1024
+export const STORAGE_OPERATOR_MANAGED_REASON =
+  'Storage runtime settings are operator-managed because the self-host management API write bridge is not configured. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
 
 const parseBoolean = (value: string | undefined, fallback: boolean) => {
   if (value === undefined) return fallback
@@ -22,6 +24,9 @@ export function getSelfHostedStorageConfig(
   overrides: UpdateStorageConfigBody = {}
 ): StorageConfigResponse {
   assertSelfHosted()
+  const managementApiConfigured = Boolean(process.env.INTERNAL_MANAGEMENT_API_URL)
+  const managementApiWritable =
+    managementApiConfigured && Boolean(process.env.INTERNAL_MANAGEMENT_API_WRITE_TOKEN)
 
   const s3ProtocolEnabled = parseBoolean(
     process.env.STORAGE_S3_PROTOCOL_ENABLED,
@@ -41,7 +46,18 @@ export function getSelfHostedStorageConfig(
     databasePoolMode: process.env.STORAGE_DATABASE_POOL_MODE ?? 'transaction',
     external: {
       upstreamTarget: 'main',
-    },
+      selfHosted: {
+        managementApi: {
+          configured: managementApiConfigured,
+          writable: managementApiWritable,
+          reason: managementApiWritable ? undefined : STORAGE_OPERATOR_MANAGED_REASON,
+          resources: {
+            config: ['storage', 'config'],
+            s3Keys: ['storage', 's3-keys'],
+          },
+        },
+      },
+    } as any,
     features: {
       icebergCatalog: {
         enabled: parseBoolean(process.env.STORAGE_ICEBERG_CATALOG_ENABLED, false),
