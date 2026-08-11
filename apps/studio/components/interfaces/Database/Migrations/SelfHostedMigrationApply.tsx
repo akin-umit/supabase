@@ -6,17 +6,39 @@ import { toast } from 'sonner'
 import { Button, Card, Input, TextArea } from 'ui'
 
 import { databaseKeys } from '@/data/database/keys'
-import { useSelfHostedManagementMutation } from '@/data/self-hosted/management'
+
+export async function applySelfHostedMigration({
+  projectRef,
+  name,
+  sql,
+}: {
+  projectRef: string
+  name: string
+  sql: string
+}) {
+  const response = await fetch(
+    `/api/v1/projects/${encodeURIComponent(projectRef)}/database/migrations`,
+    {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, query: sql }),
+    }
+  )
+  const payload = await response.json().catch(() => undefined)
+
+  if (!response.ok) {
+    throw new Error(payload?.formattedError ?? payload?.message ?? 'Unable to apply migration')
+  }
+
+  return payload
+}
 
 export function SelfHostedMigrationApply() {
   const { ref } = useParams()
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const [sql, setSql] = useState('')
-  const apply = useSelfHostedManagementMutation<unknown, { name: string; sql: string }>({
-    projectRef: ref,
-    resource: ['migrations', 'apply'],
-  })
+  const [isApplying, setIsApplying] = useState(false)
 
   return (
     <Card className="mb-6 p-5 space-y-4">
@@ -41,16 +63,19 @@ export function SelfHostedMigrationApply() {
       <Button
         icon={<Play />}
         disabled={!name.trim() || !sql.trim()}
-        loading={apply.isPending}
+        loading={isApplying}
         onClick={async () => {
           try {
-            await apply.mutateAsync({ name: name.trim(), sql })
+            setIsApplying(true)
+            await applySelfHostedMigration({ projectRef: ref, name: name.trim(), sql })
             toast.success('Migration applied')
             setName('')
             setSql('')
             await queryClient.invalidateQueries({ queryKey: databaseKeys.migrations(ref) })
           } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Migration failed')
+          } finally {
+            setIsApplying(false)
           }
         }}
       >

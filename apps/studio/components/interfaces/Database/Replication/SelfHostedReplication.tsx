@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Badge, Button, Card, Input } from 'ui'
 
-import { AlertError } from '@/components/ui/AlertError'
 import {
   useSelfHostedManagementMutation,
   useSelfHostedManagementQuery,
@@ -68,7 +67,9 @@ const destinationStatuses = new Set<Destination['status']>([
   'configured',
 ])
 
-function normalizeReplicationState(data: ReplicationState | undefined): NormalizedReplicationState {
+export function normalizeReplicationState(
+  data: ReplicationState | undefined
+): NormalizedReplicationState {
   const publications = Array.isArray(data?.publications)
     ? data.publications.map((item) => ({
         name: String(item?.name ?? 'unnamed_publication'),
@@ -153,7 +154,26 @@ export function SelfHostedReplication() {
     }
   }
 
-  if (error) return <AlertError error={error} subject="Failed to retrieve replication state" />
+  if (error) {
+    return (
+      <Card className="p-5 space-y-3">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 text-warning" />
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Replication is operator managed</p>
+            <p className="text-sm text-foreground-light">
+              Studio could not read the local replication backend. Configure the self-host
+              management API replication endpoint on the VPS, then refresh this page.
+            </p>
+            <p className="text-xs text-foreground-lighter">{error.message}</p>
+            <Button variant="default" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        </div>
+      </Card>
+    )
+  }
   if (isPending)
     return <Card className="p-6 text-sm text-foreground-light">Loading replication...</Card>
 

@@ -1,4 +1,4 @@
-import { cn } from 'ui'
+import { Badge, Card, CardContent, cn } from 'ui'
 
 import PaymentMethods from '../../Billing/Payment/PaymentMethods/PaymentMethods'
 import { InvoicesSection } from '../InvoicesSettings/InvoicesSection'
@@ -14,6 +14,7 @@ import {
   ScaffoldDivider,
   ScaffoldTitle,
 } from '@/components/layouts/Scaffold'
+import { useOrgProjectsInfiniteQuery } from '@/data/projects/org-projects-infinite-query'
 import { useOrgSubscriptionQuery } from '@/data/subscriptions/org-subscription-query'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
@@ -34,6 +35,7 @@ export const BillingSettings = () => {
 
   const { data: org } = useSelectedOrganizationQuery()
   const { data: subscription } = useOrgSubscriptionQuery({ orgSlug: org?.slug })
+  const isSelfHosted = org?.integration_source === 'self-hosted'
   const isNotOrgWithPartnerBilling = !subscription?.billing_via_partner
   const isStripeOrg = org?.managed_by === MANAGED_BY.STRIPE_PROJECTS
 
@@ -41,6 +43,10 @@ export const BillingSettings = () => {
     isBillingAccountDataEnabledOnProfileLevel && isNotOrgWithPartnerBilling
   const billingPaymentMethodsEnabled =
     isBillingPaymentMethodsEnabledOnProfileLevel && (isNotOrgWithPartnerBilling || isStripeOrg)
+
+  if (isSelfHosted) {
+    return <SelfHostedBillingSettings />
+  }
 
   return (
     <>
@@ -110,6 +116,63 @@ export const BillingSettings = () => {
           </ScaffoldContainer>
         </>
       )}
+    </>
+  )
+}
+
+const SelfHostedBillingSettings = () => {
+  const { data: org } = useSelectedOrganizationQuery()
+  const { data: subscription } = useOrgSubscriptionQuery({ orgSlug: org?.slug })
+  const { data: projectsData } = useOrgProjectsInfiniteQuery({ slug: org?.slug })
+
+  const projectCount =
+    projectsData?.pages.reduce((count, page) => count + page.projects.length, 0) ?? 0
+  const planName = subscription?.plan.name ?? org?.plan.name ?? 'Self-hosted'
+
+  return (
+    <>
+      <ScaffoldContainerLegacy>
+        <ScaffoldTitle>Billing</ScaffoldTitle>
+      </ScaffoldContainerLegacy>
+
+      <ScaffoldContainer id="self-hosted-billing">
+        <Card>
+          <CardContent className="py-6 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-base text-foreground">Self-hosted control plane</p>
+                <p className="text-sm text-foreground-light">
+                  Billing, invoices, payment methods, credits, and Supabase Cloud plan changes are
+                  not used in VPS mode. Capacity and paid feature access are managed by the local
+                  operator deployment.
+                </p>
+              </div>
+              <Badge variant="warning">Operator-managed</Badge>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="rounded border p-3">
+                <p className="text-sm text-foreground-light">Plan</p>
+                <p className="text-xl text-foreground">{planName}</p>
+              </div>
+              <div className="rounded border p-3">
+                <p className="text-sm text-foreground-light">Projects</p>
+                <p className="text-xl text-foreground">{projectCount}</p>
+              </div>
+              <div className="rounded border p-3">
+                <p className="text-sm text-foreground-light">Usage billing</p>
+                <p className="text-xl text-foreground">Disabled</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-foreground-light">
+              Use Organization Usage for local resource telemetry. Runtime-changing actions should
+              go through the audited self-host operator that writes environment and compose changes
+              for the target VPS.
+            </p>
+          </CardContent>
+        </Card>
+      </ScaffoldContainer>
     </>
   )
 }

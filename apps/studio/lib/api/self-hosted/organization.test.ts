@@ -1,50 +1,81 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  getSelfHostedDailyUsage,
+  getSelfHostedMembers,
   getSelfHostedOrganization,
+  getSelfHostedOrganizationProjects,
   getSelfHostedRoles,
   getSelfHostedSubscription,
   getSelfHostedUsage,
+  updateSelfHostedOrganization,
 } from './organization'
 
-describe('self-hosted organization API helpers', () => {
-  it('marks the default organization as self-hosted', async () => {
+describe('api/self-hosted/organization', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('returns a self-hosted organization without Cloud billing requirements', async () => {
+    vi.stubEnv('DEFAULT_ORGANIZATION_NAME', 'Supabase Turkiye')
+
     await expect(getSelfHostedOrganization()).resolves.toMatchObject({
       integration_source: 'self-hosted',
+      is_owner: true,
+      name: 'Supabase Turkiye',
+      plan: { id: 'enterprise', name: 'Self-hosted' },
+      subscription_id: null,
       usage_billing_enabled: false,
-      plan: { name: 'Self-hosted' },
     })
   })
 
-  it('returns the role shape expected by organization team views', () => {
-    const roles = getSelfHostedRoles()
+  it('returns org project, team, role, subscription, and usage shapes without Cloud API calls', async () => {
+    vi.stubEnv('DEFAULT_PROJECT_NAME', 'Local Studio')
+    vi.stubEnv('DEFAULT_PROJECT_REF', 'default')
+    vi.stubEnv('STUDIO_ADMIN_EMAIL', 'admin@example.test')
 
-    expect(roles.org_scoped_roles).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 1,
-          name: 'Owner',
-          permissions: ['*'],
-        }),
-      ])
-    )
-    expect(roles.project_scoped_roles).toEqual([])
+    await expect(
+      getSelfHostedOrganizationProjects({ limit: 10, offset: 0 })
+    ).resolves.toMatchObject({
+      projects: [
+        {
+          ref: 'default',
+          name: 'Local Studio',
+          cloud_provider: 'self-hosted',
+          organization_id: 1,
+        },
+      ],
+      pagination: { count: 1, limit: 10, offset: 0 },
+    })
+    await expect(getSelfHostedMembers()).resolves.toMatchObject([
+      { primary_email: 'admin@example.test', role_ids: [1] },
+    ])
+    expect(getSelfHostedRoles()).toMatchObject({
+      org_scoped_roles: expect.arrayContaining([
+        expect.objectContaining({ name: 'Owner', permissions: ['*'] }),
+        expect.objectContaining({ name: 'Administrator', permissions: ['*'] }),
+      ]),
+      project_scoped_roles: [],
+    })
+    await expect(getSelfHostedSubscription()).resolves.toMatchObject({
+      payment_method_type: 'self-hosted',
+      plan: { id: 'enterprise', name: 'Self-hosted' },
+      usage_billing_enabled: false,
+    })
+    await expect(getSelfHostedUsage()).resolves.toMatchObject({
+      usages: expect.arrayContaining([
+        expect.objectContaining({ metric: 'COMPUTE_HOURS_SM', unlimited: true }),
+      ]),
+    })
+    await expect(getSelfHostedDailyUsage()).resolves.toEqual({ usages: [] })
   })
 
-  it('uses the current month for self-hosted subscription windows', async () => {
-    const subscription = await getSelfHostedSubscription()
-
-    expect(subscription.payment_method_type).toBe('self-hosted')
-    expect(subscription.current_period_start).toBeGreaterThan(1_600_000_000)
-    expect(subscription.current_period_end).toBeGreaterThan(subscription.current_period_start)
-  })
-
-  it('returns self-hosted unlimited usage metrics instead of billing-only empties', async () => {
-    const usage = await getSelfHostedUsage()
-
-    expect(usage.usages.map((item) => item.metric)).toEqual(
-      expect.arrayContaining(['COMPUTE_HOURS_SM', 'DATABASE_SIZE', 'STORAGE_SIZE'])
-    )
-    expect(usage.usages.every((item) => item.unlimited)).toBe(true)
+  it('updates only the organization display name in self-hosted mode', async () => {
+    await expect(
+      updateSelfHostedOrganization({ name: '  Aqenta Local  ', slug: 'ignored' })
+    ).resolves.toMatchObject({
+      name: 'Aqenta Local',
+      slug: 'default-org-slug',
+    })
   })
 })

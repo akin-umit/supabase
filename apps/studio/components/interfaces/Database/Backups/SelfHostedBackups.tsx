@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button, Card, Input } from 'ui'
 
-import { AlertError } from '@/components/ui/AlertError'
 import {
   useSelfHostedManagementMutation,
   useSelfHostedManagementQuery,
@@ -30,7 +29,7 @@ type BackupResponse = {
 const formatBytes = (value?: number) =>
   value === undefined ? 'Size pending' : `${(value / 1024 / 1024).toFixed(1)} MB`
 
-const formatManagementError = (error: unknown) => {
+export const formatManagementError = (error: unknown) => {
   const message = error instanceof Error ? error.message : 'Operation failed'
   if (message === 'upstream_operation_failed' || message.includes('upstream_operation_failed')) {
     return 'The self-hosted backup job runner rejected the operation. Check the VPS/Coolify backup worker and storage credentials, then retry.'
@@ -39,6 +38,15 @@ const formatManagementError = (error: unknown) => {
     return 'The self-hosted management API is not configured for backup operations.'
   }
   return message
+}
+
+export const isSelfHostedManagementUnavailable = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  return (
+    message.includes('Management API is not configured') ||
+    message.includes('Unable to reach management API') ||
+    message.includes('upstream_operation_failed')
+  )
 }
 
 export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'restore' }) {
@@ -72,7 +80,30 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
     }
   }
 
-  if (error) return <AlertError error={error} subject="Failed to retrieve backups" />
+  if (error) {
+    const description = isSelfHostedManagementUnavailable(error)
+      ? formatManagementError(error)
+      : error.message
+
+    return (
+      <Card className="p-6 space-y-3">
+        <div className="flex items-start gap-3">
+          <DatabaseBackup className="mt-0.5 text-warning" />
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Backups are operator managed</p>
+            <p className="text-sm text-foreground-light">
+              Studio can show and trigger backups when the self-host management API exposes local
+              backup evidence and job controls.
+            </p>
+            <p className="text-xs text-foreground-lighter">{description}</p>
+            <Button variant="default" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        </div>
+      </Card>
+    )
+  }
 
   if (mode === 'pitr') {
     const pitrEnabled = Boolean(data?.pitr?.enabled ?? data?.configured)
@@ -132,6 +163,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
           <Button
             icon={<Play />}
             loading={run.isPending}
+            disabled={data?.configured === false}
             onClick={() => act(run.mutateAsync({}), 'Backup job queued')}
           >
             Back up now
@@ -140,6 +172,15 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
       </div>
       {isPending ? (
         <Card className="p-6 text-sm text-foreground-light">Loading backups...</Card>
+      ) : data?.configured === false ? (
+        <Card className="p-6 space-y-2 text-sm text-foreground-light">
+          <p>Backup job runner is not configured.</p>
+          <p>
+            Configure the VPS backup schedule, storage target, and restore worker in the self-hosted
+            operator. Studio will enable backup actions when the management API reports this project
+            as configured.
+          </p>
+        </Card>
       ) : data?.backups?.length ? (
         data.backups.map((backup) => (
           <Card key={backup.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
