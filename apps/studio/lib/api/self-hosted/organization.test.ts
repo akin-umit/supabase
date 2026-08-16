@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   getSelfHostedAuditLogs,
+  getSelfHostedAvailableRegions,
   getSelfHostedDailyUsage,
   getSelfHostedMembers,
   getSelfHostedOrganization,
@@ -47,6 +48,16 @@ describe('api/self-hosted/organization', () => {
         },
       ],
       pagination: { count: 1, limit: 10, offset: 0 },
+    })
+    expect(getSelfHostedAvailableRegions()).toMatchObject({
+      all: {
+        smartGroup: [expect.objectContaining({ name: 'Local VPS', type: 'smartGroup' })],
+        specific: [expect.objectContaining({ name: 'Local VPS', type: 'specific' })],
+      },
+      recommendations: {
+        smartGroup: expect.objectContaining({ name: 'Local VPS', type: 'smartGroup' }),
+        specific: [expect.objectContaining({ name: 'Local VPS', type: 'specific' })],
+      },
     })
     await expect(getSelfHostedMembers()).resolves.toMatchObject([
       { primary_email: 'admin@example.test', role_ids: [1] },

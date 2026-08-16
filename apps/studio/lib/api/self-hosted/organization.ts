@@ -67,6 +67,33 @@ export function getSelfHostedProject(ref?: string) {
   }
 }
 
+export function getSelfHostedAvailableRegions() {
+  const regionName = process.env.SELF_HOSTED_REGION_NAME || 'Local VPS'
+  const regionCode = process.env.SELF_HOSTED_REGION_CODE || 'local-vps'
+  const localRegion = {
+    code: regionCode,
+    name: regionName,
+    provider: 'SELF_HOSTED',
+    type: 'specific',
+  }
+  const localSmartGroup = {
+    code: regionCode,
+    name: regionName,
+    type: 'smartGroup',
+  }
+
+  return {
+    all: {
+      smartGroup: [localSmartGroup],
+      specific: [localRegion],
+    },
+    recommendations: {
+      smartGroup: localSmartGroup,
+      specific: [localRegion],
+    },
+  }
+}
+
 export async function getSelfHostedOrganizationProjects({
   limit = 96,
   offset = 0,
