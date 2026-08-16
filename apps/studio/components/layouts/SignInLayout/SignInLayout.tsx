@@ -18,7 +18,7 @@ import { InlineLink } from '@/components/ui/InlineLink'
 import { IdentityProviderIcon } from '@/components/ui/ProviderIcon'
 import { useInboundBranding } from '@/hooks/misc/useInboundBranding'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
-import { BASE_PATH, DOCS_URL } from '@/lib/constants'
+import { BASE_PATH, DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import { getProviderDisplay } from '@/lib/external-identity-providers'
 import { auth, buildPathWithParams, getReturnToPath } from '@/lib/gotrue'
 
@@ -65,12 +65,19 @@ export const SignInLayout = ({
   const ongoingIncident = useFlag('ongoingIncident')
 
   const { destination, focusProvider } = useInboundBranding(inboundFlow)
+  const isSelfHostedAuthShell = !IS_PLATFORM
 
   // Addresses hydration issue with `resolvedTheme` as its undefined during SSR and the first (hydrating) client render
   const [mounted, setMounted] = useState(false)
   const [quote, setQuote] = useState<Quote | null>(null)
 
   const verb = inboundFlow === 'sign-up' ? 'Sign up' : 'Sign in'
+  const effectiveHeading =
+    isSelfHostedAuthShell && !inboundFlow ? 'Aqenta Self Hosted Supabase' : heading
+  const effectiveSubheading =
+    isSelfHostedAuthShell && !inboundFlow
+      ? 'Sign in to manage your local Supabase runtime.'
+      : subheading
 
   const {
     dashboardAuthShowTestimonial: showTestimonial,
@@ -174,7 +181,7 @@ export const SignInLayout = ({
             : `Use your ${focusProvider.displayName} account to continue`
         }
         footer={
-          showDisclaimer && showTos ? (
+          showDisclaimer && showTos && !isSelfHostedAuthShell ? (
             <p className="text-xs text-foreground-lighter">
               <TermsText />
             </p>
@@ -204,7 +211,13 @@ export const SignInLayout = ({
           <nav className="relative flex items-center justify-between sm:h-10">
             <div className="flex items-center grow shrink-0 lg:grow-0">
               <div className="flex items-center justify-between w-full md:w-auto">
-                <Link href={logoLinkToMarketingSite ? 'https://supabase.com' : '/organizations'}>
+                <Link
+                  href={
+                    !isSelfHostedAuthShell && logoLinkToMarketingSite
+                      ? 'https://supabase.com'
+                      : '/organizations'
+                  }
+                >
                   <img
                     src={
                       mounted && resolvedTheme?.includes('dark')
@@ -219,7 +232,7 @@ export const SignInLayout = ({
             </div>
 
             <div className="items-center hidden space-x-3 md:ml-10 md:flex md:pr-4">
-              <DocsButton abbrev={false} href={`${DOCS_URL}`} />
+              {!isSelfHostedAuthShell && <DocsButton abbrev={false} href={`${DOCS_URL}`} />}
             </div>
           </nav>
         </div>
@@ -242,15 +255,15 @@ export const SignInLayout = ({
                 </div>
               ) : (
                 <div className="mb-10">
-                  <h1 className="mt-8 mb-2 lg:text-3xl">{heading}</h1>
-                  <h2 className="text-sm text-foreground-light">{subheading}</h2>
+                  <h1 className="mt-8 mb-2 lg:text-3xl">{effectiveHeading}</h1>
+                  <h2 className="text-sm text-foreground-light">{effectiveSubheading}</h2>
                 </div>
               )}
 
               {children}
             </div>
 
-            {showDisclaimer && showTos && (
+            {showDisclaimer && showTos && !isSelfHostedAuthShell && (
               <div className="text-center text-balance">
                 <p className="text-xs text-foreground-lighter sm:mx-auto sm:max-w-sm">
                   <TermsText />
@@ -259,8 +272,13 @@ export const SignInLayout = ({
             )}
           </main>
 
-          <aside className="flex-col items-center justify-center flex-1 shrink hidden basis-1/4 xl:flex">
-            {quote !== null && showTestimonial && (
+          <aside
+            className={cn(
+              'flex-col items-center justify-center flex-1 shrink hidden basis-1/4',
+              !isSelfHostedAuthShell && 'xl:flex'
+            )}
+          >
+            {quote !== null && showTestimonial && !isSelfHostedAuthShell && (
               <div className="relative flex flex-col gap-6">
                 <div className="absolute select-none -top-12 -left-11">
                   <span className="text-[160px] leading-none text-foreground-muted/30">{'“'}</span>

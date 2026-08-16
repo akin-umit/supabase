@@ -120,7 +120,8 @@ const Wizard: NextPageWithLayout = () => {
   )
   const isDataApiRevokeOnCreateDefault = useDataApiRevokeOnCreateDefaultEnabled()
 
-  const isNotOnHigherPlan = !['team', 'enterprise', 'platform'].includes(currentOrg?.plan.id ?? '')
+  const isNotOnHigherPlan =
+    !isSelfHosted && !['team', 'enterprise', 'platform'].includes(currentOrg?.plan.id ?? '')
 
   // This is to make the database.new redirect work correctly. The database.new redirect should be set to supabase.com/dashboard/new/last-visited-org
   if (slug === 'last-visited-org') {
@@ -208,7 +209,7 @@ const Wizard: NextPageWithLayout = () => {
     enabled: isNotOnHigherPlan,
   })
   const overdueInvoices = allOverdueInvoices.filter((x) => x.organization_id === currentOrg?.id)
-  const hasOutstandingInvoices = isNotOnHigherPlan && overdueInvoices.length > 0
+  const hasOutstandingInvoices = !isSelfHosted && isNotOnHigherPlan && overdueInvoices.length > 0
 
   const { data: orgProjectsFromApi } = useOrgProjectsInfiniteQuery({ slug: currentOrg?.slug })
   const allOrgProjects = useMemo(
@@ -218,9 +219,8 @@ const Wizard: NextPageWithLayout = () => {
   const organizationProjects =
     allProjects?.filter((project) => project.status !== PROJECT_STATUS.INACTIVE) ?? []
   const availableComputeCredits = organizationProjects.length === 0 ? 10 : 0
-  const additionalMonthlySpend = isFreePlan || isSelfHosted
-    ? 0
-    : monthlyInstancePrice(instanceSize) - availableComputeCredits
+  const additionalMonthlySpend =
+    isFreePlan || isSelfHosted ? 0 : monthlyInstancePrice(instanceSize) - availableComputeCredits
 
   const selectedCloudProvider = cloudProvider as CloudProvider
   const { data: autoDefaultRegion, error: defaultRegionError } = useDefaultRegionQuery(
@@ -324,7 +324,9 @@ const Wizard: NextPageWithLayout = () => {
       router.push(`/project/${res.ref}`)
     },
     onError: (error) => {
-      const toastId = toast.error(`Failed to create new project: ${error.message}`)
+      const toastId = toast.error(
+        `${isSelfHosted ? 'Failed to create self-hosted project' : 'Failed to create new project'}: ${error.message}`
+      )
       trackFunnelError(
         'project_creation',
         classifyApiError('project_creation', error),
@@ -544,10 +546,13 @@ const Wizard: NextPageWithLayout = () => {
             loading={!isOrganizationsSuccess}
             title={
               <div key="panel-title">
-                <h3>Create a new project</h3>
+                <h3>
+                  {isSelfHosted ? 'Create a new self-hosted project' : 'Create a new project'}
+                </h3>
                 <p className="text-sm text-foreground-lighter text-balance">
-                  Your project will have its own dedicated instance and full Postgres database. An
-                  API will be set up so you can easily interact with your new database.
+                  {isSelfHosted
+                    ? 'Studio will provision a dedicated VPS stack through the local management bridge and route it on your configured base domain.'
+                    : 'Your project will have its own dedicated instance and full Postgres database. An API will be set up so you can easily interact with your new database.'}
                 </p>
               </div>
             }

@@ -503,8 +503,9 @@ describe('project creation wizard', () => {
 
       await renderWizard()
 
-      await screen.findByText(/Supabase billing is not used in VPS mode/i)
+      await screen.findByText(/Select the VPS resource profile reserved/i)
       expect(screen.queryByText('Need a free project?')).not.toBeInTheDocument()
+      expect(screen.queryByText('Create a free organization')).not.toBeInTheDocument()
       expect(screen.queryByText('Additional costs')).not.toBeInTheDocument()
 
       await fillProjectName('Self Hosted Project')
