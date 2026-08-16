@@ -17,6 +17,7 @@ import { CreateProjectForm } from './ProjectCreation.schema'
 import { InlineLink } from '@/components/ui/InlineLink'
 import Panel from '@/components/ui/Panel'
 import { instanceSizeSpecs } from '@/data/projects/new-project.constants'
+import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { getCloudProviderArchitecture } from '@/lib/cloudprovider-utils'
 import { DOCS_URL } from '@/lib/constants'
 
@@ -25,6 +26,9 @@ interface ComputeSizeSelectorProps {
 }
 
 export const ComputeSizeSelector = ({ form }: ComputeSizeSelectorProps) => {
+  const { data: currentOrg } = useSelectedOrganizationQuery()
+  const isSelfHosted = currentOrg?.plan?.name?.toLowerCase() === 'self-hosted'
+
   return (
     <Panel.Content>
       <FormField
@@ -36,7 +40,12 @@ export const ComputeSizeSelector = ({ form }: ComputeSizeSelectorProps) => {
             layout="horizontal"
             label="Compute size"
             description={
-              <>
+              isSelfHosted ? (
+                <p>
+                  Select the resource profile that the self-hosted operator will reserve on your
+                  VPS. Billing is handled by your own infrastructure provider, not by Supabase.
+                </p>
+              ) : (
                 <p>
                   The size for your dedicated database. You can change this later. Learn more about{' '}
                   <InlineLink href={`${DOCS_URL}/guides/platform/compute-add-ons`}>
@@ -48,7 +57,7 @@ export const ComputeSizeSelector = ({ form }: ComputeSizeSelectorProps) => {
                   </InlineLink>
                   .
                 </p>
-              </>
+              )
             }
           >
             <Select value={field.value} onValueChange={(value) => field.onChange(value)}>
@@ -88,8 +97,9 @@ export const ComputeSizeSelector = ({ form }: ComputeSizeSelectorProps) => {
                                 className="text-xs text-foreground-light"
                                 data-field="instance-details"
                               >
-                                ${instanceSizeSpecs[option].priceHourly}/hour (~$
-                                {instanceSizeSpecs[option].priceMonthly}/month)
+                                {isSelfHosted
+                                  ? 'Reserved from your VPS capacity'
+                                  : `$${instanceSizeSpecs[option].priceHourly}/hour (~$${instanceSizeSpecs[option].priceMonthly}/month)`}
                               </p>
                             </div>
                           </div>

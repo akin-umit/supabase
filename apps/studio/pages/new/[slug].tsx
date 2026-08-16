@@ -93,6 +93,7 @@ const Wizard: NextPageWithLayout = () => {
 
   const { data: currentOrg } = useSelectedOrganizationQuery()
   const isFreePlan = currentOrg?.plan?.id === 'free'
+  const isSelfHosted = currentOrg?.plan?.name?.toLowerCase() === 'self-hosted'
   const canChooseInstanceSize = !isFreePlan
 
   const { lastVisitedOrganization } = useLastVisitedOrganization()
@@ -217,7 +218,7 @@ const Wizard: NextPageWithLayout = () => {
   const organizationProjects =
     allProjects?.filter((project) => project.status !== PROJECT_STATUS.INACTIVE) ?? []
   const availableComputeCredits = organizationProjects.length === 0 ? 10 : 0
-  const additionalMonthlySpend = isFreePlan
+  const additionalMonthlySpend = isFreePlan || isSelfHosted
     ? 0
     : monthlyInstancePrice(instanceSize) - availableComputeCredits
 
@@ -286,7 +287,8 @@ const Wizard: NextPageWithLayout = () => {
         (member) => member.primary_email?.toLowerCase() === userPrimaryEmail
       )
     : false
-  const shouldShowFreeProjectInfo = !!currentOrg && !isFreePlan && !isUserAtFreeProjectLimit
+  const shouldShowFreeProjectInfo =
+    !!currentOrg && !isFreePlan && !isSelfHosted && !isUserAtFreeProjectLimit
   const {
     gitHubAuthorization,
     githubRepos,

@@ -42,12 +42,13 @@ export const ProjectCreationFooter = ({
   const router = useRouter()
   const { data: currentOrg } = useSelectedOrganizationQuery()
   const isFreePlan = currentOrg?.plan?.id === 'free'
+  const isSelfHosted = currentOrg?.plan?.name?.toLowerCase() === 'self-hosted'
   const { lastVisitedOrganization } = useLastVisitedOrganization()
 
   const projectCreationDisabled = useFlag('disableProjectCreationAndUpdate')
 
   const availableComputeCredits = organizationProjects.length === 0 ? 10 : 0
-  const additionalMonthlySpend = isFreePlan
+  const additionalMonthlySpend = isFreePlan || isSelfHosted
     ? 0
     : monthlyInstancePrice(instanceSize) - availableComputeCredits
 
@@ -68,6 +69,7 @@ export const ProjectCreationFooter = ({
     <div key="panel-footer" className="grid grid-cols-12 w-full gap-4 items-center">
       <div className="col-span-4">
         {!isFreePlan &&
+          !isSelfHosted &&
           !projectCreationDisabled &&
           canCreateProject &&
           additionalMonthlySpend > 0 && (
