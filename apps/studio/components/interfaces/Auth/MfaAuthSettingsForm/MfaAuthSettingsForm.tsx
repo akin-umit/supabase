@@ -146,6 +146,8 @@ export const MfaAuthSettingsForm = () => {
   } = useCheckEntitlements('auth.mfa_enhanced_security')
   const hasAccessToEnhanceSecurity = !IS_PLATFORM || hasAccessToEnhanceSecurityEntitlement
   const promptEnhancedSecurityUpgrade = IS_PLATFORM && !hasAccessToEnhanceSecurityEntitlement
+  const isCheckingMfaEntitlements =
+    IS_PLATFORM && (isLoadingEntitlement || isLoadingEntitlementEnhanceSecurity)
 
   // For now, we support Twilio and Vonage. Twilio Verify is not supported and the remaining providers are community maintained.
   const sendSMSHookIsEnabled =
@@ -320,7 +322,7 @@ export const MfaAuthSettingsForm = () => {
     )
   }
 
-  if (isLoading || isLoadingEntitlement || isLoadingEntitlementEnhanceSecurity) {
+  if (isLoading || isCheckingMfaEntitlements) {
     return (
       <PageSection>
         <PageSectionContent>

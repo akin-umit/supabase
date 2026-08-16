@@ -81,7 +81,9 @@ describe('/api/platform/auth/[ref]/config', () => {
     await handler(req, res)
 
     expect(res._getStatusCode()).toBe(503)
-    expect(JSON.parse(res._getData()).error.message).toContain('Management API is not configured')
+    expect(JSON.parse(res._getData()).error.message).toContain(
+      'self-host management API write bridge'
+    )
   })
 
   it('returns 405 for unsupported methods', async () => {

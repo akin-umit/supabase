@@ -90,12 +90,15 @@ export const EmailTemplates = () => {
   const hasSendEmailHook = !!(
     effectiveAuthConfig?.HOOK_SEND_EMAIL_ENABLED && effectiveAuthConfig?.HOOK_SEND_EMAIL_URI
   )
-  const isTemplateRestrictionStatusKnown = isCustomEmailTemplateRestrictionStatusKnown({
-    authConfig: effectiveAuthConfig,
-    organization: selectedOrganization,
-    projectInsertedAt: selectedProject?.inserted_at,
-  })
+  const isTemplateRestrictionStatusKnown =
+    !IS_PLATFORM ||
+    isCustomEmailTemplateRestrictionStatusKnown({
+      authConfig: effectiveAuthConfig,
+      organization: selectedOrganization,
+      projectInsertedAt: selectedProject?.inserted_at,
+    })
   const isTemplateEditBlocked =
+    IS_PLATFORM &&
     isTemplateRestrictionStatusKnown &&
     isCustomEmailTemplateEditingRestricted({
       authConfig: effectiveAuthConfig,
@@ -177,7 +180,21 @@ export const EmailTemplates = () => {
           )}
 
           <PageSection>
-            {usingBuiltInEmailSender && !isTemplateEditBlocked && (
+            {!IS_PLATFORM && (
+              <Admonition
+                type="default"
+                title="Self-host email templates"
+                description={
+                  <p>
+                    Template values are read from the local Auth runtime. Saving changes from
+                    Studio requires the management API write bridge; otherwise update the
+                    GOTRUE_MAILER_* environment variables and redeploy Auth.
+                  </p>
+                }
+                layout="horizontal"
+              />
+            )}
+            {IS_PLATFORM && usingBuiltInEmailSender && !isTemplateEditBlocked && (
               <Admonition
                 type="warning"
                 title="Set up custom SMTP"

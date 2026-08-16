@@ -106,7 +106,8 @@ describe('/api/v1/projects/[ref]/config/auth/third-party-auth', () => {
 
     expect(res._getStatusCode()).toBe(503)
     expect(JSON.parse(res._getData())).toEqual({
-      message: 'Third-party auth integrations require a configured self-host management API',
+      message:
+        'Third-party auth integrations require the self-host management API write bridge. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN so Studio can persist GOTRUE_* auth settings and apply the Auth service runtime.',
     })
   })
 

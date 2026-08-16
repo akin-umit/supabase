@@ -4,7 +4,7 @@ import { useParams } from 'common'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { cn } from 'ui'
+import { Alert, AlertDescription, AlertTitle, cn } from 'ui'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 import { EmptyStatePresentational } from 'ui-patterns/EmptyStatePresentational'
 import {
@@ -69,6 +69,24 @@ export const ThirdPartyAuthForm = () => {
   )
 
   if (isError) {
+    if (!IS_PLATFORM) {
+      return (
+        <PageSection>
+          <PageSectionContent>
+            <Alert variant="warning">
+              <AlertTitle>Self-host management API is required</AlertTitle>
+              <AlertDescription>
+                Third-party Auth integrations are stored in the local Auth runtime. Configure{' '}
+                <code>INTERNAL_MANAGEMENT_API_URL</code> and{' '}
+                <code>INTERNAL_MANAGEMENT_API_WRITE_TOKEN</code> so Studio can read, save, and apply
+                the GOTRUE_* provider settings on the VPS.
+              </AlertDescription>
+            </Alert>
+          </PageSectionContent>
+        </PageSection>
+      )
+    }
+
     return (
       <AlertError
         error={error}
@@ -112,6 +130,17 @@ export const ThirdPartyAuthForm = () => {
         </PageSectionAside>
       </PageSectionMeta>
       <PageSectionContent>
+        {!IS_PLATFORM && (
+          <Alert variant="default" className="mb-4">
+            <AlertTitle>Self-host Auth runtime</AlertTitle>
+            <AlertDescription>
+              This page reads integrations from the local runtime. Creating or deleting providers
+              from Studio requires the management API write bridge; otherwise set the matching
+              GOTRUE_* environment variables and redeploy Auth.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {isLoading && (
           <div
             className={cn(
@@ -126,7 +155,11 @@ export const ThirdPartyAuthForm = () => {
           integrations.length === 0 ? (
             <EmptyStatePresentational
               title="Add an authentication provider"
-              description="Use third-party authentication systems based on JWTs to access your project."
+              description={
+                IS_PLATFORM
+                  ? 'Use third-party authentication systems based on JWTs to access your project.'
+                  : 'Add providers through the self-host management API write bridge, or configure the matching GOTRUE_* environment variables in your Auth service.'
+              }
             >
               <AddIntegrationDropdown
                 align="center"

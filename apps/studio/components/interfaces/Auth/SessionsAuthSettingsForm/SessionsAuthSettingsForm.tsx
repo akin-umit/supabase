@@ -88,6 +88,8 @@ export const SessionsAuthSettingsForm = () => {
 
   const { hasAccess: hasUserSessionsEntitlement, isLoading: isLoadingEntitlements } =
     useCheckEntitlements('auth.user_sessions')
+  const isCheckingUserSessionsEntitlement = IS_PLATFORM && isLoadingEntitlements
+  const hasUserSessionsAccess = !IS_PLATFORM || hasUserSessionsEntitlement
   const promptProPlanUpgrade = IS_PLATFORM && !hasUserSessionsEntitlement
 
   const refreshTokenForm = useForm<z.infer<typeof RefreshTokenSchema>>({
@@ -185,7 +187,7 @@ export const SessionsAuthSettingsForm = () => {
     )
   }
 
-  if (isLoading || isLoadingEntitlements) {
+  if (isLoading || isCheckingUserSessionsEntitlement) {
     return (
       <PageSection>
         <PageSectionContent>
@@ -322,7 +324,7 @@ export const SessionsAuthSettingsForm = () => {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            disabled={!canUpdateConfig || !hasUserSessionsEntitlement}
+                            disabled={!canUpdateConfig || !hasUserSessionsAccess}
                           />
                         </FormControl>
                       </FormItemLayout>
@@ -346,7 +348,7 @@ export const SessionsAuthSettingsForm = () => {
                               type="number"
                               min={0}
                               {...field}
-                              disabled={!canUpdateConfig || !hasUserSessionsEntitlement}
+                              disabled={!canUpdateConfig || !hasUserSessionsAccess}
                             />
                             <InputGroupAddon align="inline-end">
                               <InputGroupText>
@@ -376,7 +378,7 @@ export const SessionsAuthSettingsForm = () => {
                               type="number"
                               {...field}
                               className="flex-1"
-                              disabled={!canUpdateConfig || !hasUserSessionsEntitlement}
+                              disabled={!canUpdateConfig || !hasUserSessionsAccess}
                             />
                             <InputGroupAddon align="inline-end">
                               <InputGroupText>

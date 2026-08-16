@@ -91,11 +91,12 @@ const RedirectToTemplates = () => {
   const isTemplateRestrictionStatusKnown =
     !IS_PLATFORM ||
     isCustomEmailTemplateRestrictionStatusKnown({
-    authConfig,
-    organization: selectedOrganization,
-    projectInsertedAt: selectedProject?.inserted_at,
+      authConfig,
+      organization: selectedOrganization,
+      projectInsertedAt: selectedProject?.inserted_at,
     })
   const isTemplateEditBlocked =
+    IS_PLATFORM &&
     isTemplateRestrictionStatusKnown &&
     isCustomEmailTemplateEditingRestricted({
       authConfig,

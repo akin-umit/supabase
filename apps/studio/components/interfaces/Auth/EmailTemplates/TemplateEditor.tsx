@@ -42,7 +42,7 @@ import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-muta
 import { useValidateSpamMutation, ValidateSpamResponse } from '@/data/auth/validate-spam-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { usePreventNavigationOnUnsavedChanges } from '@/hooks/ui/usePreventNavigationOnUnsavedChanges'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 interface TemplateEditorProps {
   template: AuthTemplate
@@ -211,7 +211,9 @@ export const TemplateEditor = ({ template, isReadOnly = false }: TemplateEditorP
   const saveChangesTooltip = !canUpdateConfig
     ? 'You need additional permissions to edit templates'
     : isReadOnly
-      ? 'Set up custom SMTP to edit and save templates'
+      ? IS_PLATFORM
+        ? 'Set up custom SMTP to edit and save templates'
+        : 'Configure the Auth management write bridge or update GOTRUE_MAILER_* env vars to edit templates'
       : !hasChanges
         ? 'Make a change before saving'
         : undefined
@@ -342,7 +344,9 @@ export const TemplateEditor = ({ template, isReadOnly = false }: TemplateEditorP
                   disabledOptionTooltip={
                     !canUpdateConfig
                       ? 'You need additional permissions to edit templates'
-                      : 'Set up custom SMTP to edit the source'
+                      : IS_PLATFORM
+                        ? 'Set up custom SMTP to edit the source'
+                        : 'Configure the Auth management write bridge or update GOTRUE_MAILER_* env vars to edit the source'
                   }
                 />
               </div>

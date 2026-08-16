@@ -11,7 +11,7 @@ export class ThirdPartyAuthManagementApiError extends Error {
 }
 
 const MANAGEMENT_UNAVAILABLE_MESSAGE =
-  'Third-party auth integrations require a configured self-host management API'
+  'Third-party auth integrations require the self-host management API write bridge. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN so Studio can persist GOTRUE_* auth settings and apply the Auth service runtime.'
 
 function normalizeError(error: unknown, fallback: string): ThirdPartyAuthManagementApiError {
   if (error instanceof SelfHostedManagementError) {
