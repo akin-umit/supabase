@@ -515,6 +515,8 @@ describe('project creation wizard', () => {
       expect(await screen.findAllByText('Reserved from your VPS capacity')).not.toHaveLength(0)
       expect(screen.queryByText(/\$\d+(?:\.\d+)?\/hour/)).not.toBeInTheDocument()
       expect(screen.queryByText(/~\$\d+\/month/)).not.toBeInTheDocument()
+      expect(document.body.textContent).not.toMatch(/\$\d+(?:\.\d+)?\/hour/)
+      expect(document.body.textContent).not.toMatch(/~\$\d+\/month/)
 
       await user.click(await screen.findByText('4 GB RAM / 2-core ARM CPU'))
 

@@ -70,30 +70,34 @@ export const ComputeSizeSelector = ({ form, isSelfHosted = false }: ComputeSizeS
                       )
                     )
                     .map((option) => {
+                      const computeLabel = `${instanceSizeSpecs[option].ram} RAM / ${
+                        instanceSizeSpecs[option].cpu
+                      } ${getCloudProviderArchitecture(
+                        form.getValues('cloudProvider') as CloudProvider
+                      )} CPU`
+                      const computeDetails = isSelfHosted
+                        ? 'Reserved from your VPS capacity'
+                        : `$${instanceSizeSpecs[option].priceHourly}/hour (~$${instanceSizeSpecs[option].priceMonthly}/month)`
+
                       return (
-                        <SelectItem key={option} value={option}>
+                        <SelectItem
+                          key={option}
+                          value={option}
+                          textValue={`${computeLabel} ${computeDetails}`}
+                        >
                           <div className="flex flex-row gap-4 items-center">
                             <div className="w-14 flex items-center">
                               <ComputeBadge infraComputeSize={option} />
                             </div>
 
                             <div className="text-sm">
-                              <span className="text-foreground">
-                                {instanceSizeSpecs[option].ram} RAM /{' '}
-                                {instanceSizeSpecs[option].cpu}{' '}
-                                {getCloudProviderArchitecture(
-                                  form.getValues('cloudProvider') as CloudProvider
-                                )}{' '}
-                                CPU
-                              </span>
+                              <span className="text-foreground">{computeLabel}</span>
                               <p
                                 translate="no"
                                 className="text-xs text-foreground-light"
                                 data-field="instance-details"
                               >
-                                {isSelfHosted
-                                  ? 'Reserved from your VPS capacity'
-                                  : `$${instanceSizeSpecs[option].priceHourly}/hour (~$${instanceSizeSpecs[option].priceMonthly}/month)`}
+                                {computeDetails}
                               </p>
                             </div>
                           </div>
