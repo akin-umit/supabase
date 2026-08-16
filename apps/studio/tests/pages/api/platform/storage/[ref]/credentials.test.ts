@@ -55,7 +55,7 @@ describe('/api/platform/storage/[ref]/credentials', () => {
     })
   })
 
-  it('returns an exact operator-managed reason when the write bridge is absent', async () => {
+  it('returns an exact self-host write bridge reason when the write bridge is absent', async () => {
     const { req, res } = createMocks({
       method: 'POST',
       query: { ref: 'default' },
@@ -70,7 +70,7 @@ describe('/api/platform/storage/[ref]/credentials', () => {
     )
   })
 
-  it('surfaces the self-host operator activation failure instead of a generic API error', async () => {
+  it('surfaces the self-host runtime activation failure instead of a generic API error', async () => {
     vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
     vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
     vi.spyOn(global, 'fetch').mockResolvedValueOnce(

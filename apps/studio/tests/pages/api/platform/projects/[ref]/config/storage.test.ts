@@ -84,7 +84,7 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
     expect(JSON.parse(res._getData()).features.imageTransformation.enabled).toBe(false)
   })
 
-  it('falls back to the self-host runtime storage endpoint when the storage config route is operator-managed', async () => {
+  it('falls back to the self-host runtime storage endpoint when the storage config route is unavailable', async () => {
     vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
     vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
     const fetchMock = vi
@@ -100,7 +100,7 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
           JSON.stringify({
             projectRef: 'default',
             service: 'storage',
-            applied: ['fileSizeLimit', 'imageProxyAutoWebp'],
+            applied: ['fileSizeLimit', 'imageProxyAutoWebp', 's3ProtocolEnabled'],
             restarted: true,
           }),
           {
@@ -134,6 +134,7 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({
       fileSizeLimit: 64 * 1024 * 1024,
       imageProxyAutoWebp: false,
+      s3ProtocolEnabled: true,
     })
     const data = JSON.parse(res._getData())
     expect(data.fileSizeLimit).toBe(64 * 1024 * 1024)
@@ -145,7 +146,7 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
     })
   })
 
-  it('returns an exact operator-managed reason when the write bridge is absent', async () => {
+  it('returns an exact self-host write bridge reason when the write bridge is absent', async () => {
     const { req, res } = createMocks({
       method: 'PATCH',
       query: { ref: 'default' },

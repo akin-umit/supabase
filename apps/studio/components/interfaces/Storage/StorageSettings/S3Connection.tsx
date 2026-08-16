@@ -56,7 +56,7 @@ import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useIsProjectActive, useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { DOCS_URL } from '@/lib/constants'
 
-const DEFAULT_OPERATOR_MANAGED_REASON =
+const DEFAULT_RUNTIME_WRITE_BRIDGE_REASON =
   'Storage runtime settings need the self-host management API write bridge because the self-host management API write bridge is not configured. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
 
 type SelfHostedStorageConfig = {
@@ -130,7 +130,8 @@ export const S3Connection = () => {
   const selfHostedManagementApi = (config as SelfHostedStorageConfig | undefined)?.external
     ?.selfHosted?.managementApi
   const selfHostedSettingsWritable = Boolean(selfHostedManagementApi?.writable)
-  const operatorManagedReason = selfHostedManagementApi?.reason ?? DEFAULT_OPERATOR_MANAGED_REASON
+  const runtimeWriteBridgeReason =
+    selfHostedManagementApi?.reason ?? DEFAULT_RUNTIME_WRITE_BRIDGE_REASON
   const canUpdateStorageSettingsSurface = isSelfHosted
     ? selfHostedSettingsWritable
     : canUpdateStorageSettings
@@ -219,7 +220,7 @@ export const S3Connection = () => {
                         <Alert variant="warning">
                           <WarningIcon />
                           <AlertTitle>S3 runtime write bridge required</AlertTitle>
-                          <AlertDescription>{operatorManagedReason}</AlertDescription>
+                          <AlertDescription>{runtimeWriteBridgeReason}</AlertDescription>
                         </Alert>
                       </CardContent>
                     )}

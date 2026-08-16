@@ -493,6 +493,32 @@ describe('project creation wizard', () => {
       await waitFor(() => expect(onRequest).toHaveBeenCalled())
       expect(onRequest.mock.calls[0][0].desired_instance_size).toBe('medium')
     })
+
+    test('keeps self-hosted project creation on VPS capacity instead of Cloud billing', async () => {
+      mockWizardEndpoints({
+        organizations: [mockOrg({ plan: { id: 'enterprise', name: 'Self-hosted' } })],
+      })
+      const onRequest = vi.fn()
+      mockCreateProject(onRequest)
+
+      await renderWizard()
+
+      await screen.findByText(/Supabase billing is not used in VPS mode/i)
+      expect(screen.queryByText('Need a free project?')).not.toBeInTheDocument()
+      expect(screen.queryByText('Additional costs')).not.toBeInTheDocument()
+
+      await fillProjectName('Self Hosted Project')
+      await generateAndWaitForStrongPassword()
+
+      await user.click(getSelectTriggerByLabel('Compute size'))
+      await user.click(await screen.findByText('4 GB RAM / 2-core ARM CPU'))
+
+      fireEvent.click(screen.getByRole('button', { name: 'Create new project' }))
+
+      await waitFor(() => expect(onRequest).toHaveBeenCalled())
+      expect(screen.queryByText('Confirm compute costs')).not.toBeInTheDocument()
+      expect(onRequest.mock.calls[0][0].desired_instance_size).toBe('medium')
+    })
   })
 
   describe('postgres version and orioledb', () => {

@@ -70,7 +70,7 @@ describe('api/self-hosted/database-settings', () => {
     )
   })
 
-  it('accepts operation-only update responses from async self-hosted operators', async () => {
+  it('accepts operation-only update responses from async self-hosted runtime jobs', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       Response.json({
         operation: { id: '123e4567-e89b-12d3-a456-426614174000', status: 'accepted' },

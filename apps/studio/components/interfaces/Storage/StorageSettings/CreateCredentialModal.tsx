@@ -36,7 +36,7 @@ interface CreateCredentialModalProps {
   onOpenChange: (value: boolean) => void
 }
 
-const DEFAULT_OPERATOR_MANAGED_REASON =
+const DEFAULT_RUNTIME_WRITE_BRIDGE_REASON =
   'Storage runtime settings need the self-host management API write bridge because the self-host management API write bridge is not configured. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
 
 type SelfHostedStorageConfig = {
@@ -64,7 +64,8 @@ export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentia
   const selfHostedManagementApi = (config as SelfHostedStorageConfig | undefined)?.external
     ?.selfHosted?.managementApi
   const selfHostedSettingsWritable = Boolean(selfHostedManagementApi?.writable)
-  const operatorManagedReason = selfHostedManagementApi?.reason ?? DEFAULT_OPERATOR_MANAGED_REASON
+  const runtimeWriteBridgeReason =
+    selfHostedManagementApi?.reason ?? DEFAULT_RUNTIME_WRITE_BRIDGE_REASON
   const isS3ConnectionEnabled = !IS_PLATFORM || config?.features.s3Protocol.enabled
   const canCreateCredentialsSurface = !IS_PLATFORM ? selfHostedSettingsWritable : canCreateCredentials
   const disableCreation = !isProjectActive || !canCreateCredentialsSurface || !isS3ConnectionEnabled
@@ -130,7 +131,7 @@ export const CreateCredentialModal = ({ visible, onOpenChange }: CreateCredentia
                 ? 'Connection via S3 protocol is currently disabled'
                 : !canCreateCredentialsSurface
                   ? !IS_PLATFORM
-                    ? operatorManagedReason
+                    ? runtimeWriteBridgeReason
                     : 'You need additional permissions to create new access keys'
                   : ''}
           </TooltipContent>

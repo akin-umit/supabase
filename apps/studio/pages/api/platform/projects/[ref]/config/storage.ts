@@ -8,7 +8,7 @@ import {
 } from '@/lib/api/self-hosted/management'
 import {
   getSelfHostedStorageConfig,
-  STORAGE_OPERATOR_MANAGED_REASON,
+  STORAGE_RUNTIME_WRITE_BRIDGE_REASON,
 } from '@/lib/api/self-hosted/storage'
 import { IS_PLATFORM } from '@/lib/constants'
 
@@ -32,6 +32,9 @@ function buildRuntimeStoragePatchBody(req: NextApiRequest) {
   if (req.body?.fileSizeLimit !== undefined) body.fileSizeLimit = req.body.fileSizeLimit
   if (req.body?.features?.imageTransformation?.enabled !== undefined) {
     body.imageProxyAutoWebp = req.body.features.imageTransformation.enabled
+  }
+  if (req.body?.features?.s3Protocol?.enabled !== undefined) {
+    body.s3ProtocolEnabled = req.body.features.s3Protocol.enabled
   }
 
   return body
@@ -115,7 +118,7 @@ const handlePatch = async (req: NextApiRequest, res: NextApiResponse) => {
     const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
     const message =
       error instanceof SelfHostedManagementError && error.statusCode === 503
-        ? STORAGE_OPERATOR_MANAGED_REASON
+        ? STORAGE_RUNTIME_WRITE_BRIDGE_REASON
         : error instanceof Error
           ? error.message
           : 'Unable to update Storage runtime settings'

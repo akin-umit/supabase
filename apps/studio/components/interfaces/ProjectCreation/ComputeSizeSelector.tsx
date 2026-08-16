@@ -42,8 +42,8 @@ export const ComputeSizeSelector = ({ form }: ComputeSizeSelectorProps) => {
             description={
               isSelfHosted ? (
                 <p>
-                  Select the resource profile that the self-hosted operator will reserve on your
-                  VPS. Billing is handled by your own infrastructure provider, not by Supabase.
+                  Select the resource profile that this self-hosted runtime will reserve on your
+                  VPS. Supabase billing is not used in VPS mode.
                 </p>
               ) : (
                 <p>

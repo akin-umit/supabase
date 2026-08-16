@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { formatManagementError, isSelfHostedManagementUnavailable } from './SelfHostedBackups'
 
 describe('self-hosted backup helpers', () => {
-  it('turns upstream backup worker failures into operator guidance', () => {
+  it('turns upstream backup worker failures into runtime guidance', () => {
     const error = new Error('upstream_operation_failed')
 
     expect(formatManagementError(error)).toContain('backup job runner rejected the operation')

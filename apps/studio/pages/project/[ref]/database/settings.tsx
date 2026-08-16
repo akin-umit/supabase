@@ -86,13 +86,13 @@ const SelfHostedDatabaseSettingsSurface = () => {
   const sections = [
     {
       title: 'Connection pooling',
-      status: 'Operator-managed',
+      status: 'Runtime config',
       description:
         'Pooler sizing is read from the local Supavisor/PgBouncer runtime. Studio does not write pooler capacity until the self-host management API exposes PATCH /v1/projects/:ref/database/pooling.',
     },
     {
       title: 'SSL enforcement',
-      status: 'Operator-managed',
+      status: 'VPS config',
       description:
         'SSL enforcement depends on the local Postgres listener and certificate bundle. Configure it in the VPS runtime, then verify connection behavior from Studio.',
     },
