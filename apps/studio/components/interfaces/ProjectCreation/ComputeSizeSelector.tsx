@@ -17,18 +17,15 @@ import { CreateProjectForm } from './ProjectCreation.schema'
 import { InlineLink } from '@/components/ui/InlineLink'
 import Panel from '@/components/ui/Panel'
 import { instanceSizeSpecs } from '@/data/projects/new-project.constants'
-import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { getCloudProviderArchitecture } from '@/lib/cloudprovider-utils'
 import { DOCS_URL } from '@/lib/constants'
 
 interface ComputeSizeSelectorProps {
   form: UseFormReturn<CreateProjectForm>
+  isSelfHosted?: boolean
 }
 
-export const ComputeSizeSelector = ({ form }: ComputeSizeSelectorProps) => {
-  const { data: currentOrg } = useSelectedOrganizationQuery()
-  const isSelfHosted = currentOrg?.plan?.name?.toLowerCase() === 'self-hosted'
-
+export const ComputeSizeSelector = ({ form, isSelfHosted = false }: ComputeSizeSelectorProps) => {
   return (
     <Panel.Content>
       <FormField
@@ -105,7 +102,11 @@ export const ComputeSizeSelector = ({ form }: ComputeSizeSelectorProps) => {
                     })}
                   <SelectItem key={'disabled'} value={'disabled'} disabled>
                     <div className="flex items-center justify-center w-full">
-                      <span>Larger instance sizes available after creation</span>
+                      <span>
+                        {isSelfHosted
+                          ? 'Larger VPS profiles can be enabled in your runtime configuration'
+                          : 'Larger instance sizes available after creation'}
+                      </span>
                     </div>
                   </SelectItem>
                 </SelectGroup>

@@ -29,6 +29,7 @@ interface ProjectCreationFooterProps {
   organizationProjects: OrgProject[]
   isCreatingNewProject: boolean
   isSuccessNewProject: boolean
+  isSelfHosted?: boolean
 }
 
 export const ProjectCreationFooter = ({
@@ -38,11 +39,11 @@ export const ProjectCreationFooter = ({
   organizationProjects,
   isCreatingNewProject,
   isSuccessNewProject,
+  isSelfHosted = false,
 }: ProjectCreationFooterProps) => {
   const router = useRouter()
   const { data: currentOrg } = useSelectedOrganizationQuery()
   const isFreePlan = currentOrg?.plan?.id === 'free'
-  const isSelfHosted = currentOrg?.plan?.name?.toLowerCase() === 'self-hosted'
   const { lastVisitedOrganization } = useLastVisitedOrganization()
 
   const projectCreationDisabled = useFlag('disableProjectCreationAndUpdate')

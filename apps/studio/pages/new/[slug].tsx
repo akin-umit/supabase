@@ -564,6 +564,7 @@ const Wizard: NextPageWithLayout = () => {
                 organizationProjects={organizationProjects}
                 isCreatingNewProject={isCreatingNewProject}
                 isSuccessNewProject={isSuccessNewProject}
+                isSelfHosted={isSelfHosted}
               />
             }
           >
@@ -610,7 +611,9 @@ const Wizard: NextPageWithLayout = () => {
                       )}
                       <ProjectNameInput form={form} />
 
-                      {canChooseInstanceSize && <ComputeSizeSelector form={form} />}
+                      {canChooseInstanceSize && (
+                        <ComputeSizeSelector form={form} isSelfHosted={isSelfHosted} />
+                      )}
 
                       <DatabasePasswordInput form={form} />
 

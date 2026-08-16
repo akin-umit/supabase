@@ -512,6 +512,10 @@ describe('project creation wizard', () => {
       await generateAndWaitForStrongPassword()
 
       await user.click(getSelectTriggerByLabel('Compute size'))
+      expect(await screen.findAllByText('Reserved from your VPS capacity')).not.toHaveLength(0)
+      expect(screen.queryByText(/\$\d+(?:\.\d+)?\/hour/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/~\$\d+\/month/)).not.toBeInTheDocument()
+
       await user.click(await screen.findByText('4 GB RAM / 2-core ARM CPU'))
 
       fireEvent.click(screen.getByRole('button', { name: 'Create new project' }))
