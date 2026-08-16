@@ -21,7 +21,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       assert(typeof ref === 'string', 'Invalid or missing ref parameter')
       assert(typeof name === 'string', 'Invalid or missing name parameter')
 
-      const { data } = await retrieveAnalyticsData({
+      const { data, error } = await retrieveAnalyticsData({
         name,
         params,
         projectRef: ref,
@@ -36,6 +36,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         self_hosted: {
           degraded: true,
           reason:
+            error?.message ||
             'Self-hosted analytics data is waiting for local Logflare and Vector metrics collector data.',
         },
       })

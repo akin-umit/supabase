@@ -104,6 +104,18 @@ describe('self-hosted Logflare queries', () => {
     expect(error?.message).toContain('Unsupported self-hosted analytics endpoint')
   })
 
+  it('returns a recoverable error when the local Logflare token is not configured', async () => {
+    const { retrieveAnalyticsData } = await import('./logs')
+    const { data, error } = await retrieveAnalyticsData({
+      name: 'logs.all',
+      projectRef: 'default',
+      params: {},
+    })
+
+    expect(data).toBeUndefined()
+    expect(error?.message).toBe('LOGFLARE_PRIVATE_ACCESS_TOKEN is required')
+  })
+
   it('builds self-hosted log queries against Logflare source aliases', async () => {
     const { getLogQuery } = await import('./logs')
 

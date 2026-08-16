@@ -307,18 +307,20 @@ export async function retrieveAnalyticsData({
   projectRef,
   params,
 }: RetrieveAnalyticsDataOptions): Promise<WrappedResult<AnalyticsResult>> {
-  assertSelfHosted()
-  assert(PROJECT_ANALYTICS_URL, 'PROJECT_ANALYTICS_URL is required')
-  assert(process.env.LOGFLARE_PRIVATE_ACCESS_TOKEN, 'LOGFLARE_PRIVATE_ACCESS_TOKEN is required')
-
-  const baseUrl = new URL(PROJECT_ANALYTICS_URL)
-  const apiPath = baseUrl.pathname.replace(/\/$/, '').endsWith('/api') ? '' : '/api'
-  baseUrl.pathname = `${baseUrl.pathname.replace(/\/$/, '')}${apiPath}/`
-
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), ANALYTICS_TIMEOUT_MS)
+  let timeout: ReturnType<typeof setTimeout> | undefined
 
   try {
+    assertSelfHosted()
+    assert(PROJECT_ANALYTICS_URL, 'PROJECT_ANALYTICS_URL is required')
+    assert(process.env.LOGFLARE_PRIVATE_ACCESS_TOKEN, 'LOGFLARE_PRIVATE_ACCESS_TOKEN is required')
+
+    const baseUrl = new URL(PROJECT_ANALYTICS_URL)
+    const apiPath = baseUrl.pathname.replace(/\/$/, '').endsWith('/api') ? '' : '/api'
+    baseUrl.pathname = `${baseUrl.pathname.replace(/\/$/, '')}${apiPath}/`
+
+    const controller = new AbortController()
+    timeout = setTimeout(() => controller.abort(), ANALYTICS_TIMEOUT_MS)
+
     const normalized = normalizeAnalyticsRequest(name, params)
     const url = new URL(`endpoints/query/${encodeURIComponent(normalized.name)}`, baseUrl)
     url.searchParams.set('project', projectRef)
@@ -356,7 +358,7 @@ export async function retrieveAnalyticsData({
     }
     throw error
   } finally {
-    clearTimeout(timeout)
+    if (timeout) clearTimeout(timeout)
   }
 }
 
