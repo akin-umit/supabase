@@ -2,9 +2,8 @@ import { useParams } from 'common'
 import { Github, Triangle } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Button, Card, Input } from 'ui'
+import { Alert, AlertDescription, AlertTitle, Button, Card, Input } from 'ui'
 
-import { AlertError } from '@/components/ui/AlertError'
 import {
   useSelfHostedManagementMutation,
   useSelfHostedManagementQuery,
@@ -147,7 +146,18 @@ export function SelfHostedIntegrations() {
     resource: ['integrations'],
   })
 
-  if (error) return <AlertError subject="Failed to retrieve integrations" error={error} />
+  if (error) {
+    return (
+      <Alert variant="default">
+        <AlertTitle>Integration status is not available</AlertTitle>
+        <AlertDescription>
+          Studio could not read GitHub/Vercel bridge status from the self-host management API.
+          Configure the VPS-side integration bridge in <code className="text-code-inline">.env</code>{' '}
+          or <code className="text-code-inline">docker-compose.yml</code>, then refresh this page.
+        </AlertDescription>
+      </Alert>
+    )
+  }
   if (isPending)
     return <Card className="p-6 text-sm text-foreground-light">Loading integrations...</Card>
 

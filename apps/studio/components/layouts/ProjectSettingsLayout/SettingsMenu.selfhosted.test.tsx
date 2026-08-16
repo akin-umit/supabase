@@ -100,9 +100,13 @@ describe('useGenerateSettingsMenu (self-hosted)', () => {
   it('includes Data API and Vault integrations in self-hosted mode', () => {
     const { result } = renderHook(() => useGenerateSettingsMenu())
     const integrationsGroup = result.current.find((group) => group.title === 'Integrations')
+    const dataApiItem = integrationsGroup?.items.find((item) => item.key === 'api')
+    const vaultItem = integrationsGroup?.items.find((item) => item.key === 'vault')
 
-    expect(integrationsGroup?.items.some((item) => item.key === 'api')).toBe(true)
-    expect(integrationsGroup?.items.some((item) => item.key === 'vault')).toBe(true)
+    expect(dataApiItem?.url).toBe('/project/project-ref/integrations/data_api/overview')
+    expect(vaultItem?.url).toBe('/project/project-ref/integrations/vault/overview')
+    expect(dataApiItem?.rightIcon).toBeUndefined()
+    expect(vaultItem?.rightIcon).toBeUndefined()
   })
 
   it('includes organization settings links in self-hosted mode without billing', () => {

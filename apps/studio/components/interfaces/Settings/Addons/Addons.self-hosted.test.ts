@@ -14,24 +14,26 @@ const status = (value: RuntimeConfigStatus['status']): RuntimeConfigStatus => ({
 describe('getSelfHostedServiceBadge', () => {
   it('reports only the status returned by the management API', () => {
     expect(getSelfHostedServiceBadge(status('configured'))).toEqual({
-      label: 'Configured',
+      label: 'Runtime ready',
       variant: 'success',
-      description: 'Runtime settings were reported by the self-host management API.',
+      description: 'The self-host runtime reported the required configuration for this service.',
     })
     expect(getSelfHostedServiceBadge(status('incomplete'))).toEqual({
-      label: 'Needs config',
+      label: 'Configure',
       variant: 'warning',
-      description: 'Some runtime settings are missing and must be completed in this VPS runtime.',
+      description:
+        'Some VPS runtime variables are missing. Complete them in docker-compose.yml or .env.',
     })
     expect(getSelfHostedServiceBadge(undefined)).toEqual({
-      label: 'Unavailable',
+      label: 'Not reported',
       variant: 'default',
-      description: 'Studio could not read this service status from the management API.',
+      description:
+        'This VPS has not reported service evidence yet. Check the management API bridge and .env values.',
     })
     expect(getSelfHostedServiceBadge(status('unavailable'))).toEqual({
-      label: 'Unavailable',
+      label: 'Not running',
       variant: 'default',
-      description: 'The management API reported this service as unavailable.',
+      description: 'The management API can be reached, but this service is not reported as running.',
     })
   })
 })

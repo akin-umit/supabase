@@ -99,32 +99,34 @@ export function getSelfHostedServiceBadge(status: RuntimeConfigStatus | undefine
 } {
   if (!status) {
     return {
-      label: 'Unavailable',
+      label: 'Not reported',
       variant: 'default',
-      description: 'Studio could not read this service status from the management API.',
+      description:
+        'This VPS has not reported service evidence yet. Check the management API bridge and .env values.',
     }
   }
 
   if (status.status === 'configured') {
     return {
-      label: 'Configured',
+      label: 'Runtime ready',
       variant: 'success',
-      description: 'Runtime settings were reported by the self-host management API.',
+      description: 'The self-host runtime reported the required configuration for this service.',
     }
   }
 
   if (status.status === 'incomplete') {
     return {
-      label: 'Needs config',
+      label: 'Configure',
       variant: 'warning',
-      description: 'Some runtime settings are missing and must be completed in this VPS runtime.',
+      description:
+        'Some VPS runtime variables are missing. Complete them in docker-compose.yml or .env.',
     }
   }
 
   return {
-    label: 'Unavailable',
+    label: 'Not running',
     variant: 'default',
-    description: 'The management API reported this service as unavailable.',
+    description: 'The management API can be reached, but this service is not reported as running.',
   }
 }
 
@@ -193,7 +195,15 @@ const SelfHostedAddons = () => {
             ))}
           </ResourceList>
         ) : isError ? (
-          <AlertError error={error} subject="Failed to retrieve service status" />
+          <Alert variant="default">
+            <AlertTitle>Service status is not available</AlertTitle>
+            <AlertDescription>
+              Studio could not read VPS service status from the self-host management API. Verify
+              <code className="text-code-inline mx-1">INTERNAL_MANAGEMENT_API_URL</code> and
+              <code className="text-code-inline mx-1">INTERNAL_MANAGEMENT_API_WRITE_TOKEN</code>,
+              then refresh this page.
+            </AlertDescription>
+          </Alert>
         ) : (
           <ResourceList>
             {services.map((service) => (
