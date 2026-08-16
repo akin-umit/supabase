@@ -157,7 +157,7 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
 
     expect(res._getStatusCode()).toBe(503)
     expect(JSON.parse(res._getData()).error.message).toContain(
-      'self-host management API write bridge is not configured'
+      'self-host management API write bridge'
     )
   })
 })

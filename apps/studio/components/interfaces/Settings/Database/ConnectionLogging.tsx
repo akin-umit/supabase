@@ -52,6 +52,20 @@ type DatabaseSettingSummary = {
   pendingRestart?: boolean
 }
 
+const formatSelfHostedPostgresConfigError = (error: Error | null) => {
+  const message = error?.message ?? 'Unknown error'
+  if (message.includes('Management API is not configured')) {
+    return 'Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN so Studio can read and persist Postgres logging settings.'
+  }
+  if (message.includes('endpoint is not exposed') || message.includes('endpoint is not configured')) {
+    return 'The VPS management API is reachable, but it does not expose the database settings contract yet. Add GET/PATCH /v1/projects/:ref/database/settings to the self-host runtime.'
+  }
+  if (message.includes('Unable to reach')) {
+    return 'Studio cannot reach the self-host management API from the container. Check the internal URL, network, and service health.'
+  }
+  return message
+}
+
 export const ConnectionLogging = () => {
   const { ref: projectRef } = useParams()
   const queryClient = useQueryClient()
@@ -139,7 +153,23 @@ export const ConnectionLogging = () => {
       </PageSectionMeta>
       <PageSectionContent>
         {isError ? (
-          <AlertError error={error} subject="Failed to retrieve Postgres configuration" />
+          !IS_PLATFORM ? (
+            <Card>
+              <CardContent className="space-y-2">
+                <p className="text-sm font-medium">Postgres runtime settings need configuration</p>
+                <p className="text-sm text-foreground-light">
+                  Studio reads and saves connection logging through the self-host management API.
+                  Until that bridge reports Postgres config state, these toggles are not treated as
+                  persisted.
+                </p>
+                <p className="text-xs text-foreground-lighter">
+                  {formatSelfHostedPostgresConfigError(error)}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <AlertError error={error} subject="Failed to retrieve Postgres configuration" />
+          )
         ) : (
           <div className="space-y-4">
             <Form {...form}>

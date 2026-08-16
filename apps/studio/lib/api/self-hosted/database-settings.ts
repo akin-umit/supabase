@@ -143,22 +143,24 @@ async function requestManagementApi(pathname: string, init: RequestInit) {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })
 
+    const payload = await response.json().catch(() => undefined)
+
     if (!response.ok) {
       const statusCode = response.status === 404 || response.status === 405 ? 503 : 502
       throw new DatabaseSettingsManagementApiError(
-        'Database settings management API request failed',
+        normalizeManagementErrorMessage(payload, response.status),
         statusCode
       )
     }
 
-    try {
-      return await response.json()
-    } catch {
+    if (payload === undefined) {
       throw new DatabaseSettingsManagementApiError(
         'Database settings management API response was invalid',
         502
       )
     }
+
+    return payload
   } catch (error) {
     if (error instanceof DatabaseSettingsManagementApiError) throw error
 
@@ -167,6 +169,34 @@ async function requestManagementApi(pathname: string, init: RequestInit) {
       502
     )
   }
+}
+
+function normalizeManagementErrorMessage(payload: unknown, status: number) {
+  const rawMessage =
+    typeof payload === 'object' && payload !== null
+      ? (payload as { message?: unknown; error?: unknown; code?: unknown }).message ??
+        (payload as { error?: unknown }).error ??
+        (payload as { code?: unknown }).code
+      : undefined
+  const message = typeof rawMessage === 'string' ? rawMessage : undefined
+
+  if (message === 'upstream_operation_failed') {
+    return 'Database settings apply failed in the self-hosted runtime. Check the VPS Postgres config writer and restart/apply worker.'
+  }
+  if (message === 'management_api_not_configured' || message === 'Management API is not configured') {
+    return 'Database settings management API is not configured'
+  }
+  if (message === 'database_settings_not_configured') {
+    return 'Database settings endpoint is not configured in the self-hosted management API'
+  }
+  if (status === 404 || status === 405) {
+    return 'Database settings endpoint is not exposed by the self-hosted management API'
+  }
+  if (message && /^[A-Za-z0-9_. -]{1,160}$/.test(message)) {
+    return message
+  }
+
+  return 'Database settings management API request failed'
 }
 
 export async function getDatabaseSettings(projectRef: string): Promise<DatabaseSettingsResponse> {

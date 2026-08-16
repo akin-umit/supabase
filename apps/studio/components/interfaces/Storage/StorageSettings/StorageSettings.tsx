@@ -59,7 +59,7 @@ import { formatBytes } from '@/lib/helpers'
 
 const formId = 'storage-settings-form'
 const DEFAULT_RUNTIME_WRITE_BRIDGE_REASON =
-  'Storage runtime settings need the self-host management API write bridge because the self-host management API write bridge is not configured. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
+  'Storage runtime settings need the self-host management API write bridge. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
 
 interface StorageSettingsState {
   fileSizeLimit: number

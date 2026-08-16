@@ -35,7 +35,7 @@ type ReplicationState = {
   walLevel?: string
   wal_level?: string
   configured?: boolean
-  status?: 'configured' | 'operator_managed' | 'unsupported' | 'unavailable'
+  status?: 'configured' | 'runtime_managed' | 'operator_managed' | 'unsupported' | 'unavailable'
   message?: string
   publications?: Publication[]
   slots?: Slot[]
@@ -107,7 +107,7 @@ export function normalizeReplicationState(
   return {
     walLevel: (data?.walLevel ?? data?.wal_level) ? String(data?.walLevel ?? data?.wal_level) : '',
     configured: data?.configured ?? true,
-    status: data?.status ?? 'configured',
+    status: data?.status === 'operator_managed' ? 'runtime_managed' : (data?.status ?? 'configured'),
     message: data?.message ?? '',
     publications,
     slots,
