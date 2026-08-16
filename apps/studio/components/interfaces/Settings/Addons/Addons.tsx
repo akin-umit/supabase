@@ -115,10 +115,9 @@ export function getSelfHostedServiceBadge(status: RuntimeConfigStatus | undefine
 
   if (status.status === 'incomplete') {
     return {
-      label: 'Operator managed',
+      label: 'Needs config',
       variant: 'warning',
-      description:
-        'Some runtime settings are missing from Studio and must be managed by the operator.',
+      description: 'Some runtime settings are missing and must be completed in this VPS runtime.',
     }
   }
 

@@ -79,7 +79,7 @@ export const UpgradePlanButton = ({
           },
         }}
       >
-        {children ?? 'Self-host operator managed'}
+        {children ?? 'Self-host runtime'}
       </ButtonTooltip>
     )
   }

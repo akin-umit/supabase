@@ -19,10 +19,9 @@ describe('getSelfHostedServiceBadge', () => {
       description: 'Runtime settings were reported by the self-host management API.',
     })
     expect(getSelfHostedServiceBadge(status('incomplete'))).toEqual({
-      label: 'Operator managed',
+      label: 'Needs config',
       variant: 'warning',
-      description:
-        'Some runtime settings are missing from Studio and must be managed by the operator.',
+      description: 'Some runtime settings are missing and must be completed in this VPS runtime.',
     })
     expect(getSelfHostedServiceBadge(undefined)).toEqual({
       label: 'Unavailable',
