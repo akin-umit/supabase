@@ -53,8 +53,8 @@ describe('api/self-hosted/organization', () => {
     ])
     expect(getSelfHostedRoles()).toMatchObject({
       org_scoped_roles: expect.arrayContaining([
-        expect.objectContaining({ name: 'Owner', permissions: ['*'] }),
-        expect.objectContaining({ name: 'Administrator', permissions: ['*'] }),
+        expect.objectContaining({ name: 'Owner', permissions: ['*'], projects: [] }),
+        expect.objectContaining({ name: 'Administrator', permissions: ['*'], projects: [] }),
       ]),
       project_scoped_roles: [],
     })
