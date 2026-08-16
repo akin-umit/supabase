@@ -63,6 +63,10 @@ describe('useGenerateSettingsMenu (self-hosted)', () => {
     expect(getShortcutId(configGroup?.items.find((item) => item.key === 'log-drains'))).toBe(
       SHORTCUT_IDS.NAV_PROJECT_SETTINGS_LOG_DRAINS
     )
+    expect(configGroup?.items.some((item) => item.key === 'webhooks')).toBe(true)
+    expect(getShortcutId(configGroup?.items.find((item) => item.key === 'webhooks'))).toBe(
+      SHORTCUT_IDS.NAV_PROJECT_SETTINGS_WEBHOOKS
+    )
   })
 
   it('hides Log Drains in self-hosted mode when logs:all is disabled', () => {
@@ -99,6 +103,28 @@ describe('useGenerateSettingsMenu (self-hosted)', () => {
 
     expect(integrationsGroup?.items.some((item) => item.key === 'api')).toBe(true)
     expect(integrationsGroup?.items.some((item) => item.key === 'vault')).toBe(true)
+  })
+
+  it('includes organization settings links in self-hosted mode without billing', () => {
+    const { result } = renderHook(() => useGenerateSettingsMenu())
+    const organizationGroup = result.current.find((group) => group.title === 'Organization')
+    const billingGroup = result.current.find((group) => group.title === 'Billing')
+
+    expect(organizationGroup?.items.map((item) => item.key)).toEqual([
+      'org-general',
+      'org-team',
+      'org-security',
+      'org-sso',
+      'org-apps',
+      'org-audit',
+    ])
+    expect(organizationGroup?.items.find((item) => item.key === 'org-general')?.url).toBe(
+      '/org/my-org/general'
+    )
+    expect(organizationGroup?.items.find((item) => item.key === 'org-team')?.url).toBe(
+      '/org/my-org/team'
+    )
+    expect(billingGroup).toBeUndefined()
   })
 
   it('links dashboard preferences to the project settings surface', () => {

@@ -59,7 +59,7 @@ import { formatBytes } from '@/lib/helpers'
 
 const formId = 'storage-settings-form'
 const DEFAULT_OPERATOR_MANAGED_REASON =
-  'Storage runtime settings are operator-managed because the self-host management API write bridge is not configured. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
+  'Storage runtime settings need the self-host management API write bridge because the self-host management API write bridge is not configured. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN to let Studio persist Storage runtime settings and restart/apply the Storage service.'
 
 interface StorageSettingsState {
   fileSizeLimit: number
@@ -455,7 +455,7 @@ export const StorageSettings = () => {
                         <CardContent>
                           <Alert variant="warning">
                             <WarningIcon />
-                            <AlertTitle>Operator-managed Storage settings</AlertTitle>
+                            <AlertTitle>Storage runtime write bridge required</AlertTitle>
                             <AlertDescription>{operatorManagedReason}</AlertDescription>
                           </Alert>
                         </CardContent>

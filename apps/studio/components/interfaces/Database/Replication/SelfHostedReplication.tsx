@@ -160,7 +160,7 @@ export function SelfHostedReplication() {
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 text-warning" />
           <div className="space-y-2">
-            <p className="text-sm font-medium">Replication is operator managed</p>
+            <p className="text-sm font-medium">Replication runtime needs configuration</p>
             <p className="text-sm text-foreground-light">
               Studio could not read the local replication backend. Configure the self-host
               management API replication endpoint on the VPS, then refresh this page.
@@ -207,7 +207,7 @@ export function SelfHostedReplication() {
             <h3 className="text-lg">Publications</h3>
           </div>
           <div className="flex items-center gap-2 text-xs text-foreground-light">
-            <span>WAL level: {replication.walLevel || 'not reported by operator'}</span>
+            <span>WAL level: {replication.walLevel || 'not reported by runtime'}</span>
             {hasLogicalWal ? (
               <Badge variant="success">Logical</Badge>
             ) : (

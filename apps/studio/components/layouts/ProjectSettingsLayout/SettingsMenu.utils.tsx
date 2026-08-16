@@ -12,6 +12,7 @@ export const useGenerateSettingsMenu = () => {
   const { ref } = useParams()
   const { data: project, isPending } = useSelectedProjectQuery()
   const { data: organization } = useSelectedOrganizationQuery()
+  const organizationSlug = organization?.slug
   const showDashboardPreferences = useFlag('dashboardPreferences')
 
   const platformWebhooksEnabled = useIsPlatformWebhooksEnabled()
@@ -57,6 +58,15 @@ export const useGenerateSettingsMenu = () => {
             disabled: !isProjectActive,
             isLoading: isPending,
             shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_INTEGRATIONS,
+          },
+          {
+            name: 'Webhooks',
+            key: 'webhooks',
+            url: `/project/${ref}/settings/webhooks`,
+            items: [],
+            disabled: !isProjectActive,
+            isLoading: isPending,
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_WEBHOOKS,
           },
           {
             name: 'API Keys',
@@ -109,6 +119,56 @@ export const useGenerateSettingsMenu = () => {
             : []),
         ],
       },
+      ...(organizationSlug
+        ? [
+            {
+              title: 'Organization',
+              items: [
+                {
+                  name: 'General',
+                  key: 'org-general',
+                  url: `/org/${organizationSlug}/general`,
+                  items: [],
+                  shortcutId: SHORTCUT_IDS.NAV_ORG_SETTINGS_GENERAL,
+                },
+                {
+                  name: 'Team',
+                  key: 'org-team',
+                  url: `/org/${organizationSlug}/team`,
+                  items: [],
+                },
+                {
+                  name: 'Security',
+                  key: 'org-security',
+                  url: `/org/${organizationSlug}/security`,
+                  items: [],
+                  shortcutId: SHORTCUT_IDS.NAV_ORG_SETTINGS_SECURITY,
+                },
+                {
+                  name: 'SSO',
+                  key: 'org-sso',
+                  url: `/org/${organizationSlug}/sso`,
+                  items: [],
+                  shortcutId: SHORTCUT_IDS.NAV_ORG_SETTINGS_SSO,
+                },
+                {
+                  name: 'OAuth Apps',
+                  key: 'org-apps',
+                  url: `/org/${organizationSlug}/apps`,
+                  items: [],
+                  shortcutId: SHORTCUT_IDS.NAV_ORG_SETTINGS_APPS,
+                },
+                {
+                  name: 'Audit Logs',
+                  key: 'org-audit',
+                  url: `/org/${organizationSlug}/audit`,
+                  items: [],
+                  shortcutId: SHORTCUT_IDS.NAV_ORG_SETTINGS_AUDIT,
+                },
+              ],
+            },
+          ]
+        : []),
       {
         title: 'Integrations',
         items: [
@@ -273,7 +333,7 @@ export const useGenerateSettingsMenu = () => {
               {
                 name: 'Subscription',
                 key: 'subscription',
-                url: `/org/${organization?.slug}/billing`,
+                url: `/org/${organizationSlug}/billing`,
                 items: [],
                 rightIcon: <ArrowUpRight strokeWidth={1} className="h-4 w-4" />,
               },
@@ -282,7 +342,7 @@ export const useGenerateSettingsMenu = () => {
         {
           name: 'Usage',
           key: 'usage',
-          url: `/org/${organization?.slug}/usage?projectRef=${ref}`,
+          url: `/org/${organizationSlug}/usage?projectRef=${ref}`,
           items: [],
           rightIcon: <ArrowUpRight strokeWidth={1} className="h-4 w-4" />,
         },

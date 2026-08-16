@@ -90,7 +90,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
         <div className="flex items-start gap-3">
           <DatabaseBackup className="mt-0.5 text-warning" />
           <div className="space-y-2">
-            <p className="text-sm font-medium">Backups are operator managed</p>
+            <p className="text-sm font-medium">Backup runtime needs configuration</p>
             <p className="text-sm text-foreground-light">
               Studio can show and trigger backups when the self-host management API exposes local
               backup evidence and job controls.
@@ -177,7 +177,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
           <p>Backup job runner is not configured.</p>
           <p>
             Configure the VPS backup schedule, storage target, and restore worker in the self-hosted
-            operator. Studio will enable backup actions when the management API reports this project
+            runtime. Studio will enable backup actions when the management API reports this project
             as configured.
           </p>
         </Card>
@@ -233,7 +233,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
         <Card className="p-6 space-y-2 text-sm text-foreground-light">
           <p>No backups have been created yet.</p>
           <p>
-            Configure the self-hosted backup job runner and storage target in your VPS operator,
+            Configure the self-hosted backup job runner and storage target in your VPS runtime,
             then use Back up now to create the first recovery point.
           </p>
         </Card>
