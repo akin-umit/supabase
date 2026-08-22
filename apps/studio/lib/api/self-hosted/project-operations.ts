@@ -9,6 +9,28 @@ const isoTimestampSchema = z.string().datetime({ offset: true })
 const serviceNameSchema = z.string().trim().min(1).max(100)
 const versionSchema = z.string().trim().min(1).max(100)
 const commitSchema = z.union([z.string().regex(/^[a-f\d]{7,40}$/i), z.literal('unknown')])
+const serviceStateSchema = z.enum([
+  'healthy',
+  'unavailable',
+  'degraded',
+  'unhealthy',
+  'starting',
+  'restarting',
+  'deploying',
+  'stopping',
+  'stopped',
+  'unknown',
+])
+const overviewStatusSchema = z.enum([
+  'healthy',
+  'degraded',
+  'unavailable',
+  'starting',
+  'restarting',
+  'deploying',
+  'stopping',
+  'unknown',
+])
 
 const deploymentSchema = z
   .object({
@@ -65,8 +87,8 @@ const infrastructureSchema = z
 const projectOperationsSchema = z
   .object({
     generatedAt: isoTimestampSchema,
-    status: z.enum(['healthy', 'degraded']),
-    services: z.record(serviceNameSchema, z.enum(['healthy', 'unavailable'])),
+    status: overviewStatusSchema,
+    services: z.record(serviceNameSchema, serviceStateSchema),
     deployment: deploymentSchema,
     backup: backupSchema,
     migration: migrationSchema,

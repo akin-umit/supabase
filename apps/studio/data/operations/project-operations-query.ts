@@ -44,6 +44,7 @@ export const useProjectOperationsQuery = <TData = ProjectOperationsData>(
     queryKey: operationsKeys.projectOperations(projectRef),
     queryFn: ({ signal }) => getProjectOperations({ projectRef }, signal),
     enabled: enabled && isSelfHosted && typeof projectRef !== 'undefined' && projectRef !== '_',
+    refetchInterval: 10_000,
     ...options,
   })
 }

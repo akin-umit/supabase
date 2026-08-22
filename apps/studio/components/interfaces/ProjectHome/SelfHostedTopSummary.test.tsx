@@ -89,4 +89,27 @@ describe('SelfHostedInfrastructureDiagram', () => {
     expect(screen.getByText('1/1')).toBeInTheDocument()
     expect(screen.getByText('Telemetry pending')).toBeInTheDocument()
   })
+
+  it('does not report restart or deploy states as healthy', () => {
+    mockUseProjectOperationsQuery.mockReturnValue({
+      isPending: false,
+      data: {
+        generatedAt: '2026-07-14T18:00:00Z',
+        status: 'restarting',
+        services: { database: 'healthy', auth: 'restarting', storage: 'deploying' },
+        deployment: { commit: 'abc1234', version: '0.2.0' },
+        backup: { status: 'unavailable' },
+        migration: { status: 'unavailable' },
+        infrastructure: {
+          database: { host: 'db', port: 5432, maxClientConnections: 60 },
+          services: { total: 3, healthy: 1, unavailable: 2 },
+        },
+      },
+    })
+
+    render(<SelfHostedInfrastructureDiagram />)
+
+    expect(screen.getByText('Restarting')).toBeInTheDocument()
+    expect(screen.getByText('1/3')).toBeInTheDocument()
+  })
 })

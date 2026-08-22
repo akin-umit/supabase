@@ -28,7 +28,15 @@ import { SingleStat } from '@/components/ui/SingleStat'
 import { useProjectOperationsQuery } from '@/data/operations/project-operations-query'
 import type { ProjectOperations } from '@/lib/api/self-hosted/project-operations'
 
-type SummaryState = 'healthy' | 'degraded' | 'unknown' | 'unavailable'
+type SummaryState =
+  | 'healthy'
+  | 'degraded'
+  | 'unknown'
+  | 'unavailable'
+  | 'starting'
+  | 'restarting'
+  | 'deploying'
+  | 'stopping'
 
 const SERVICE_LABELS: Record<string, string> = {
   auth: 'Auth',
@@ -51,6 +59,10 @@ const STATE_LABELS: Record<SummaryState, string> = {
   degraded: 'Degraded',
   unknown: 'Unknown',
   unavailable: 'Unavailable',
+  starting: 'Starting',
+  restarting: 'Restarting',
+  deploying: 'Deploying',
+  stopping: 'Stopping',
 }
 
 const STATE_VARIANTS: Record<SummaryState, 'success' | 'warning' | 'default'> = {
@@ -58,6 +70,10 @@ const STATE_VARIANTS: Record<SummaryState, 'success' | 'warning' | 'default'> = 
   degraded: 'warning',
   unknown: 'default',
   unavailable: 'default',
+  starting: 'warning',
+  restarting: 'warning',
+  deploying: 'warning',
+  stopping: 'warning',
 }
 
 function normalizeState(value?: string): SummaryState {
@@ -65,6 +81,10 @@ function normalizeState(value?: string): SummaryState {
   const state = value.toLowerCase()
   if (['healthy', 'running', 'verified', 'applied', 'success'].includes(state)) return 'healthy'
   if (['degraded', 'unhealthy', 'failed', 'error', 'warning'].includes(state)) return 'degraded'
+  if (['starting', 'creating', 'coming_up'].includes(state)) return 'starting'
+  if (['restarting', 'reloading'].includes(state)) return 'restarting'
+  if (['deploying', 'updating'].includes(state)) return 'deploying'
+  if (['stopping', 'terminating'].includes(state)) return 'stopping'
   if (['stopped', 'unavailable'].includes(state)) return 'unavailable'
   return 'unknown'
 }
