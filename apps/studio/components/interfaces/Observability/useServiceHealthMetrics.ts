@@ -65,6 +65,32 @@ const SERVICE_RESPONSE_KEY: Record<
   postgrest: 'postgrest_logs',
 }
 
+const SERVICE_LOG_SOURCE: Record<ServiceKey, string> = {
+  db: 'postgres_logs',
+  auth: 'auth_logs',
+  functions: 'function_edge_logs',
+  storage: 'storage_logs',
+  realtime: 'realtime_logs',
+  data_api: 'edge_logs',
+  postgrest: 'postgrest_logs',
+}
+
+export function getServiceDegradedState(
+  selfHosted: { degraded?: boolean; reason?: string; missing_sources?: string[] } | undefined,
+  serviceKey: ServiceKey
+) {
+  if (!selfHosted?.degraded) return { isDegraded: false, degradedReason: undefined }
+
+  const missingSources = selfHosted.missing_sources ?? []
+  const source = SERVICE_LOG_SOURCE[serviceKey]
+  const sourceDegraded = missingSources.length === 0 || missingSources.includes(source)
+
+  return {
+    isDegraded: sourceDegraded,
+    degradedReason: sourceDegraded ? selfHosted.reason : undefined,
+  }
+}
+
 /** Extracts a single service's timeseries rows from the shared service-health response */
 export function extractServiceRows(rows: ServiceHealthResultRow[], serviceKey: ServiceKey) {
   const responseKey = SERVICE_RESPONSE_KEY[serviceKey]
@@ -132,13 +158,14 @@ const useServiceHealthQuery = ({
   )
 
   const metrics = useMemo(() => calculateHealthMetrics(eventChartData), [eventChartData])
+  const degraded = getServiceDegradedState(queryResult.data?.self_hosted, serviceKey)
 
   return {
     ...metrics,
     eventChartData,
     isLoading: queryResult.isLoading,
-    isDegraded: !!queryResult.data?.self_hosted?.degraded,
-    degradedReason: queryResult.data?.self_hosted?.reason,
+    isDegraded: degraded.isDegraded,
+    degradedReason: degraded.degradedReason,
     error: queryResult.error,
     refresh: queryResult.refetch,
   }

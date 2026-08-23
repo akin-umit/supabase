@@ -1,12 +1,13 @@
 import * as Sentry from '@sentry/nextjs'
 import { useQueries, useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'common'
+import { IS_PLATFORM, useFlag, useParams } from 'common'
 import { isEqual } from 'lodash'
 import { useState } from 'react'
 
 import { generateRegexpWhereSafe } from '../Reports.constants'
 import { ReportFilterItem } from '../Reports.types'
 import { executeAnalyticsSql } from '@/data/logs/execute-analytics-sql'
+import { logsAllEndpointUrl, shouldUseOtelLogsEndpoint } from '@/data/logs/logs-endpoint'
 import { safeSql, type SafeLogSqlFragment } from '@/data/logs/safe-analytics-sql'
 
 const SOURCE_TABLE: Record<string, SafeLogSqlFragment> = {
@@ -223,6 +224,10 @@ export const useSharedAPIReport = ({
   enabled = true,
 }: Omit<SharedAPIReportParams, 'projectRef'>) => {
   const { ref } = useParams() as { ref: string }
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: useFlag('otelLegacyLogs'),
+  })
   const [filters, setFilters] = useState<ReportFilterItem[]>([])
   const queryClient = useQueryClient()
   const filterByMapSource = {
@@ -268,7 +273,7 @@ export const useSharedAPIReport = ({
         try {
           const data = await executeAnalyticsSql({
             projectRef: ref,
-            endpoint: '/platform/projects/{ref}/analytics/endpoints/logs.all',
+            endpoint: logsAllEndpointUrl(useOtel),
             sql: value.safeSql(allFilters, filterByMapSource[filterBy]),
             iso_timestamp_start: start,
             iso_timestamp_end: end,

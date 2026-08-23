@@ -3,7 +3,11 @@ import { IS_PLATFORM, useFlag } from 'common'
 
 import { executeAnalyticsSql } from './execute-analytics-sql'
 import { logsKeys } from './keys'
-import { logsAllEndpointUrl, pickLogsQueryBuilder } from './logs-endpoint'
+import {
+  logsAllEndpointUrl,
+  pickLogsQueryBuilder,
+  shouldUseOtelLogsEndpoint,
+} from './logs-endpoint'
 import { parseOtelTimestamp } from './otel-inspection.utils'
 import { analyticsLiteral, safeSql } from './safe-analytics-sql'
 import { extractLogMetadata } from './unified-logs.utils'
@@ -180,7 +184,10 @@ export const useUnifiedLogsInfiniteQuery = <TData = UnifiedLogsData>(
   > = {}
 ) => {
   const otelUnifiedLogsFlag = useFlag('otelUnifiedLogs')
-  const useOtel = IS_PLATFORM && otelUnifiedLogsFlag
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: otelUnifiedLogsFlag,
+  })
   return useInfiniteQuery({
     queryKey: [...logsKeys.unifiedLogsInfinite(projectRef, search), { otel: useOtel }],
     queryFn: ({ signal, pageParam }) => {

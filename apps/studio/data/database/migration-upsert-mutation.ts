@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { databaseKeys } from './keys'
-import { handleError, put } from '@/data/fetchers'
+import { handleError, post } from '@/data/fetchers'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
 export type MigrationUpsertVariables = {
@@ -28,7 +28,7 @@ export async function upsertMigration({
     body.name = name
   }
 
-  const { data, error } = await put('/v1/projects/{ref}/database/migrations', {
+  const { data, error } = await post('/v1/projects/{ref}/database/migrations', {
     params: { path: { ref: projectRef } },
     body,
     headers,

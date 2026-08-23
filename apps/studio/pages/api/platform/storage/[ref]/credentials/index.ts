@@ -29,7 +29,7 @@ function normalizeKey(value: unknown) {
   const accessKey =
     key.access_key ?? key.accessKey ?? key.accessKeyId ?? key.access_key_id ?? key.keyId ?? key.id
   return {
-    id: key.id,
+    id: key.id ?? key.access_key_id ?? key.accessKeyId ?? accessKey,
     description: key.description ?? key.name ?? 'Self-hosted runtime credential',
     access_key: accessKey,
     created_at: key.created_at ?? key.createdAt ?? null,
@@ -49,9 +49,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const description = req.body?.description ?? req.body?.name
     const body =
       req.method === 'POST'
-        ? { name: nameFromDescription(req.body?.description ?? req.body?.name) }
+        ? { name: nameFromDescription(description), description: String(description ?? '') }
         : undefined
     const data = await requestSelfHostedManagement({
       projectRef,

@@ -509,7 +509,6 @@ describe('project creation wizard', () => {
       expect(screen.queryByText('Additional costs')).not.toBeInTheDocument()
 
       await fillProjectName('Self Hosted Project')
-      await generateAndWaitForStrongPassword()
 
       await user.click(getSelectTriggerByLabel('Compute size'))
       expect(await screen.findAllByText('Reserved from your VPS capacity')).not.toHaveLength(0)

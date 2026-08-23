@@ -3,7 +3,11 @@ import { IS_PLATFORM, useFlag } from 'common'
 
 import { executeAnalyticsSql } from './execute-analytics-sql'
 import { logsKeys } from './keys'
-import { logsAllEndpointUrl, pickLogsQueryBuilder } from './logs-endpoint'
+import {
+  logsAllEndpointUrl,
+  pickLogsQueryBuilder,
+  shouldUseOtelLogsEndpoint,
+} from './logs-endpoint'
 import {
   getUnifiedLogsISOStartEnd,
   UNIFIED_LOGS_QUERY_OPTIONS,
@@ -92,7 +96,10 @@ export const useUnifiedLogsCountQuery = <TData = UnifiedLogsCountData>(
   }: UseCustomQueryOptions<UnifiedLogsCountData, UnifiedLogsCountError, TData> = {}
 ) => {
   const otelUnifiedLogsFlag = useFlag('otelUnifiedLogs')
-  const useOtel = IS_PLATFORM && otelUnifiedLogsFlag
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: otelUnifiedLogsFlag,
+  })
   return useQuery<UnifiedLogsCountData, UnifiedLogsCountError, TData>({
     queryKey: [...logsKeys.unifiedLogsCount(projectRef, search), { otel: useOtel }],
     queryFn: ({ signal }) => getUnifiedLogsCount({ projectRef, search, useOtel }, signal),

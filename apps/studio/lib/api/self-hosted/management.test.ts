@@ -59,4 +59,34 @@ describe('self-hosted management client', () => {
     expect(String(url)).toBe('http://management.internal/v1/projects/default/runtime/logging')
     fetchMock.mockRestore()
   })
+
+  it('surfaces nested backup runner errors without leaking arbitrary response bodies', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: {
+            message: 'upstream_operation_failed',
+            detail: 'db password should not be surfaced',
+          },
+        }),
+        {
+          status: 502,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    )
+
+    await expect(
+      requestSelfHostedManagement({
+        projectRef: 'default',
+        resource: ['backups'],
+        method: 'POST',
+      })
+    ).rejects.toMatchObject({
+      message: 'upstream_operation_failed',
+      statusCode: 502,
+    })
+  })
 })

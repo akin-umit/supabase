@@ -208,6 +208,7 @@ export const edgeFunctionReports = ({
   endDate,
   interval,
   filters,
+  useOtel = false,
 }: {
   projectRef: string
   functions: { id: string; name: string }[]
@@ -215,6 +216,7 @@ export const edgeFunctionReports = ({
   endDate: string
   interval: AnalyticsInterval
   filters: EdgeFunctionReportFilters
+  useOtel?: boolean
 }): ReportConfig<EdgeFunctionReportFilters>[] => [
   {
     id: 'total-invocations',
@@ -229,7 +231,7 @@ export const edgeFunctionReports = ({
     titleTooltip: 'The total number of edge function invocations over time.',
     dataProvider: async () => {
       const sql = METRIC_SQL.TotalInvocations(interval, filters)
-      const response = await fetchLogs(projectRef, sql, startDate, endDate)
+      const response = await fetchLogs(projectRef, sql, startDate, endDate, { useOtel })
 
       if (!response?.result) return { data: [] }
 
@@ -260,7 +262,7 @@ export const edgeFunctionReports = ({
     titleTooltip: 'The total number of edge function executions by status code.',
     dataProvider: async () => {
       const sql = METRIC_SQL.ExecutionStatusCodes(interval, filters)
-      const rawData = await fetchLogs(projectRef, sql, startDate, endDate)
+      const rawData = await fetchLogs(projectRef, sql, startDate, endDate, { useOtel })
 
       if (!rawData?.result) return { data: [] }
 
@@ -296,7 +298,7 @@ export const edgeFunctionReports = ({
     format: (value: unknown) => `${Number(value).toFixed(0)}ms`,
     dataProvider: async () => {
       const sql = METRIC_SQL.ExecutionTime(interval, filters)
-      const rawData = await fetchLogs(projectRef, sql, startDate, endDate)
+      const rawData = await fetchLogs(projectRef, sql, startDate, endDate, { useOtel })
 
       if (!rawData?.result) return { data: [] }
 
@@ -354,7 +356,7 @@ export const edgeFunctionReports = ({
     requiredPlan: 'Pro',
     dataProvider: async () => {
       const sql = METRIC_SQL.InvocationsByRegion(interval, filters)
-      const rawData = await fetchLogs(projectRef, sql, startDate, endDate)
+      const rawData = await fetchLogs(projectRef, sql, startDate, endDate, { useOtel })
       const data = rawData.result?.map((point: any) => ({
         ...point,
         timestamp: isUnixMicro(point.timestamp)

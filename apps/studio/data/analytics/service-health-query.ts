@@ -30,6 +30,7 @@ export type ProjectServiceHealthResponse = {
   self_hosted?: {
     degraded?: boolean
     reason?: string
+    missing_sources?: string[]
   }
 }
 

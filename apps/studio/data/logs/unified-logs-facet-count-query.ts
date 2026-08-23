@@ -3,7 +3,7 @@ import { IS_PLATFORM, useFlag } from 'common'
 
 import { executeAnalyticsSql } from './execute-analytics-sql'
 import { logsKeys } from './keys'
-import { logsAllEndpointUrl } from './logs-endpoint'
+import { logsAllEndpointUrl, shouldUseOtelLogsEndpoint } from './logs-endpoint'
 import { quotedIdent, safeSql } from './safe-analytics-sql'
 import {
   getUnifiedLogsISOStartEnd,
@@ -66,7 +66,10 @@ export const useUnifiedLogsFacetCountQuery = <TData = UnifiedLogsFacetCountData>
   }: UseCustomQueryOptions<UnifiedLogsFacetCountData, UnifiedLogsFacetCountError, TData> = {}
 ) => {
   const otelUnifiedLogsFlag = useFlag('otelUnifiedLogs')
-  const useOtel = IS_PLATFORM && !!otelUnifiedLogsFlag
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: !!otelUnifiedLogsFlag,
+  })
   return useQuery<UnifiedLogsFacetCountData, UnifiedLogsFacetCountError, TData>({
     queryKey: [
       ...logsKeys.unifiedLogsFacetCount(projectRef, facet, facetSearch, search),

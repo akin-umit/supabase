@@ -18,7 +18,7 @@ import { InlineLink } from '@/components/ui/InlineLink'
 import Panel from '@/components/ui/Panel'
 import { instanceSizeSpecs } from '@/data/projects/new-project.constants'
 import { getCloudProviderArchitecture } from '@/lib/cloudprovider-utils'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 interface ComputeSizeSelectorProps {
   form: UseFormReturn<CreateProjectForm>
@@ -26,6 +26,8 @@ interface ComputeSizeSelectorProps {
 }
 
 export const ComputeSizeSelector = ({ form, isSelfHosted = false }: ComputeSizeSelectorProps) => {
+  const usesSelfHostedCopy = isSelfHosted || !IS_PLATFORM
+
   return (
     <Panel.Content>
       <FormField
@@ -37,7 +39,7 @@ export const ComputeSizeSelector = ({ form, isSelfHosted = false }: ComputeSizeS
             layout="horizontal"
             label="Compute size"
             description={
-              isSelfHosted ? (
+              usesSelfHostedCopy ? (
                 <p>Select the VPS resource profile reserved for this self-hosted runtime.</p>
               ) : (
                 <p>
@@ -75,7 +77,7 @@ export const ComputeSizeSelector = ({ form, isSelfHosted = false }: ComputeSizeS
                       } ${getCloudProviderArchitecture(
                         form.getValues('cloudProvider') as CloudProvider
                       )} CPU`
-                      const computeDetails = isSelfHosted
+                      const computeDetails = usesSelfHostedCopy
                         ? 'Reserved from your VPS capacity'
                         : `$${instanceSizeSpecs[option].priceHourly}/hour (~$${instanceSizeSpecs[option].priceMonthly}/month)`
 
@@ -107,7 +109,7 @@ export const ComputeSizeSelector = ({ form, isSelfHosted = false }: ComputeSizeS
                   <SelectItem key={'disabled'} value={'disabled'} disabled>
                     <div className="flex items-center justify-center w-full">
                       <span>
-                        {isSelfHosted
+                        {usesSelfHostedCopy
                           ? 'Larger VPS profiles can be enabled in your runtime configuration'
                           : 'Larger instance sizes available after creation'}
                       </span>

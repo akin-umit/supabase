@@ -86,6 +86,57 @@ describe('/api/platform/auth/[ref]/config', () => {
     )
   })
 
+  it('falls back to the runtime auth write bridge when the auth config endpoint is unavailable', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'not_found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            projectRef: 'default',
+            service: 'auth',
+            applied: ['EXTERNAL_GITHUB_ENABLED', 'SITE_URL'],
+            restarted: true,
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+      )
+
+    const { req, res } = createMocks({
+      method: 'PATCH',
+      query: { ref: 'default' },
+      body: { EXTERNAL_GITHUB_ENABLED: true, SITE_URL: 'https://studio.example.test' },
+    })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(200)
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      new URL('http://management.internal/v1/projects/default/runtime/auth'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({
+          EXTERNAL_GITHUB_ENABLED: true,
+          SITE_URL: 'https://studio.example.test',
+        }),
+      })
+    )
+    const data = JSON.parse(res._getData())
+    expect(data.EXTERNAL_GITHUB_ENABLED).toBe(true)
+    expect(data.SITE_URL).toBe('https://studio.example.test')
+    expect(data.operation.restarted).toBe(true)
+  })
+
   it('returns 405 for unsupported methods', async () => {
     const { req, res } = createMocks({ method: 'POST', query: { ref: 'default' } })
 

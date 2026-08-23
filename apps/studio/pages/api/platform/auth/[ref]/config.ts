@@ -45,6 +45,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         })
         return res.status(200).json(data)
       } catch (error) {
+        if (error instanceof SelfHostedManagementError && error.statusCode === 503) {
+          try {
+            const data = await requestSelfHostedManagement({
+              projectRef,
+              resource: ['runtime', 'auth'],
+              method: 'PATCH',
+              body: req.body,
+            })
+            return res.status(200).json({ ...getSelfHostedAuthConfig(), ...req.body, operation: data })
+          } catch (fallbackError) {
+            error = fallbackError
+          }
+        }
         const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
         const message =
           error instanceof SelfHostedManagementError && error.statusCode === 503

@@ -47,11 +47,52 @@ describe('/api/platform/storage/[ref]/credentials', () => {
     const [url, init] = fetchMock.mock.calls[0]
     expect(String(url)).toBe('http://management.internal/v1/projects/default/storage/s3-keys')
     expect(init?.method).toBe('POST')
-    expect(JSON.parse(String(init?.body))).toEqual({ name: 'studio-key' })
+    expect(JSON.parse(String(init?.body))).toEqual({
+      name: 'studio-key',
+      description: 'Studio key',
+    })
     expect(JSON.parse(res._getData())).toMatchObject({
       id: 'key-1',
       access_key: 'access-key-1',
       secret_key: 'secret-key-1',
+    })
+  })
+
+  it('normalizes runtime S3 access key create responses', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          credential: {
+            accessKeyId: 'access-key-2',
+            name: 'studio-key',
+            createdAt: '2026-08-11T00:00:00Z',
+          },
+          secretAccessKey: 'secret-key-2',
+          operation: { id: 'op-2', status: 'succeeded' },
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    )
+
+    const { req, res } = createMocks({
+      method: 'POST',
+      query: { ref: 'default' },
+      body: { description: 'Studio key' },
+    })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(201)
+    expect(JSON.parse(res._getData())).toMatchObject({
+      id: 'access-key-2',
+      access_key: 'access-key-2',
+      secret_key: 'secret-key-2',
+      operation: { id: 'op-2', status: 'succeeded' },
     })
   })
 

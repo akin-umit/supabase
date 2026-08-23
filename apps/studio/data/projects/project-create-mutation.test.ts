@@ -7,6 +7,11 @@ vi.mock('@/data/fetchers', () => ({
   }),
 }))
 
+vi.mock('@/lib/constants', () => ({
+  PROVIDERS: { AWS: { id: 'AWS' } },
+  IS_PLATFORM: true,
+}))
+
 describe('project-create-mutation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -66,6 +71,38 @@ describe('project-create-mutation', () => {
           github_installation_id: undefined,
           github_repository_id: undefined,
         }),
+      })
+    })
+
+    it('sends only VPS project fields on self-hosted Studio', async () => {
+      vi.resetModules()
+      vi.doMock('@/lib/constants', () => ({
+        PROVIDERS: { AWS: { id: 'AWS' } },
+        IS_PLATFORM: false,
+      }))
+      const { post } = await import('@/data/fetchers')
+      const { createProject } = await import('./project-create-mutation')
+
+      const mockPost = post as unknown as ReturnType<typeof vi.fn>
+      mockPost.mockResolvedValueOnce({
+        data: { ref: 'local-project', organization_slug: 'default-org-slug' },
+        error: null,
+      })
+
+      await createProject({
+        name: 'Local Project',
+        organizationSlug: 'default-org-slug',
+        dbPass: 'unused-password',
+        dbRegion: 'West US (North California)',
+        cloudProvider: 'AWS',
+        dbInstanceSize: 'micro',
+      })
+
+      expect(mockPost).toHaveBeenCalledWith('/platform/projects', {
+        body: {
+          name: 'Local Project',
+          organization_slug: 'default-org-slug',
+        },
       })
     })
   })

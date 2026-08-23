@@ -68,7 +68,7 @@ import { useLastVisitedOrganization } from '@/hooks/misc/useLastVisitedOrganizat
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { withAuth } from '@/hooks/misc/withAuth'
 import { usePHFlag } from '@/hooks/ui/useFlag'
-import { DOCS_URL, PROJECT_STATUS, PROVIDERS, useDefaultProvider } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM, PROJECT_STATUS, PROVIDERS, useDefaultProvider } from '@/lib/constants'
 import { buildStudioPageTitle } from '@/lib/page-title'
 import { useProfile } from '@/lib/profile'
 import { classifyApiError, classifyValidationError } from '@/lib/telemetry/funnel-errors'
@@ -94,6 +94,7 @@ const Wizard: NextPageWithLayout = () => {
   const { data: currentOrg } = useSelectedOrganizationQuery()
   const isFreePlan = currentOrg?.plan?.id === 'free'
   const isSelfHosted = currentOrg?.plan?.name?.toLowerCase() === 'self-hosted'
+  const isSelfHostedMode = isSelfHosted || !IS_PLATFORM
   const canChooseInstanceSize = !isFreePlan
 
   const { lastVisitedOrganization } = useLastVisitedOrganization()
@@ -121,7 +122,7 @@ const Wizard: NextPageWithLayout = () => {
   const isDataApiRevokeOnCreateDefault = useDataApiRevokeOnCreateDefaultEnabled()
 
   const isNotOnHigherPlan =
-    !isSelfHosted && !['team', 'enterprise', 'platform'].includes(currentOrg?.plan.id ?? '')
+    !isSelfHostedMode && !['team', 'enterprise', 'platform'].includes(currentOrg?.plan.id ?? '')
 
   // This is to make the database.new redirect work correctly. The database.new redirect should be set to supabase.com/dashboard/new/last-visited-org
   if (slug === 'last-visited-org') {
@@ -141,6 +142,7 @@ const Wizard: NextPageWithLayout = () => {
     mode: 'onChange',
     defaultValues: {
       organization: slug,
+      selfHosted: false,
       projectName: projectName || '',
       highAvailability: false,
       postgresVersion: '',
@@ -209,7 +211,7 @@ const Wizard: NextPageWithLayout = () => {
     enabled: isNotOnHigherPlan,
   })
   const overdueInvoices = allOverdueInvoices.filter((x) => x.organization_id === currentOrg?.id)
-  const hasOutstandingInvoices = !isSelfHosted && isNotOnHigherPlan && overdueInvoices.length > 0
+  const hasOutstandingInvoices = !isSelfHostedMode && isNotOnHigherPlan && overdueInvoices.length > 0
 
   const { data: orgProjectsFromApi } = useOrgProjectsInfiniteQuery({ slug: currentOrg?.slug })
   const allOrgProjects = useMemo(
@@ -220,7 +222,7 @@ const Wizard: NextPageWithLayout = () => {
     allProjects?.filter((project) => project.status !== PROJECT_STATUS.INACTIVE) ?? []
   const availableComputeCredits = organizationProjects.length === 0 ? 10 : 0
   const additionalMonthlySpend =
-    isFreePlan || isSelfHosted ? 0 : monthlyInstancePrice(instanceSize) - availableComputeCredits
+    isFreePlan || isSelfHostedMode ? 0 : monthlyInstancePrice(instanceSize) - availableComputeCredits
 
   const selectedCloudProvider = cloudProvider as CloudProvider
   const { data: autoDefaultRegion, error: defaultRegionError } = useDefaultRegionQuery(
@@ -288,7 +290,7 @@ const Wizard: NextPageWithLayout = () => {
       )
     : false
   const shouldShowFreeProjectInfo =
-    !!currentOrg && !isFreePlan && !isSelfHosted && !isUserAtFreeProjectLimit
+    !!currentOrg && !isFreePlan && !isSelfHostedMode && !isUserAtFreeProjectLimit
   const {
     gitHubAuthorization,
     githubRepos,
@@ -325,7 +327,7 @@ const Wizard: NextPageWithLayout = () => {
     },
     onError: (error) => {
       const toastId = toast.error(
-        `${isSelfHosted ? 'Failed to create self-hosted project' : 'Failed to create new project'}: ${error.message}`
+        `${isSelfHostedMode ? 'Failed to create self-hosted project' : 'Failed to create new project'}: ${error.message}`
       )
       trackFunnelError(
         'project_creation',
@@ -470,6 +472,18 @@ const Wizard: NextPageWithLayout = () => {
   }, [slug, setValue, projectName])
 
   useEffect(() => {
+    setValue('selfHosted', isSelfHostedMode, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: true,
+    })
+    if (isSelfHostedMode) {
+      setValue('dbRegion', 'local-vps', { shouldDirty: false, shouldValidate: false })
+      setValue('dbPass', '', { shouldDirty: false, shouldValidate: true })
+    }
+  }, [isSelfHostedMode, setValue])
+
+  useEffect(() => {
     if (!isDbRegionDirty && defaultRegion) {
       setValue('dbRegion', defaultRegion)
     }
@@ -547,10 +561,10 @@ const Wizard: NextPageWithLayout = () => {
             title={
               <div key="panel-title">
                 <h3>
-                  {isSelfHosted ? 'Create a new self-hosted project' : 'Create a new project'}
+                  {isSelfHostedMode ? 'Create a new self-hosted project' : 'Create a new project'}
                 </h3>
                 <p className="text-sm text-foreground-lighter text-balance">
-                  {isSelfHosted
+                  {isSelfHostedMode
                     ? 'Studio will provision a dedicated VPS stack through the local management bridge and route it on your configured base domain.'
                     : 'Your project will have its own dedicated instance and full Postgres database. An API will be set up so you can easily interact with your new database.'}
                 </p>
@@ -564,7 +578,7 @@ const Wizard: NextPageWithLayout = () => {
                 organizationProjects={organizationProjects}
                 isCreatingNewProject={isCreatingNewProject}
                 isSuccessNewProject={isSuccessNewProject}
-                isSelfHosted={isSelfHosted}
+                isSelfHosted={isSelfHostedMode}
               />
             }
           >
@@ -612,17 +626,21 @@ const Wizard: NextPageWithLayout = () => {
                       <ProjectNameInput form={form} />
 
                       {canChooseInstanceSize && (
-                        <ComputeSizeSelector form={form} isSelfHosted={isSelfHosted} />
+                        <ComputeSizeSelector form={form} isSelfHosted={isSelfHostedMode} />
                       )}
 
-                      <DatabasePasswordInput form={form} />
+                      {!isSelfHostedMode && (
+                        <>
+                          <DatabasePasswordInput form={form} />
 
-                      <RegionSelector
-                        form={form}
-                        instanceSize={instanceSize as DesiredInstanceSize}
-                      />
+                          <RegionSelector
+                            form={form}
+                            instanceSize={instanceSize as DesiredInstanceSize}
+                          />
 
-                      <SecurityOptions form={form} />
+                          <SecurityOptions form={form} />
+                        </>
+                      )}
 
                       {showInternalOnlyConfiguration && <InternalOnlyConfiguration form={form} />}
 

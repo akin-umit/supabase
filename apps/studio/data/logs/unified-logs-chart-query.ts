@@ -3,7 +3,11 @@ import { IS_PLATFORM, useFlag } from 'common'
 
 import { executeAnalyticsSql } from './execute-analytics-sql'
 import { logsKeys } from './keys'
-import { logsAllEndpointUrl, pickLogsQueryBuilder } from './logs-endpoint'
+import {
+  logsAllEndpointUrl,
+  pickLogsQueryBuilder,
+  shouldUseOtelLogsEndpoint,
+} from './logs-endpoint'
 import { UNIFIED_LOGS_QUERY_OPTIONS, UnifiedLogsVariables } from './unified-logs-infinite-query'
 import { parseLogsFilterUrlParams } from '@/components/interfaces/UnifiedLogs/UnifiedLogs.filters'
 import { getLogsChartQuery } from '@/components/interfaces/UnifiedLogs/UnifiedLogs.queries'
@@ -164,7 +168,10 @@ export const useUnifiedLogsChartQuery = <TData = UnifiedLogsChartData>(
   }: UseCustomQueryOptions<UnifiedLogsChartData, UnifiedLogsChartError, TData> = {}
 ) => {
   const otelUnifiedLogsFlag = useFlag('otelUnifiedLogs')
-  const useOtel = IS_PLATFORM && otelUnifiedLogsFlag
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: otelUnifiedLogsFlag,
+  })
   return useQuery<UnifiedLogsChartData, UnifiedLogsChartError, TData>({
     queryKey: [...logsKeys.unifiedLogsChart(projectRef, search), { otel: useOtel }],
     queryFn: ({ signal }) => getUnifiedLogsChart({ projectRef, search, useOtel }, signal),

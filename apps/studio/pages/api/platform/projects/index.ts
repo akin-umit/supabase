@@ -36,11 +36,33 @@ const handleCreate = async (req: NextApiRequest, res: NextApiResponse) => {
   const name = typeof body.name === 'string' ? body.name.trim() : ''
   const organizationSlug =
     typeof body.organization_slug === 'string' ? body.organization_slug : 'default-org-slug'
+  const unsupportedFields = [
+    'cloud_provider',
+    'db_pass',
+    'db_region',
+    'region_selection',
+    'db_sql',
+    'desired_instance_size',
+    'db_pricing_tier_id',
+    'postgres_engine',
+    'release_channel',
+    'high_availability',
+    'custom_supabase_internal_requests',
+  ].filter((field) => Object.hasOwn(body, field))
 
   if (name.length < 3) {
     return res.status(400).json({
       data: null,
       error: { message: 'Project name must be at least 3 characters long.' },
+    })
+  }
+  if (unsupportedFields.length > 0) {
+    return res.status(400).json({
+      data: null,
+      error: {
+        message:
+          'Self-hosted project creation uses VPS provisioning and does not accept cloud project fields.',
+      },
     })
   }
 

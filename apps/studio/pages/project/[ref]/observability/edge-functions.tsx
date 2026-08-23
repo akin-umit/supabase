@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'common'
+import { IS_PLATFORM, useFlag, useParams } from 'common'
 import dayjs from 'dayjs'
 import { ArrowRight, RefreshCw } from 'lucide-react'
 import { parseAsJson, useQueryState } from 'nuqs'
@@ -33,6 +33,7 @@ import { DocsButton } from '@/components/ui/DocsButton'
 import { ObservabilityLink } from '@/components/ui/ObservabilityLink'
 import { ShortcutTooltip } from '@/components/ui/ShortcutTooltip'
 import { useEdgeFunctionsQuery } from '@/data/edge-functions/edge-functions-query'
+import { shouldUseOtelLogsEndpoint } from '@/data/logs/logs-endpoint'
 import { edgeFunctionReports } from '@/data/reports/v2/edge-functions.config'
 import { useRefreshHandler, useReportDateRange } from '@/hooks/misc/useReportDateRange'
 import { BASE_PATH } from '@/lib/constants'
@@ -60,6 +61,10 @@ const REPORT_TITLE = 'Edge Functions'
 
 const EdgeFunctionsUsage = () => {
   const { ref } = useParams()
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: useFlag('otelLegacyLogs'),
+  })
   const { data: functions } = useEdgeFunctionsQuery({
     projectRef: ref,
   })
@@ -108,6 +113,7 @@ const EdgeFunctionsUsage = () => {
       startDate: selectedDateRange?.period_start?.date ?? '',
       endDate: selectedDateRange?.period_end?.date ?? '',
       interval: selectedDateRange?.interval ?? 'minute',
+      useOtel,
       filters: {
         functions: functionFilter ?? [],
         status_code: statusCodeFilter,
@@ -123,6 +129,7 @@ const EdgeFunctionsUsage = () => {
     statusCodeFilter,
     regionFilter,
     executionTimeFilter,
+    useOtel,
   ])
 
   const onRefreshReport = useRefreshHandler(

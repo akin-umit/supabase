@@ -17,6 +17,7 @@ const ALLOWED_ROOTS = new Set([
   'webhooks',
 ])
 const SECRET_FIELD_PATTERN = /password|secret|credential|token/i
+const SAFE_ERROR_PATTERN = /^[A-Za-z0-9_.: /-]{1,240}$/
 
 export class SelfHostedManagementError extends Error {
   constructor(
@@ -128,7 +129,7 @@ export async function requestSelfHostedManagement({
     const payload = await response.json().catch(() => undefined)
     if (!response.ok) {
       throw new SelfHostedManagementError(
-        payload?.message ?? payload?.error ?? 'Management operation failed',
+        normalizeManagementErrorMessage(payload),
         response.status === 404 || response.status === 405 ? 503 : response.status
       )
     }
@@ -177,7 +178,7 @@ export async function requestSelfHostedManagementRoot({
     const payload = await response.json().catch(() => undefined)
     if (!response.ok) {
       throw new SelfHostedManagementError(
-        payload?.message ?? payload?.error ?? 'Management operation failed',
+        normalizeManagementErrorMessage(payload),
         response.status === 404 || response.status === 405 ? 503 : response.status
       )
     }
@@ -197,4 +198,24 @@ function sanitizeManagementPayload(value: unknown): unknown {
       .filter(([key]) => !SECRET_FIELD_PATTERN.test(key))
       .map(([key, entry]) => [key, sanitizeManagementPayload(entry)])
   )
+}
+
+function normalizeManagementErrorMessage(payload: unknown) {
+  const record =
+    payload !== null && typeof payload === 'object' ? (payload as Record<string, unknown>) : {}
+  const nestedError =
+    record.error !== null && typeof record.error === 'object'
+      ? (record.error as Record<string, unknown>)
+      : undefined
+
+  const rawMessage =
+    record.message ??
+    nestedError?.message ??
+    record.error ??
+    record.code ??
+    nestedError?.code ??
+    'Management operation failed'
+
+  const message = typeof rawMessage === 'string' ? rawMessage : 'Management operation failed'
+  return SAFE_ERROR_PATTERN.test(message) ? message : 'Management operation failed'
 }

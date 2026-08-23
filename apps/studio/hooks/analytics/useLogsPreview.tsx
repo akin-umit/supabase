@@ -32,7 +32,11 @@ import {
   mapOtelPreviewRow,
 } from '@/components/interfaces/Settings/Logs/Logs.utils.otel'
 import { executeAnalyticsSql } from '@/data/logs/execute-analytics-sql'
-import { logsAllEndpointUrl, pickLogsQueryBuilder } from '@/data/logs/logs-endpoint'
+import {
+  logsAllEndpointUrl,
+  pickLogsQueryBuilder,
+  shouldUseOtelLogsEndpoint,
+} from '@/data/logs/logs-endpoint'
 
 interface LogsPreviewHook {
   logData: LogData[]
@@ -65,7 +69,10 @@ function useLogsPreview({
 
   // When on, query the OTEL endpoint instead of BigQuery. logsAllEndpointUrl is
   // inlined in each queryFn (not hoisted) so useOtel stays the only query dep.
-  const useOtel = IS_PLATFORM && useFlag('otelLegacyLogs')
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: useFlag('otelLegacyLogs'),
+  })
 
   const {
     timestampStart: urlTimestampStart,

@@ -1,4 +1,4 @@
-import { useParams } from 'common'
+import { IS_PLATFORM, useFlag, useParams } from 'common'
 import { isEqual } from 'lodash'
 import { useEffect, useState } from 'react'
 
@@ -6,12 +6,17 @@ import { PRESET_CONFIG } from '@/components/interfaces/Reports/Reports.constants
 import { ReportFilterItem } from '@/components/interfaces/Reports/Reports.types'
 import { getLogsSql, queriesFactory } from '@/components/interfaces/Reports/Reports.utils'
 import type { LogsEndpointParams } from '@/components/interfaces/Settings/Logs/Logs.types'
+import { shouldUseOtelLogsEndpoint } from '@/data/logs/logs-endpoint'
 import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useDatabaseSelectorStateSnapshot } from '@/state/database-selector'
 
 export const useApiReport = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const { ref: projectRef } = useParams()
   const { isSelfHosted } = useDeploymentMode()
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: useFlag('otelLegacyLogs'),
+  })
   const state = useDatabaseSelectorStateSnapshot()
 
   const identifier = state.selectedDatabaseId
@@ -20,7 +25,8 @@ export const useApiReport = ({ enabled = true }: { enabled?: boolean } = {}) => 
   const queryHooks = queriesFactory<keyof typeof PRESET_CONFIG.api.queries>(
     PRESET_CONFIG.api.queries,
     projectRef ?? 'default',
-    enabled
+    enabled,
+    { useOtel }
   )
   const totalRequests = queryHooks.totalRequests()
   const topRoutes = queryHooks.topRoutes()

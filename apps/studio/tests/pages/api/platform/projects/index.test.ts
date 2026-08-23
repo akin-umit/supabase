@@ -57,6 +57,10 @@ describe('/api/platform/projects', () => {
     const requestBody = JSON.parse(String(fetchMock.mock.calls[0][1]?.body))
     expect(requestBody.name).toBe('Demo Project')
     expect(requestBody.ref).toMatch(/^demo-project-[a-z0-9]{6}$/)
+    expect(requestBody).not.toHaveProperty('baseDomainId')
+    expect(requestBody).not.toHaveProperty('cloud_provider')
+    expect(requestBody).not.toHaveProperty('db_pass')
+    expect(requestBody).not.toHaveProperty('desired_instance_size')
 
     const data = JSON.parse(res._getData())
     expect(data).toMatchObject({
@@ -82,6 +86,26 @@ describe('/api/platform/projects', () => {
     expect(res._getStatusCode()).toBe(503)
     expect(JSON.parse(res._getData()).error.message).toContain(
       'Self-hosted project creation requires the management API write bridge'
+    )
+  })
+
+  it('rejects cloud create fields on the self-hosted project route', async () => {
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: {
+        name: 'Demo Project',
+        organization_slug: 'default-org-slug',
+        cloud_provider: 'AWS',
+        db_pass: 'secret-password',
+        desired_instance_size: 'micro',
+      },
+    })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(400)
+    expect(JSON.parse(res._getData()).error.message).toContain(
+      'does not accept cloud project fields'
     )
   })
 })

@@ -2,6 +2,7 @@ import { type ComparisonOperator } from '@/components/interfaces/Reports/v2/Repo
 import { AnalyticsInterval } from '@/data/analytics/constants'
 import { useEdgeFunctionsQuery } from '@/data/edge-functions/edge-functions-query'
 import { executeAnalyticsSql } from '@/data/logs/execute-analytics-sql'
+import { logsAllEndpointUrl } from '@/data/logs/logs-endpoint'
 import { safeSql, type SafeLogSqlFragment } from '@/data/logs/safe-analytics-sql'
 
 export type Granularity = 'minute' | 'hour' | 'day'
@@ -85,11 +86,12 @@ export async function fetchLogs(
   projectRef: string,
   sql: SafeLogSqlFragment,
   startDate: string,
-  endDate: string
+  endDate: string,
+  options: { useOtel?: boolean } = {}
 ) {
   return await executeAnalyticsSql({
     projectRef,
-    endpoint: '/platform/projects/{ref}/analytics/endpoints/logs.all',
+    endpoint: logsAllEndpointUrl(options.useOtel ?? false),
     sql,
     iso_timestamp_start: startDate,
     iso_timestamp_end: endDate,

@@ -26,6 +26,38 @@ function buildStorageConfigPatchBody(req: NextApiRequest) {
   }
 }
 
+function normalizeStorageConfigPayload(payload: unknown): Partial<StorageConfigResponse> {
+  if (typeof payload !== 'object' || payload === null) return {}
+  const record = payload as Record<string, any>
+  const config =
+    typeof record.config === 'object' && record.config !== null ? record.config : record
+
+  const fileSizeLimit = config.fileSizeLimit ?? config.file_size_limit ?? config.fileSizeLimitBytes
+  const imageTransformationEnabled =
+    config.features?.imageTransformation?.enabled ??
+    config.imageTransformation?.enabled ??
+    config.imageTransformationEnabled ??
+    config.image_proxy_auto_webp ??
+    config.imageProxyAutoWebp
+  const s3ProtocolEnabled =
+    config.features?.s3Protocol?.enabled ??
+    config.s3Protocol?.enabled ??
+    config.s3ProtocolEnabled ??
+    config.s3_protocol_enabled
+  const operation = record.operation ?? record.external?.operation
+
+  return {
+    ...(fileSizeLimit !== undefined ? { fileSizeLimit } : {}),
+    features: {
+      ...(imageTransformationEnabled !== undefined
+        ? { imageTransformation: { enabled: imageTransformationEnabled } }
+        : {}),
+      ...(s3ProtocolEnabled !== undefined ? { s3Protocol: { enabled: s3ProtocolEnabled } } : {}),
+    },
+    ...(operation !== undefined ? { external: { operation } } : {}),
+  }
+}
+
 function buildRuntimeStoragePatchBody(req: NextApiRequest) {
   const body: Record<string, unknown> = {}
 
@@ -41,14 +73,18 @@ function buildRuntimeStoragePatchBody(req: NextApiRequest) {
 }
 
 function buildAppliedStorageConfig(req: NextApiRequest, managementPayload: unknown = {}) {
+  const normalizedPayload = normalizeStorageConfigPayload(managementPayload)
+  const requestPatch = buildStorageConfigPatchBody(req)
+
   return getSelfHostedStorageConfig({
-    ...(typeof managementPayload === 'object' && managementPayload !== null
-      ? (managementPayload as Partial<StorageConfigResponse>)
-      : {}),
-    fileSizeLimit: req.body?.fileSizeLimit,
+    ...normalizedPayload,
+    fileSizeLimit: normalizedPayload.fileSizeLimit ?? requestPatch.fileSizeLimit,
     features: {
-      imageTransformation: req.body?.features?.imageTransformation,
-      s3Protocol: req.body?.features?.s3Protocol,
+      ...normalizedPayload.features,
+      imageTransformation:
+        normalizedPayload.features?.imageTransformation ??
+        requestPatch.features.imageTransformation,
+      s3Protocol: normalizedPayload.features?.s3Protocol ?? requestPatch.features.s3Protocol,
     },
   })
 }

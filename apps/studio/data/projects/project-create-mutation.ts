@@ -5,7 +5,7 @@ import { DesiredInstanceSize, PostgresEngine, ReleaseChannel } from './new-proje
 import { useInvalidateProjectsInfiniteQuery } from './org-projects-infinite-query'
 import type { components } from '@/data/api'
 import { handleError, post } from '@/data/fetchers'
-import { PROVIDERS } from '@/lib/constants'
+import { IS_PLATFORM, PROVIDERS } from '@/lib/constants'
 import { captureCriticalError } from '@/lib/error-reporting'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
@@ -54,6 +54,18 @@ export async function createProject({
   githubInstallationId,
   githubRepositoryId,
 }: ProjectCreateVariables) {
+  if (!IS_PLATFORM) {
+    const { data, error } = await post(`/platform/projects`, {
+      body: {
+        name,
+        organization_slug: organizationSlug,
+      },
+    })
+
+    if (error) handleError(error)
+    return data
+  }
+
   const body: CreateProjectBody = {
     cloud_provider: cloudProvider as CloudProvider,
     organization_slug: organizationSlug,

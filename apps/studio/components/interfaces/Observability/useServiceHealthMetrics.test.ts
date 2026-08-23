@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { extractServiceRows } from './useServiceHealthMetrics'
+import { extractServiceRows, getServiceDegradedState } from './useServiceHealthMetrics'
 import type { ServiceHealthResultRow } from '@/data/analytics/service-health-query'
 
 const makeRow = (overrides?: Partial<ServiceHealthResultRow>): ServiceHealthResultRow => ({
@@ -16,6 +16,34 @@ const makeRow = (overrides?: Partial<ServiceHealthResultRow>): ServiceHealthResu
   function_logs: { ok: 15, warning: 0, error: 0, total: 15 },
   etl_replication_logs: { ok: 0, warning: 0, error: 0, total: 0 },
   ...overrides,
+})
+
+describe('getServiceDegradedState', () => {
+  it('keeps legacy global degradation behavior when no missing sources are provided', () => {
+    expect(
+      getServiceDegradedState({ degraded: true, reason: 'analytics unavailable' }, 'data_api')
+    ).toEqual({
+      isDegraded: true,
+      degradedReason: 'analytics unavailable',
+    })
+  })
+
+  it('degrades only the service backed by a missing log source', () => {
+    const selfHosted = {
+      degraded: true,
+      reason: 'function_edge_logs is unavailable',
+      missing_sources: ['function_edge_logs'],
+    }
+
+    expect(getServiceDegradedState(selfHosted, 'functions')).toEqual({
+      isDegraded: true,
+      degradedReason: 'function_edge_logs is unavailable',
+    })
+    expect(getServiceDegradedState(selfHosted, 'data_api')).toEqual({
+      isDegraded: false,
+      degradedReason: undefined,
+    })
+  })
 })
 
 describe('extractServiceRows', () => {

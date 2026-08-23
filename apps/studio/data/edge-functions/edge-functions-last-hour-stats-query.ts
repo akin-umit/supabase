@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { edgeFunctionsKeys } from './keys'
 import { handleError } from '@/data/fetchers'
 import { executeAnalyticsSql } from '@/data/logs/execute-analytics-sql'
-import { logsAllEndpointUrl } from '@/data/logs/logs-endpoint'
+import { logsAllEndpointUrl, shouldUseOtelLogsEndpoint } from '@/data/logs/logs-endpoint'
 import {
   analyticsLiteral,
   joinSqlFragments,
@@ -146,7 +146,10 @@ export const useEdgeFunctionsLastHourStatsQuery = <TData = EdgeFunctionsLastHour
   > = {}
 ) => {
   const useOtelLegacyLogs = useFlag('otelLegacyLogs')
-  const useOtel = IS_PLATFORM && useOtelLegacyLogs
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: useOtelLegacyLogs,
+  })
 
   return useQuery<EdgeFunctionsLastHourStatsData, EdgeFunctionsLastHourStatsError, TData>({
     queryKey: edgeFunctionsKeys.lastHourStats(projectRef, functionIds, useOtel),

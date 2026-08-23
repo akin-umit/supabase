@@ -3,6 +3,7 @@ import { IS_PLATFORM, useFlag } from 'common'
 
 import { executeAnalyticsSql } from './execute-analytics-sql'
 import { logsKeys } from './keys'
+import { shouldUseOtelLogsEndpoint } from './logs-endpoint'
 import {
   aggregateFunctionLogs,
   flattenOtelInspectionRow,
@@ -256,7 +257,10 @@ export const useUnifiedLogInspectionQuery = <TData = UnifiedLogInspectionData>(
   }: UseCustomQueryOptions<UnifiedLogInspectionData, UnifiedLogInspectionError, TData> = {}
 ) => {
   const otelUnifiedLogsFlag = useFlag('otelUnifiedLogs')
-  const useOtel = IS_PLATFORM && !!otelUnifiedLogsFlag
+  const useOtel = shouldUseOtelLogsEndpoint({
+    isPlatform: IS_PLATFORM,
+    flagEnabled: !!otelUnifiedLogsFlag,
+  })
   return useQuery<UnifiedLogInspectionData, UnifiedLogInspectionError, TData>({
     queryKey: [...logsKeys.serviceFlow(projectRef, search, logId), { otel: useOtel }],
     queryFn: ({ signal }) =>

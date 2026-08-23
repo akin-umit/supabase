@@ -48,7 +48,8 @@ type PresetHooks = Record<keyof PresetConfig['queries'], () => PresetHookResult>
 export const queriesFactory = <T extends string>(
   queries: BaseQueries<T>,
   projectRef: string,
-  enabled = true
+  enabled = true,
+  options: { useOtel?: boolean } = {}
 ): PresetHooks => {
   const hooks: PresetHooks = Object.entries<ReportQuery>(queries).reduce((acc, [k, query]) => {
     if (query.queryType === 'db') {
@@ -59,7 +60,7 @@ export const queriesFactory = <T extends string>(
     } else {
       return {
         ...acc,
-        [k]: () => useLogsQuery({ projectRef, enabled }),
+        [k]: () => useLogsQuery({ projectRef, enabled, options }),
       }
     }
   }, {})

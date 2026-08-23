@@ -84,6 +84,51 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
     expect(JSON.parse(res._getData()).features.imageTransformation.enabled).toBe(false)
   })
 
+  it('returns the persisted storage config when the management API responds with runtime field names', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          config: {
+            file_size_limit: 32 * 1024 * 1024,
+            image_proxy_auto_webp: true,
+            s3_protocol_enabled: false,
+          },
+          operation: { id: 'op-1', status: 'succeeded' },
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    )
+
+    const { req, res } = createMocks({
+      method: 'PATCH',
+      query: { ref: 'default' },
+      body: {
+        fileSizeLimit: 25 * 1024 * 1024,
+        features: {
+          imageTransformation: { enabled: false },
+          s3Protocol: { enabled: true },
+        },
+      },
+    })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(200)
+    expect(JSON.parse(res._getData())).toMatchObject({
+      fileSizeLimit: 32 * 1024 * 1024,
+      features: {
+        imageTransformation: { enabled: true },
+        s3Protocol: { enabled: false },
+      },
+      external: { operation: { id: 'op-1', status: 'succeeded' } },
+    })
+  })
+
   it('falls back to the self-host runtime storage endpoint when the storage config route is unavailable', async () => {
     vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
     vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')

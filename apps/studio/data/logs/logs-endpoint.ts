@@ -3,6 +3,16 @@ export const logsAllEndpointUrl = (useOtel: boolean) =>
     ? ('/platform/projects/{ref}/analytics/endpoints/logs.all.otel' as const)
     : ('/platform/projects/{ref}/analytics/endpoints/logs.all' as const)
 
+export const shouldUseOtelLogsEndpoint = ({
+  isPlatform,
+  flagEnabled,
+}: {
+  isPlatform: boolean
+  flagEnabled: boolean
+}) => {
+  return isPlatform ? flagEnabled : true
+}
+
 /**
  * Convenience picker for a (bq, otel) pair. Preserves the input type so
  * callers keep the original signature.

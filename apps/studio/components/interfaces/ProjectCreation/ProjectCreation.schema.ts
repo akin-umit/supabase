@@ -18,16 +18,15 @@ export const FormSchema = z
       required_error: 'Please enter a Postgres version.',
     }),
     instanceType: z.string().optional(),
-    dbRegion: z.string({
-      required_error: 'Please select a region.',
-    }),
+    dbRegion: z.string().optional().default('local-vps'),
     cloudProvider: z.string({
       required_error: 'Please select a cloud provider.',
     }),
+    selfHosted: z.boolean().default(false),
 
     dbPass: z
       .string({ required_error: 'Please enter a database password.' })
-      .min(1, 'Password is required.'),
+      .default(''),
     dbPassStrength: z
       .union([z.literal(0), z.literal(1), z.literal(2), z.literal(3), z.literal(4)])
       .default(0),
@@ -45,10 +44,25 @@ export const FormSchema = z
   })
   .superRefine(
     (
-      { dbPassStrength, dbPassStrengthWarning, highAvailability, cloudProvider, useOrioleDb },
+      {
+        dbPass,
+        dbPassStrength,
+        dbPassStrengthWarning,
+        highAvailability,
+        cloudProvider,
+        useOrioleDb,
+        selfHosted,
+      },
       ctx
     ) => {
-      if (dbPassStrength < DEFAULT_MINIMUM_PASSWORD_STRENGTH) {
+      if (!selfHosted && !dbPass) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['dbPass'],
+          message: 'Password is required.',
+        })
+      }
+      if (!selfHosted && dbPassStrength < DEFAULT_MINIMUM_PASSWORD_STRENGTH) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['dbPass'],
