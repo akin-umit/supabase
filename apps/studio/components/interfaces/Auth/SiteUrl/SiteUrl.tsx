@@ -38,10 +38,11 @@ const SiteUrl = () => {
   const { mutate: updateAuthConfig } = useAuthConfigUpdateMutation()
   const [isUpdatingSiteUrl, setIsUpdatingSiteUrl] = useState(false)
 
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
 
   const siteUrlForm = useForm({
     resolver: zodResolver(schema),

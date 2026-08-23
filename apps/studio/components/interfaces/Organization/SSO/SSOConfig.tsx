@@ -27,7 +27,7 @@ import { useOrgSSOConfigQuery } from '@/data/sso/sso-config-query'
 import { useSSOConfigUpdateMutation } from '@/data/sso/sso-config-update-mutation'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 const FormSchema = z
   .object({
@@ -241,6 +241,29 @@ export const SSOConfig = () => {
     ensureDomainField()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- useEffectEvent fn intentionally not a dep (eslint-plugin-react-hooks v5 doesn't recognize stable useEffectEvent yet)
   }, [enableSpInitiated])
+
+  if (!IS_PLATFORM) {
+    return (
+      <ScaffoldContainer size="small" className="px-6 xl:px-10">
+        <ScaffoldSection isFullWidth>
+          <Card>
+            <CardContent className="space-y-3">
+              <h2 className="text-base">Self-hosted SSO is operator managed</h2>
+              <p className="text-sm text-foreground-light">
+                Organization SSO is available in self-hosted mode, but it must be backed by a local
+                management bridge before Studio can persist provider metadata, domains, mappings,
+                and member cleanup safely.
+              </p>
+              <p className="text-sm text-foreground-light">
+                No Supabase Cloud SSO APIs are called here, and Studio will not show a fake saved
+                state until that bridge is configured.
+              </p>
+            </CardContent>
+          </Card>
+        </ScaffoldSection>
+      </ScaffoldContainer>
+    )
+  }
 
   return (
     <ScaffoldContainer size="small" className="px-6 xl:px-10">

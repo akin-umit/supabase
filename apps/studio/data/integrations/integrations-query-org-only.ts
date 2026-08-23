@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Integration } from './integrations.types'
 import { integrationKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 type IntegrationsVariables = {
@@ -11,6 +12,7 @@ type IntegrationsVariables = {
 
 export async function getIntegrations({ orgSlug }: IntegrationsVariables) {
   if (!orgSlug) throw new Error('orgSlug is required')
+  if (!IS_PLATFORM) return []
 
   const { data, error } = await get('/platform/integrations/{slug}', {
     params: { path: { slug: orgSlug } },
@@ -33,7 +35,7 @@ export const useOrgIntegrationsQuery = <TData = IntegrationsData>(
   useQuery<IntegrationsData, IntegrationsError, TData>({
     queryKey: integrationKeys.integrationsListWithOrg(orgSlug),
     queryFn: () => getIntegrations({ orgSlug }),
-    enabled: enabled && typeof orgSlug !== 'undefined',
+    enabled: enabled && IS_PLATFORM && typeof orgSlug !== 'undefined',
     staleTime: 30 * 60 * 1000,
     ...options,
   })

@@ -14,6 +14,7 @@ import {
 
 import { Hook, HOOK_DEFINITION_TITLE, HOOKS_DEFINITIONS } from './hooks.constants'
 import { extractMethod, isValidHook } from './hooks.utils'
+import { IS_PLATFORM } from '@/lib/constants'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
@@ -42,9 +43,15 @@ export const AddHookDropdown = ({
   const { data: organization } = useSelectedOrganizationQuery()
 
   const { data: authConfig } = useAuthConfigQuery({ projectRef })
-  const { can: canUpdateAuthHook } = useAsyncCheckPermissions(PermissionAction.AUTH_EXECUTE, '*')
+  const { can: canUpdateAuthHookPermission } = useAsyncCheckPermissions(
+    PermissionAction.AUTH_EXECUTE,
+    '*'
+  )
+  const canUpdateAuthHook = !IS_PLATFORM || canUpdateAuthHookPermission
   const { getEntitlementSetValues: getEntitledHookSet } = useCheckEntitlements('auth.hooks')
-  const entitledHookSet = getEntitledHookSet()
+  const entitledHookSet = IS_PLATFORM
+    ? getEntitledHookSet()
+    : HOOKS_DEFINITIONS.map((definition) => definition.entitlementKey)
 
   const { availableHooks, nonAvailableHooks } = useMemo(() => {
     const allHooks: Hook[] = HOOKS_DEFINITIONS.map((definition) => ({

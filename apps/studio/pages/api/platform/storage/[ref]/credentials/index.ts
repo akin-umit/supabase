@@ -8,6 +8,8 @@ import { STORAGE_RUNTIME_WRITE_BRIDGE_REASON } from '@/lib/api/self-hosted/stora
 import { IS_PLATFORM } from '@/lib/constants'
 
 const SAFE_NAME = /^[a-z][a-z0-9_-]{2,62}$/
+const STORAGE_RUNTIME_READ_BRIDGE_REASON =
+  'Storage S3 access keys need the self-host management API bridge. Configure INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_TOKEN or INTERNAL_MANAGEMENT_API_WRITE_TOKEN so Studio can read the local S3 credentials.'
 
 type UnknownRecord = Record<string, unknown>
 
@@ -126,7 +128,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const status = error instanceof SelfHostedManagementError ? error.statusCode : 500
     const message =
       error instanceof SelfHostedManagementError && error.statusCode === 503
-        ? STORAGE_RUNTIME_WRITE_BRIDGE_REASON
+        ? req.method === 'POST'
+          ? STORAGE_RUNTIME_WRITE_BRIDGE_REASON
+          : STORAGE_RUNTIME_READ_BRIDGE_REASON
         : error instanceof Error
           ? error.message
           : 'Unable to manage S3 credentials'

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { useQuery } from '@tanstack/react-query'
-import { IS_PLATFORM, useParams } from 'common'
+import { useParams } from 'common'
 import { ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
@@ -41,7 +41,7 @@ import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-muta
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import type { RuntimeConfigStatus } from '@/lib/api/self-hosted/runtime-config'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 const schema = z.object({
   DISABLE_SIGNUP: z.boolean(),
@@ -91,10 +91,11 @@ export const BasicAuthSettingsForm = () => {
     PermissionAction.READ,
     'custom_config_gotrue'
   )
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
   const canManageConfig = canUpdateConfig
   const effectiveAuthConfig = authConfig
   const shouldShowError = isError

@@ -89,6 +89,40 @@ describe('/api/platform/projects', () => {
     )
   })
 
+  it('returns missing Coolify provisioning variables without exposing values', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: 'project_provisioning_not_configured',
+          missing: ['COOLIFY_API_BASE_URL', 'COOLIFY_API_TOKEN', 'unsafe token value'],
+        }),
+        {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    )
+
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: {
+        name: 'Demo Project',
+        organization_slug: 'default-org-slug',
+      },
+    })
+
+    await handler(req, res)
+
+    const message = JSON.parse(res._getData()).error.message
+    expect(res._getStatusCode()).toBe(503)
+    expect(message).toContain('Coolify provisioning bridge')
+    expect(message).toContain('COOLIFY_API_BASE_URL')
+    expect(message).toContain('COOLIFY_API_TOKEN')
+    expect(message).not.toContain('unsafe token value')
+  })
+
   it('rejects cloud create fields on the self-hosted project route', async () => {
     const { req, res } = createMocks({
       method: 'POST',

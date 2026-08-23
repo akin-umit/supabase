@@ -128,10 +128,11 @@ export const ProtectionAuthSettingsForm = () => {
     PermissionAction.READ,
     'custom_config_gotrue'
   )
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
 
   const protectionForm = useForm<FormSchema>({
     resolver: zodResolver(formSchema),

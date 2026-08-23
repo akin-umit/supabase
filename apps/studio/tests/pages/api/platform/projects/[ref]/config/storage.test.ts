@@ -129,6 +129,42 @@ describe('/api/platform/projects/[ref]/config/storage', () => {
     })
   })
 
+  it('does not report success when the storage runtime operation failed', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          config: { file_size_limit: 32 * 1024 * 1024 },
+          operation: {
+            id: 'op-1',
+            status: 'failed',
+            code: 'storage_config_apply_failed',
+            message: 'Coolify rejected the storage env update',
+          },
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    )
+
+    const { req, res } = createMocks({
+      method: 'PATCH',
+      query: { ref: 'default' },
+      body: { fileSizeLimit: 25 * 1024 * 1024 },
+    })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(502)
+    expect(JSON.parse(res._getData()).error).toMatchObject({
+      message: 'Coolify rejected the storage env update',
+      code: 'storage_config_apply_failed',
+    })
+  })
+
   it('falls back to the self-host runtime storage endpoint when the storage config route is unavailable', async () => {
     vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
     vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')

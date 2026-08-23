@@ -46,10 +46,11 @@ import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 export const RateLimits = () => {
   const { ref: projectRef } = useParams()
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
   const { can: canReadConfig } = useAsyncCheckPermissions(
     PermissionAction.READ,
     'custom_config_gotrue'

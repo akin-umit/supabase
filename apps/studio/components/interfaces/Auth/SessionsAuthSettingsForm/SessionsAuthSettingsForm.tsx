@@ -30,6 +30,7 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
 import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
+import { IS_PLATFORM } from '@/lib/constants'
 import { AlertError } from '@/components/ui/AlertError'
 import { NoPermission } from '@/components/ui/NoPermission'
 import { UpgradeToPro } from '@/components/ui/UpgradeToPro'
@@ -37,7 +38,6 @@ import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
-import { IS_PLATFORM } from '@/lib/constants'
 
 function HoursOrNeverText({ value }: { value: number }) {
   if (value === 0) {
@@ -81,10 +81,11 @@ export const SessionsAuthSettingsForm = () => {
     PermissionAction.READ,
     'custom_config_gotrue'
   )
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
 
   const { hasAccess: hasUserSessionsEntitlement, isLoading: isLoadingEntitlements } =
     useCheckEntitlements('auth.user_sessions')

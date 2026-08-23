@@ -18,6 +18,7 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
 import { SelfHostedAuthConfigNotice } from './SelfHostedAuthConfigNotice'
+import { IS_PLATFORM } from '@/lib/constants'
 import { AlertError } from '@/components/ui/AlertError'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
@@ -25,7 +26,6 @@ import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-muta
 import { useTablesQuery } from '@/data/tables/tables-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { IS_PLATFORM } from '@/lib/constants'
 
 const schema = z.object({
   AUDIT_LOG_DISABLE_POSTGRES: z.boolean(),
@@ -37,10 +37,11 @@ export const AuditLogsForm = () => {
   const { ref: projectRef } = useParams()
   const { data: project } = useSelectedProjectQuery()
 
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
 
   const { data: tables = [] } = useTablesQuery({
     projectRef: project?.ref,

@@ -40,6 +40,7 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import * as z from 'zod'
 
 import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
+import { IS_PLATFORM } from '@/lib/constants'
 import { TaxDisclaimer } from '@/components/interfaces/Billing/TaxDisclaimer'
 import { AlertError } from '@/components/ui/AlertError'
 import { NoPermission } from '@/components/ui/NoPermission'
@@ -48,7 +49,6 @@ import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
-import { IS_PLATFORM } from '@/lib/constants'
 
 function determineMFAStatus(verifyEnabled: boolean, enrollEnabled: boolean) {
   return verifyEnabled ? (enrollEnabled ? 'Enabled' : 'Verify Enabled') : 'Disabled'
@@ -130,10 +130,11 @@ export const MfaAuthSettingsForm = () => {
     PermissionAction.READ,
     'custom_config_gotrue'
   )
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
 
   const { hasAccess: hasAccessToMFAEntitlement, isLoading: isLoadingEntitlement } =
     useCheckEntitlements('auth.mfa_phone')

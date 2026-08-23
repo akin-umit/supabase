@@ -293,6 +293,14 @@ export const Usage = () => {
             }
           />
         </ScaffoldContainer>
+      ) : isSelfHostedUsage ? (
+        <ScaffoldContainer id="restriction" className="mt-5">
+          <Admonition
+            type="default"
+            title="Self-hosted usage is limited by your VPS"
+            description="Studio reports telemetry from the local runtime. Supabase billing quotas, spend caps, overage charges, and hosted-plan restrictions are not applied in self-hosted mode."
+          />
+        </ScaffoldContainer>
       ) : (
         <ScaffoldContainer id="restriction" className="mt-5">
           <Restriction />
@@ -309,7 +317,11 @@ export const Usage = () => {
       />
 
       {subscription?.plan.id !== 'free' && (
-        <Compute orgDailyStats={orgDailyStats} isLoadingOrgDailyStats={isLoadingOrgDailyStats} />
+        <Compute
+          orgDailyStats={orgDailyStats}
+          isLoadingOrgDailyStats={isLoadingOrgDailyStats}
+          isSelfHostedUsage={isSelfHostedUsage}
+        />
       )}
 
       {subscription?.plan.id === 'platform' && (

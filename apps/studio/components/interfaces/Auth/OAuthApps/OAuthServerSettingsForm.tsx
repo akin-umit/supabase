@@ -112,11 +112,11 @@ export const OAuthServerSettingsForm = () => {
 
   const oauthApps = oAuthAppsData?.clients || []
 
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
-  const canManageConfig = !IS_PLATFORM || canUpdateConfig
+  const canManageConfig = !IS_PLATFORM || canUpdateConfigPermission
 
   const form = useForm<OAuthServerSettings>({
     resolver: zodResolver(schema),

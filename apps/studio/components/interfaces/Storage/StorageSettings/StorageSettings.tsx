@@ -69,6 +69,9 @@ interface StorageSettingsState {
 
 type SelfHostedStorageConfig = {
   external?: {
+    operation?: {
+      status?: string
+    }
     selfHosted?: {
       managementApi?: {
         writable?: boolean
@@ -189,8 +192,17 @@ export const StorageSettings = () => {
   const fileSizeLimitError = form.formState.errors.fileSizeLimit
 
   const { mutate: updateStorageConfig } = useProjectStorageConfigUpdateUpdateMutation({
-    onSuccess: () => {
-      toast.success('Successfully updated storage settings')
+    onSuccess: (data) => {
+      const operationStatus = (data as SelfHostedStorageConfig | undefined)?.external?.operation
+        ?.status
+
+      if (operationStatus === 'queued' || operationStatus === 'accepted') {
+        toast('Storage settings update queued in the self-hosted runtime')
+      } else if (operationStatus === 'running') {
+        toast('Storage settings are being applied in the self-hosted runtime')
+      } else {
+        toast.success('Successfully updated storage settings')
+      }
       setIsUpdating(false)
     },
     onError: (error) => {

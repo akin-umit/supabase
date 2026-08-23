@@ -9,16 +9,16 @@ type SelfHostedAuthConfigNoticeProps = {
 }
 
 export const SelfHostedAuthConfigNotice = ({
-  title = 'Manage these Auth settings from your self-hosted configuration',
+  title = 'Auth settings are applied through the self-host management bridge',
   settings = [],
 }: SelfHostedAuthConfigNoticeProps) => {
   return (
     <Admonition type="default" title={title}>
       <div className="space-y-3 text-sm text-foreground-light">
         <p>
-          This Studio build does not have the Supabase Cloud Auth configuration API. Update the
-          GoTrue/Auth service environment variables in your compose, Kubernetes, or service manager
-          configuration, then restart the Auth service for changes to take effect.
+          Studio reads and saves these values through the local management API. Configure
+          INTERNAL_MANAGEMENT_API_URL and INTERNAL_MANAGEMENT_API_WRITE_TOKEN so changes are
+          persisted to the GoTrue/Auth runtime and applied without calling Supabase Cloud.
         </p>
         {settings.length > 0 && (
           <div>

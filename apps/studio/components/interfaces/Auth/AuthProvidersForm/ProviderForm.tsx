@@ -37,7 +37,7 @@ import { useProjectApiUrl } from '@/data/config/project-endpoint-query'
 import { useHasEntitlementAccess } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
-import { BASE_PATH } from '@/lib/constants'
+import { BASE_PATH, IS_PLATFORM } from '@/lib/constants'
 
 interface ProviderFormProps {
   config: components['schemas']['GoTrueConfigResponse']
@@ -58,10 +58,11 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
 
   const { data: endpoint } = useProjectApiUrl({ projectRef })
 
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
   const canManageConfig = canUpdateConfig
 
   const shouldDisableField = (field: string): boolean => {
@@ -232,7 +233,8 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
 
               {Object.keys(provider.properties).map((x: string) => {
                 const { entitlementKey } = provider.properties[x]
-                const hasAccess = entitlementKey == null || hasEntitlementAccess(entitlementKey)
+                const hasAccess =
+                  !IS_PLATFORM || entitlementKey == null || hasEntitlementAccess(entitlementKey)
 
                 return (
                   <FormField

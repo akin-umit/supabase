@@ -19,6 +19,7 @@ import { Admonition } from 'ui-patterns/admonition'
 
 import { type AuthTemplate } from './EmailTemplates.types'
 import { getAuthTemplateType } from './EmailTemplates.utils'
+import { IS_PLATFORM } from '@/lib/constants'
 import { AuthConfigResponse } from '@/data/auth/auth-config-query'
 import { useAuthTemplateResetMutation } from '@/data/auth/auth-template-reset-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
@@ -35,10 +36,11 @@ export const ResetTemplateDialog = ({
   const { ref: projectRef } = useParams()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
 
   const { id } = template
   const templateType = getAuthTemplateType(id)

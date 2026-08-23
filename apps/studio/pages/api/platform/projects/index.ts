@@ -140,6 +140,9 @@ function explainSelfHostedCreateError(message: string) {
   if (message.includes('verified_base_domain')) {
     return 'Self-hosted project creation requires a verified base domain so Studio can create project subdomains.'
   }
+  if (message.includes('project_provisioning_not_configured')) {
+    return `Self-hosted project creation requires the Coolify provisioning bridge to be configured. ${message}`
+  }
   if (message.includes('coolify')) {
     return 'Self-hosted project creation requires the Coolify provisioning bridge to be configured.'
   }

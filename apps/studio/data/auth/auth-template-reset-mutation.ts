@@ -4,8 +4,9 @@ import { toast } from 'sonner'
 import type { ProjectAuthConfigData } from './auth-config-query'
 import { authKeys } from './keys'
 import { type AuthTemplateResetType } from '@/components/interfaces/Auth/EmailTemplates/EmailTemplates.types'
-import { handleError, post } from '@/data/fetchers'
+import { handleError, patch, post } from '@/data/fetchers'
 import { lintKeys } from '@/data/lint/keys'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
 type AuthTemplateResetVariables = {
@@ -14,6 +15,20 @@ type AuthTemplateResetVariables = {
 }
 
 async function resetAuthTemplate({ projectRef, template }: AuthTemplateResetVariables) {
+  if (!IS_PLATFORM) {
+    const templateId = template.replace(/-/g, '_').toUpperCase()
+    const { data, error } = await patch('/platform/auth/{ref}/config', {
+      params: { path: { ref: projectRef } },
+      body: {
+        [`MAILER_SUBJECTS_${templateId}`]: null,
+        [`MAILER_TEMPLATES_${templateId}_CONTENT`]: null,
+      } as any,
+    })
+
+    if (error) handleError(error)
+    return data
+  }
+
   const { data, error } = await post('/platform/auth/{ref}/templates/{template}/reset', {
     params: { path: { ref: projectRef, template } },
   })

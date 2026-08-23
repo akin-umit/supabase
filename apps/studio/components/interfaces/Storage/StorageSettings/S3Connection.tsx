@@ -61,6 +61,9 @@ const DEFAULT_RUNTIME_WRITE_BRIDGE_REASON =
 
 type SelfHostedStorageConfig = {
   external?: {
+    operation?: {
+      status?: string
+    }
     selfHosted?: {
       managementApi?: {
         writable?: boolean
@@ -106,11 +109,20 @@ export const S3Connection = () => {
 
   const { mutate: updateStorageConfig, isPending: isUpdating } =
     useProjectStorageConfigUpdateUpdateMutation({
-      onSuccess: (_, vars) => {
+      onSuccess: (data, vars) => {
         if (vars.features?.s3Protocol) {
           form.reset({ s3ConnectionEnabled: vars.features.s3Protocol.enabled })
         }
-        toast.success('Successfully updated storage settings')
+
+        const operationStatus = (data as SelfHostedStorageConfig | undefined)?.external?.operation
+          ?.status
+        if (operationStatus === 'queued' || operationStatus === 'accepted') {
+          toast('S3 protocol update queued in the self-hosted runtime')
+        } else if (operationStatus === 'running') {
+          toast('S3 protocol settings are being applied in the self-hosted runtime')
+        } else {
+          toast.success('Successfully updated storage settings')
+        }
       },
     })
 

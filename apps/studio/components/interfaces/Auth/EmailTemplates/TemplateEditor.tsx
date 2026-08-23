@@ -89,10 +89,11 @@ const getPreviewSrcDoc = (html: string) => {
 
 export const TemplateEditor = ({ template, isReadOnly = false }: TemplateEditorProps) => {
   const { ref: projectRef } = useParams()
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
   const canEdit = canUpdateConfig && !isReadOnly
 
   const { id, properties } = template

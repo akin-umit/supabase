@@ -73,10 +73,11 @@ export const PerformanceSettingsForm = () => {
     PermissionAction.READ,
     'custom_config_gotrue'
   )
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
 
   const [isUpdatingRequestDurationForm, setIsUpdatingRequestDurationForm] = useState(false)
   const [isUpdatingDatabaseForm, setIsUpdatingDatabaseForm] = useState(false)
@@ -117,7 +118,7 @@ export const PerformanceSettingsForm = () => {
 
   const onSubmitRequestDurationForm = (values: any) => {
     if (!project?.ref) return console.error('Project ref is required')
-    if (!hasAccessToPerformance) return
+    if (IS_PLATFORM && !hasAccessToPerformance) return
 
     setIsUpdatingRequestDurationForm(true)
 

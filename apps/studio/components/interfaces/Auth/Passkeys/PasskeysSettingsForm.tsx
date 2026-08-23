@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { IS_PLATFORM, useParams } from 'common'
+import { useParams } from 'common'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
@@ -28,7 +28,7 @@ import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 type GoTrueConfig = components['schemas']['GoTrueConfigResponse']
 
@@ -167,10 +167,11 @@ export const PasskeysSettingsForm = () => {
     isSuccess: isPermissionsLoaded,
   } = useAsyncCheckPermissions(PermissionAction.READ, 'custom_config_gotrue')
 
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
   const canManageConfig = canUpdateConfig
 
   const formValues =

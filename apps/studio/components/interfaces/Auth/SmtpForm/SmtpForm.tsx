@@ -32,6 +32,7 @@ import { SelfHostedAuthConfigNotice } from '../SelfHostedAuthConfigNotice'
 import { SmtpDisableConfirmationDialog } from './SmtpDisableConfirmationDialog'
 import { defaultDisabledSmtpFormValues } from './SmtpForm.constants'
 import { generateFormValues, isSmtpEnabled } from './SmtpForm.utils'
+import { IS_PLATFORM } from '@/lib/constants'
 import { AlertError } from '@/components/ui/AlertError'
 import { InlineLink } from '@/components/ui/InlineLink'
 import { NoPermission } from '@/components/ui/NoPermission'
@@ -40,7 +41,6 @@ import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-muta
 import { useAuthTemplateResetMutation } from '@/data/auth/auth-template-reset-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { IS_PLATFORM } from '@/lib/constants'
 
 const smtpEnabledSchema = z.object({
   ENABLE_SMTP: z.literal(true),
@@ -121,10 +121,11 @@ export const SmtpForm = () => {
     PermissionAction.READ,
     'custom_config_gotrue'
   )
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
+  const { can: canUpdateConfigPermission } = useAsyncCheckPermissions(
     PermissionAction.UPDATE,
     'custom_config_gotrue'
   )
+  const canUpdateConfig = !IS_PLATFORM || canUpdateConfigPermission
 
   const blockEditingOnReset =
     !!selectedProject?.inserted_at &&

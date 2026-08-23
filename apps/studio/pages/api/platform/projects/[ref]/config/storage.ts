@@ -72,6 +72,37 @@ function buildRuntimeStoragePatchBody(req: NextApiRequest) {
   return body
 }
 
+function getOperationFailure(managementPayload: unknown) {
+  if (typeof managementPayload !== 'object' || managementPayload === null) return undefined
+  const record = managementPayload as Record<string, any>
+  const operation =
+    typeof record.operation === 'object' && record.operation !== null
+      ? record.operation
+      : typeof record.external?.operation === 'object' && record.external.operation !== null
+        ? record.external.operation
+        : undefined
+
+  if (operation?.status !== 'failed') return undefined
+
+  const operationError =
+    typeof operation.error === 'object' && operation.error !== null ? operation.error : {}
+  return {
+    message:
+      typeof operationError.message === 'string'
+        ? operationError.message
+        : typeof operation.message === 'string'
+          ? operation.message
+          : 'Storage runtime settings apply failed',
+    code:
+      typeof operation.code === 'string'
+        ? operation.code
+        : typeof operationError.code === 'string'
+          ? operationError.code
+          : 'storage_runtime_apply_failed',
+    operation,
+  }
+}
+
 function buildAppliedStorageConfig(req: NextApiRequest, managementPayload: unknown = {}) {
   const normalizedPayload = normalizeStorageConfigPayload(managementPayload)
   const requestPatch = buildStorageConfigPatchBody(req)
@@ -128,6 +159,10 @@ const handlePatch = async (req: NextApiRequest, res: NextApiResponse) => {
       method: 'PATCH',
       body: storageConfigBody,
     })
+    const failure = getOperationFailure(data)
+    if (failure) {
+      return res.status(502).json({ error: failure })
+    }
 
     return res.status(200).json(buildAppliedStorageConfig(req, data))
   } catch (error) {
@@ -142,6 +177,10 @@ const handlePatch = async (req: NextApiRequest, res: NextApiResponse) => {
           method: 'PATCH',
           body: runtimeBody,
         })
+        const failure = getOperationFailure({ external: { operation: data } })
+        if (failure) {
+          return res.status(502).json({ error: failure })
+        }
 
         return res
           .status(200)

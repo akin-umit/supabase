@@ -14,7 +14,7 @@ import { Input } from 'ui-patterns/DataInputs/Input'
 import { Hook } from './hooks.constants'
 import { DropdownMenuItemTooltip } from '@/components/ui/DropdownMenuItemTooltip'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 
 interface HookCardProps {
   hook: Hook
@@ -23,7 +23,11 @@ interface HookCardProps {
 }
 
 export const HookCard = ({ hook, onSelectEdit, onSelectDelete }: HookCardProps) => {
-  const { can: canUpdateAuthHook } = useAsyncCheckPermissions(PermissionAction.AUTH_EXECUTE, '*')
+  const { can: canUpdateAuthHookPermission } = useAsyncCheckPermissions(
+    PermissionAction.AUTH_EXECUTE,
+    '*'
+  )
+  const canUpdateAuthHook = !IS_PLATFORM || canUpdateAuthHookPermission
 
   return (
     <div className="bg-surface-100 border-default overflow-hidden border shadow-sm px-5 py-4 flex flex-row first:rounded-t-md last:rounded-b-md space-x-4">

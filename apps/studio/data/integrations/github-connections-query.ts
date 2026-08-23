@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { integrationKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type GitHubConnectionsVariables = {
@@ -15,6 +16,7 @@ export async function getGitHubConnections(
   signal?: AbortSignal
 ) {
   if (!organizationId) throw new Error('organizationId is required')
+  if (!IS_PLATFORM) return []
 
   const { data, error } = await get('/platform/integrations/github/connections', {
     params: {
@@ -44,7 +46,7 @@ export const useGitHubConnectionsQuery = <TData = GitHubConnectionsData>(
   return useQuery<GitHubConnectionsData, GitHubConnectionsError, TData>({
     queryKey: integrationKeys.githubConnectionsList(organizationId),
     queryFn: ({ signal }) => getGitHubConnections({ organizationId }, signal),
-    enabled: enabled && typeof organizationId !== 'undefined',
+    enabled: enabled && IS_PLATFORM && typeof organizationId !== 'undefined',
     staleTime: 30 * 60 * 1000,
     ...options,
   })

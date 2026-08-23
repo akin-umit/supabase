@@ -19,9 +19,10 @@ import { DOCS_URL } from '@/lib/constants'
 export interface ComputeProps {
   orgDailyStats: OrgDailyUsageResponse | undefined
   isLoadingOrgDailyStats: boolean
+  isSelfHostedUsage?: boolean
 }
 
-const Compute = ({ orgDailyStats, isLoadingOrgDailyStats }: ComputeProps) => {
+const Compute = ({ orgDailyStats, isLoadingOrgDailyStats, isSelfHostedUsage }: ComputeProps) => {
   const allAttributeKeys = Object.values(ComputeUsageMetric).map((it) => it.toLowerCase())
 
   const { billingAll } = useIsFeatureEnabled(['billing:all'])
@@ -71,9 +72,10 @@ const Compute = ({ orgDailyStats, isLoadingOrgDailyStats }: ComputeProps) => {
       <SectionContent
         section={{
           name: 'Compute Hours',
-          description:
-            'Amount of hours your projects were active. Each project is a dedicated server and database.\nPaid plans come with $10 in Compute Credits to cover one project running on Micro Compute or parts of any compute add-on.\nBilling is based on the sum of Compute Hours used. Paused projects do not count towards usage.',
-          links: billingAll
+          description: isSelfHostedUsage
+            ? 'Amount of time your self-hosted projects were active. Compute is reserved from your VPS capacity, so Studio reports local runtime usage without Supabase billing, credits, or overage charges.'
+            : 'Amount of hours your projects were active. Each project is a dedicated server and database.\nPaid plans come with $10 in Compute Credits to cover one project running on Micro Compute or parts of any compute add-on.\nBilling is based on the sum of Compute Hours used. Paused projects do not count towards usage.',
+          links: billingAll && !isSelfHostedUsage
             ? [
                 {
                   name: 'Compute Add-ons',

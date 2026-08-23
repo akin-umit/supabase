@@ -14,6 +14,7 @@ const {
   useAuthTemplateResetMutationMock,
   useAuthConfigUpdateMutationMock,
   useAsyncCheckPermissionsMock,
+  platformState,
   validateSpamMock,
 } = vi.hoisted(() => ({
   resetTemplateMock: vi.fn(),
@@ -22,6 +23,7 @@ const {
   useAuthTemplateResetMutationMock: vi.fn(),
   useAuthConfigUpdateMutationMock: vi.fn(),
   useAsyncCheckPermissionsMock: vi.fn(),
+  platformState: { isPlatform: true },
   validateSpamMock: vi.fn(),
 }))
 
@@ -73,6 +75,16 @@ vi.mock('@/data/auth/validate-spam-mutation', () => ({
 vi.mock('@/hooks/misc/useCheckPermissions', () => ({
   useAsyncCheckPermissions: useAsyncCheckPermissionsMock,
 }))
+
+vi.mock('@/lib/constants', async () => {
+  const actual = await vi.importActual<Record<string, unknown>>('@/lib/constants')
+  return {
+    ...actual,
+    get IS_PLATFORM() {
+      return platformState.isPlatform
+    },
+  }
+})
 
 vi.mock('sonner', () => ({
   toast: {
@@ -135,6 +147,7 @@ const renderTemplateEditor = ({
 describe('TemplateEditor reset to default', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    platformState.isPlatform = true
     validateSpamMock.mockImplementation((_vars, callbacks) => callbacks?.onSuccess?.({ rules: [] }))
   })
 
@@ -255,6 +268,13 @@ describe('TemplateEditor reset to default', () => {
     renderTemplateEditor({ hasCustomBody: true, canUpdateConfig: false })
 
     expect(screen.getByRole('button', { name: 'Reset template' })).toBeDisabled()
+  })
+
+  it('keeps reset available in self-hosted mode without platform permissions', () => {
+    platformState.isPlatform = false
+    renderTemplateEditor({ hasCustomBody: true, canUpdateConfig: false })
+
+    expect(screen.getByRole('button', { name: 'Reset template' })).toBeEnabled()
   })
 
   it('keeps the dialog open and shows an inline error when reset fails', async () => {

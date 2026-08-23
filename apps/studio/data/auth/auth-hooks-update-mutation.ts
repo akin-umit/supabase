@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 import { authKeys } from './keys'
 import type { components } from '@/data/api'
 import { handleError, patch } from '@/data/fetchers'
-import { IS_PLATFORM } from '@/lib/constants'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
 export type AuthHooksUpdateVariables = {
@@ -13,13 +12,7 @@ export type AuthHooksUpdateVariables = {
 }
 
 export async function updateAuthHooks({ projectRef, config }: AuthHooksUpdateVariables) {
-  if (!IS_PLATFORM) {
-    throw new Error(
-      'Self-hosted Auth hooks are managed with GoTrue hook environment variables. Update the deployment environment and redeploy the Auth service.'
-    )
-  }
-
-  const { data, error } = await patch('/platform/auth/{ref}/config/hooks', {
+  const { data, error } = await patch('/platform/auth/{ref}/config', {
     params: { path: { ref: projectRef } },
     body: config,
   })

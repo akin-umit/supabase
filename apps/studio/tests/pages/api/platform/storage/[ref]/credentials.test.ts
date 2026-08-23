@@ -111,6 +111,21 @@ describe('/api/platform/storage/[ref]/credentials', () => {
     )
   })
 
+  it('returns a read bridge reason when listing S3 access keys without management configuration', async () => {
+    const { req, res } = createMocks({
+      method: 'GET',
+      query: { ref: 'default' },
+    })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(503)
+    expect(JSON.parse(res._getData()).error.message).toContain(
+      'self-host management API bridge'
+    )
+    expect(JSON.parse(res._getData()).error.message).toContain('read the local S3 credentials')
+  })
+
   it('surfaces the self-host runtime activation failure instead of a generic API error', async () => {
     vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
     vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
