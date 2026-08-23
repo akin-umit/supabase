@@ -270,7 +270,7 @@ const Wizard: NextPageWithLayout = () => {
 
   const canCreateProject = isAdmin && !freePlanWithExceedingLimits && !hasOutstandingInvoices
   const canConfigureGitHubOnCreate =
-    canCreateProject && hasAccessToGitHubIntegration && canCreateGitHubConnection
+    canCreateProject && !isSelfHostedMode && hasAccessToGitHubIntegration && canCreateGitHubConnection
 
   const dbRegionExact = smartRegionToExactRegion(dbRegion ?? '')
 
