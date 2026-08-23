@@ -89,4 +89,34 @@ describe('self-hosted management client', () => {
       statusCode: 502,
     })
   })
+
+  it('surfaces missing provisioning variable names without exposing values', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-token')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: 'project_provisioning_not_configured',
+          missing: ['COOLIFY_API_BASE_URL', 'COOLIFY_API_TOKEN', 'bad token value'],
+        }),
+        {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    )
+
+    await expect(
+      requestSelfHostedManagement({
+        projectRef: 'default',
+        resource: ['runtime', 'auth'],
+        method: 'PATCH',
+        body: { disable_signup: false },
+      })
+    ).rejects.toMatchObject({
+      message:
+        'project_provisioning_not_configured: missing COOLIFY_API_BASE_URL / COOLIFY_API_TOKEN',
+      statusCode: 503,
+    })
+  })
 })

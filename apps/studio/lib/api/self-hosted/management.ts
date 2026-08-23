@@ -18,6 +18,7 @@ const ALLOWED_ROOTS = new Set([
 ])
 const SECRET_FIELD_PATTERN = /password|secret|credential|token/i
 const SAFE_ERROR_PATTERN = /^[A-Za-z0-9_.: /-]{1,240}$/
+const SAFE_MISSING_CONFIG_PATTERN = /^[A-Z0-9_]{2,80}$/
 
 export class SelfHostedManagementError extends Error {
   constructor(
@@ -208,6 +209,13 @@ function normalizeManagementErrorMessage(payload: unknown) {
       ? (record.error as Record<string, unknown>)
       : undefined
 
+  const missingConfig = Array.isArray(record.missing)
+    ? record.missing
+        .filter((entry): entry is string => typeof entry === 'string')
+        .filter((entry) => SAFE_MISSING_CONFIG_PATTERN.test(entry))
+        .slice(0, 12)
+    : []
+
   const rawMessage =
     record.message ??
     nestedError?.message ??
@@ -217,5 +225,8 @@ function normalizeManagementErrorMessage(payload: unknown) {
     'Management operation failed'
 
   const message = typeof rawMessage === 'string' ? rawMessage : 'Management operation failed'
+  if (message === 'project_provisioning_not_configured' && missingConfig.length > 0) {
+    return `${message}: missing ${missingConfig.join(' / ')}`
+  }
   return SAFE_ERROR_PATTERN.test(message) ? message : 'Management operation failed'
 }
