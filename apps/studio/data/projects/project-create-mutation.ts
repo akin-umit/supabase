@@ -59,6 +59,11 @@ export async function createProject({
       body: {
         name,
         organization_slug: organizationSlug,
+        desired_instance_size: dbInstanceSize,
+        db_region: dbRegion,
+        data_api_exposed_schemas: dataApiExposedSchemas,
+        data_api_use_api_schema: dataApiUseApiSchema,
+        data_api_revoke_default_privileges: dataApiRevokeDefaultPrivileges,
       },
     })
 

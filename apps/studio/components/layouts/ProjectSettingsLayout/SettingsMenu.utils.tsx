@@ -51,6 +51,15 @@ export const useGenerateSettingsMenu = () => {
             shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_INFRASTRUCTURE,
           },
           {
+            name: 'Compute and Disk',
+            key: 'compute-and-disk',
+            url: `/project/${ref}/settings/compute-and-disk`,
+            items: [],
+            disabled: !isProjectActive,
+            isLoading: isPending,
+            shortcutId: SHORTCUT_IDS.NAV_PROJECT_SETTINGS_COMPUTE_AND_DISK,
+          },
+          {
             name: 'Integrations',
             key: 'integrations',
             url: `/project/${ref}/settings/integrations`,

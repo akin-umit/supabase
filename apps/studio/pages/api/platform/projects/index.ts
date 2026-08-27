@@ -39,10 +39,8 @@ const handleCreate = async (req: NextApiRequest, res: NextApiResponse) => {
   const unsupportedFields = [
     'cloud_provider',
     'db_pass',
-    'db_region',
     'region_selection',
     'db_sql',
-    'desired_instance_size',
     'db_pricing_tier_id',
     'postgres_engine',
     'release_channel',
@@ -67,6 +65,12 @@ const handleCreate = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   const ref = createProjectRef(name)
+  const desiredInstanceSize =
+    typeof body.desired_instance_size === 'string' && body.desired_instance_size.trim()
+      ? body.desired_instance_size.trim()
+      : 'micro'
+  const region =
+    typeof body.db_region === 'string' && body.db_region.trim() ? body.db_region.trim() : 'local-vps'
 
   try {
     const payload = (await requestSelfHostedManagementRoot({
@@ -75,6 +79,21 @@ const handleCreate = async (req: NextApiRequest, res: NextApiResponse) => {
       body: {
         ref,
         name,
+        desiredInstanceSize,
+        desired_instance_size: desiredInstanceSize,
+        region,
+        db_region: region,
+        dataApiExposedSchemas: Array.isArray(body.data_api_exposed_schemas)
+          ? body.data_api_exposed_schemas
+          : undefined,
+        dataApiUseApiSchema:
+          typeof body.data_api_use_api_schema === 'boolean'
+            ? body.data_api_use_api_schema
+            : undefined,
+        dataApiRevokeDefaultPrivileges:
+          typeof body.data_api_revoke_default_privileges === 'boolean'
+            ? body.data_api_revoke_default_privileges
+            : undefined,
       },
     })) as { project?: Record<string, unknown>; job?: Record<string, unknown> }
 
@@ -96,7 +115,7 @@ const handleCreate = async (req: NextApiRequest, res: NextApiResponse) => {
       organization_slug: organizationSlug,
       preview_branch_refs: [],
       ref: projectRef,
-      region: typeof project.region === 'string' ? project.region : 'local-vps',
+      region: typeof project.region === 'string' ? project.region : region,
       service_key: '',
       status: typeof project.status === 'string' ? project.status : 'COMING_UP',
       subscription_id: null,

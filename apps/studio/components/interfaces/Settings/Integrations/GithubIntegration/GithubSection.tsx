@@ -130,10 +130,10 @@ export const GitHubSection = ({ isProjectScoped }: { isProjectScoped: boolean })
       <PageSectionContent>
         {!IS_PLATFORM ? (
           <div className="rounded border px-4 py-3 text-sm text-foreground-light">
-            <p className="text-foreground">GitHub deploys are managed by the self-hosted operator.</p>
+            <p className="text-foreground">GitHub deploys are handled by the VPS runtime.</p>
             <p className="mt-1">
-              Connect repository webhooks, branch rules, and preview workflows in your hosting
-              platform. Studio will not call Supabase Cloud GitHub APIs in self-hosted mode.
+              Connect repository webhooks, branch rules, and preview workflows through the local
+              deployment bridge. Studio will not call Supabase Cloud GitHub APIs in self-hosted mode.
             </p>
           </div>
         ) : isLoadingPermissions ? (

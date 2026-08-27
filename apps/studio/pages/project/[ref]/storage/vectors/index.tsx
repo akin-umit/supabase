@@ -1,7 +1,4 @@
 import { IS_PLATFORM, useParams } from 'common'
-import { PageContainer } from 'ui-patterns/PageContainer'
-import { PageSection, PageSectionContent } from 'ui-patterns/PageSection'
-import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
 import { BucketsUpgradePlan } from '@/components/interfaces/Storage/BucketsUpgradePlan'
 import { VectorsBuckets } from '@/components/interfaces/Storage/VectorBuckets'
@@ -14,28 +11,9 @@ import { DefaultLayout } from '@/components/layouts/DefaultLayout'
 import { StorageBucketsLayout } from '@/components/layouts/StorageLayout/StorageBucketsLayout'
 import StorageLayout from '@/components/layouts/StorageLayout/StorageLayout'
 import { useIsVectorBucketsEnabled } from '@/data/config/project-storage-config-query'
-import { useVectorBucketsQuery } from '@/data/storage/vector-buckets-query'
 import { useDeploymentMode } from '@/hooks/misc/useDeploymentMode'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import type { NextPageWithLayout } from '@/types'
-
-function SelfHostedVectorBuckets() {
-  const { ref: projectRef } = useParams()
-  const { isPending, isError } = useVectorBucketsQuery({ projectRef })
-
-  if (isError) return null
-  if (!isPending) return <VectorsBuckets />
-
-  return (
-    <PageContainer>
-      <PageSection>
-        <PageSectionContent>
-          <GenericSkeletonLoader />
-        </PageSectionContent>
-      </PageSection>
-    </PageContainer>
-  )
-}
 
 const StorageVectorsPage: NextPageWithLayout = () => {
   const { ref: projectRef } = useParams()
@@ -53,7 +31,7 @@ const StorageVectorsPage: NextPageWithLayout = () => {
   } else if (IS_PLATFORM && !isVectorBucketsEnabled) {
     return <BucketsUpgradePlan type="vector" />
   } else if (isSelfHosted) {
-    return <SelfHostedVectorBuckets />
+    return <VectorsBuckets />
   } else if (!isVectorBucketsEnabled) {
     return <VectorBucketsLocalDisabledState />
   } else {

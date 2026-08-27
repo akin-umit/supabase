@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -110,6 +110,7 @@ describe('StorageVectorsPage', () => {
   beforeEach(() => {
     mockIsPlatform.value = true
     mockProject(AVAILABLE_REGION)
+    mockDeploymentMode(true)
   })
 
   test('platform + region not supported: shows region limitation', async () => {
@@ -161,16 +162,13 @@ describe('StorageVectorsPage', () => {
     expect(await screen.findByText('vectors-buckets')).toBeInTheDocument()
   })
 
-  test('self-hosted (non-platform): hides the surface when the Storage API is unavailable', async () => {
+  test('self-hosted (non-platform): delegates Storage API failures to the vector buckets surface', async () => {
     mockIsPlatform.value = false
     mockDeploymentMode(false)
     mockVectorBuckets(503)
 
-    const { container } = customRender(<StorageVectorsPage dehydratedState={undefined} />)
+    customRender(<StorageVectorsPage dehydratedState={undefined} />)
 
-    // `useDeploymentMode` defaults to CLI during its loading window, so the page
-    // briefly renders before resolving to self-hosted — wait for it to settle.
-    await waitFor(() => expect(container).toBeEmptyDOMElement())
-    expect(screen.queryByText('vectors-buckets')).not.toBeInTheDocument()
+    expect(await screen.findByText('vectors-buckets')).toBeInTheDocument()
   })
 })

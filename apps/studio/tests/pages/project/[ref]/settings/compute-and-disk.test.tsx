@@ -41,17 +41,48 @@ vi.mock('@/components/interfaces/DiskManagement/DiskManagementForm', () => ({
   DiskManagementForm: () => <div>Cloud DiskManagementForm</div>,
 }))
 
+vi.mock('@/hooks/misc/useSelectedProject', () => ({
+  useSelectedProjectQuery: () => ({
+    data: {
+      ref: 'default',
+      databases: [{ identifier: 'default', infra_compute_size: 'medium' }],
+    },
+  }),
+}))
+
+vi.mock('@/data/operations/project-operations-query', () => ({
+  useProjectOperationsQuery: () => ({
+    data: {
+      infrastructure: {
+        runtime: {
+          cpuPercent: 12,
+          memoryPercent: 34,
+          diskPercent: 56,
+        },
+      },
+    },
+    isError: false,
+    isFetching: false,
+    refetch: vi.fn(),
+  }),
+}))
+
 describe('/project/[ref]/settings/compute-and-disk', () => {
   beforeEach(() => {
     mockIsPlatform.value = false
     mockReplace.mockReset()
   })
 
-  it('redirects self-hosted projects to the single infrastructure settings surface', () => {
+  it('shows the self-hosted VPS resource profile instead of redirecting', () => {
     render(<ComputeAndDiskPage dehydratedState={{}} />)
 
-    expect(mockReplace).toHaveBeenCalledWith('/project/default/settings/infrastructure')
-    expect(screen.queryByText('CPU')).not.toBeInTheDocument()
+    expect(mockReplace).not.toHaveBeenCalled()
+    expect(screen.getByText('VPS resource profile')).toBeInTheDocument()
+    expect(screen.getByText('Self-hosted VPS')).toBeInTheDocument()
+    expect(screen.getAllByText('Medium')).toHaveLength(2)
+    expect(screen.getByText('12%')).toBeInTheDocument()
+    expect(screen.getByText('34%')).toBeInTheDocument()
+    expect(screen.getByText('56%')).toBeInTheDocument()
     expect(screen.queryByText('Cloud DiskManagementForm')).not.toBeInTheDocument()
   })
 

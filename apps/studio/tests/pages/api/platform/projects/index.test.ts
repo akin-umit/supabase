@@ -60,7 +60,10 @@ describe('/api/platform/projects', () => {
     expect(requestBody).not.toHaveProperty('baseDomainId')
     expect(requestBody).not.toHaveProperty('cloud_provider')
     expect(requestBody).not.toHaveProperty('db_pass')
-    expect(requestBody).not.toHaveProperty('desired_instance_size')
+    expect(requestBody.desired_instance_size).toBe('micro')
+    expect(requestBody.desiredInstanceSize).toBe('micro')
+    expect(requestBody.db_region).toBe('local-vps')
+    expect(requestBody.region).toBe('local-vps')
 
     const data = JSON.parse(res._getData())
     expect(data).toMatchObject({

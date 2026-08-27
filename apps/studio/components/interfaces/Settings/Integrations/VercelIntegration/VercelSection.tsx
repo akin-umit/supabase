@@ -157,10 +157,11 @@ export const VercelSection = ({ isProjectScoped }: { isProjectScoped: boolean })
       <PageSectionContent>
         {!IS_PLATFORM ? (
           <div className="rounded border px-4 py-3 text-sm text-foreground-light">
-            <p className="text-foreground">Vercel previews are managed by the self-hosted operator.</p>
+            <p className="text-foreground">Vercel previews are handled by the VPS runtime.</p>
             <p className="mt-1">
               Configure frontend environment variables, preview URLs, and deploy hooks in your
-              frontend host. Studio will not call Supabase Cloud Vercel APIs in self-hosted mode.
+              frontend host through the local deployment bridge. Studio will not call Supabase Cloud
+              Vercel APIs in self-hosted mode.
             </p>
           </div>
         ) : isLoadingPermissions ? (
