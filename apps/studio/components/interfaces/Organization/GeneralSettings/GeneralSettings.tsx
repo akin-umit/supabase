@@ -35,7 +35,9 @@ export const GeneralSettings = () => {
         </PageSectionContent>
       </PageSection>
 
-      {isSelfHosted ? <SelfHostedControlPlaneSection /> : (
+      {isSelfHosted ? (
+        <SelfHostedControlPlaneSection />
+      ) : (
         <PageSection>
           <PageSectionMeta>
             <PageSectionSummary>
@@ -93,19 +95,24 @@ const SelfHostedControlPlaneSection = () => {
               </div>
               <div>
                 <p className="text-sm text-foreground-light">Runtime apply mode</p>
-                <Badge variant="warning">Operator-managed</Badge>
+                <Badge variant="warning">VPS-managed</Badge>
               </div>
             </div>
             <div className="space-y-2">
               {projects.map((project) => (
-                <div key={project.ref} className="flex items-center justify-between gap-3 border-t pt-3">
+                <div
+                  key={project.ref}
+                  className="flex items-center justify-between gap-3 border-t pt-3"
+                >
                   <div>
                     <p className="text-sm text-foreground">{project.name}</p>
                     <p className="text-xs text-foreground-light">{project.ref}</p>
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     {getDomains(project).map((domain) => (
-                      <Badge key={domain} variant="default">{domain}</Badge>
+                      <Badge key={domain} variant="default">
+                        {domain}
+                      </Badge>
                     ))}
                   </div>
                 </div>

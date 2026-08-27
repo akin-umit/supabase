@@ -114,11 +114,11 @@ describe('BillingSettings self-hosted mode', () => {
     })
   })
 
-  it('renders the local operator-managed billing state instead of Cloud billing panels', () => {
+  it('renders the local VPS-managed billing state instead of Cloud billing panels', () => {
     render(<BillingSettings />)
 
     expect(screen.getByText('Self-hosted control plane')).toBeInTheDocument()
-    expect(screen.getByText('Operator-managed')).toBeInTheDocument()
+    expect(screen.getByText('VPS-managed')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument()
     expect(screen.getByText('Usage billing')).toBeInTheDocument()
     expect(screen.getByText('Disabled')).toBeInTheDocument()

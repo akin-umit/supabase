@@ -40,6 +40,12 @@ vi.mock('@/components/interfaces/Platform/Webhooks', () => ({
   ),
 }))
 
+vi.mock('@/components/interfaces/Platform/Webhooks/SelfHostedWebhooks', () => ({
+  SelfHostedWebhooks: ({ endpointId }: { endpointId?: string }) => (
+    <div>SelfHostedWebhooks {endpointId}</div>
+  ),
+}))
+
 describe('/project/[ref]/settings/webhooks', () => {
   beforeEach(() => {
     mockIsPlatform.value = false
@@ -49,14 +55,14 @@ describe('/project/[ref]/settings/webhooks', () => {
   it('does not render mock platform webhooks in self-hosted mode', () => {
     render(<WebhooksPage dehydratedState={{}} />)
 
-    expect(screen.getByText('Operator-managed webhooks')).toBeInTheDocument()
+    expect(screen.getByText('SelfHostedWebhooks')).toBeInTheDocument()
     expect(screen.queryByText(/PlatformWebhooksPage/)).not.toBeInTheDocument()
   })
 
   it('does not render mock endpoint details in self-hosted mode', () => {
     render(<WebhookEndpointPage dehydratedState={{}} />)
 
-    expect(screen.getByText('Webhook endpoint details are unavailable')).toBeInTheDocument()
+    expect(screen.getByText('SelfHostedWebhooks endpoint-1')).toBeInTheDocument()
     expect(screen.queryByText(/PlatformWebhooksPage/)).not.toBeInTheDocument()
   })
 

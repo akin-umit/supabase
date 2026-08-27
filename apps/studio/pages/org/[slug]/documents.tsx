@@ -14,14 +14,16 @@ import { OrganizationSettingsLayout } from '@/components/layouts/ProjectLayout/O
 import { ScaffoldDivider } from '@/components/layouts/Scaffold'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import type { NextPageWithLayout } from '@/types'
 
 const OrgDocuments: NextPageWithLayout = () => {
   const { slug } = useParams()
 
   const showLegalDocuments = useIsFeatureEnabled('organization:show_legal_documents')
+  const showDocuments = !IS_PLATFORM || showLegalDocuments
 
-  if (!showLegalDocuments) {
+  if (!showDocuments) {
     return <UnknownInterface urlBack={`/org/${slug}`} />
   }
 

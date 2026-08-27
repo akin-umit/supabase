@@ -30,6 +30,7 @@ import { useOrganizationsQuery } from '@/data/organizations/organizations-query'
 import { useOrgProjectsInfiniteQuery } from '@/data/projects/org-projects-infinite-query'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { IS_PLATFORM } from '@/lib/constants'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import { useShortcut } from '@/state/shortcuts/useShortcut'
 
@@ -66,6 +67,8 @@ export const AuditLogs = () => {
 
   const { hasAccess: hasAccessToAuditLogs, isLoading: isLoadingEntitlements } =
     useCheckEntitlements('security.audit_logs_days')
+  const canReadAuditLogSurface = canReadAuditLogs || !IS_PLATFORM
+  const hasAuditLogSurfaceAccess = hasAccessToAuditLogs || !IS_PLATFORM
 
   const {
     data,
@@ -83,7 +86,7 @@ export const AuditLogs = () => {
       iso_timestamp_end: dateRange.to,
     },
     {
-      enabled: canReadAuditLogs,
+      enabled: canReadAuditLogSurface,
       retry: false,
       refetchOnWindowFocus: (query) => {
         return !query.state.error?.message.endsWith(logsUpgradeError)
@@ -91,7 +94,7 @@ export const AuditLogs = () => {
     }
   )
 
-  const isLogsNotAvailableBasedOnPlan = isError && !hasAccessToAuditLogs
+  const isLogsNotAvailableBasedOnPlan = IS_PLATFORM && isError && !hasAuditLogSurfaceAccess
   const isRangeExceededError = isError && error.message.includes('range exceeded')
   const showFilters = !isLoading && !isLogsNotAvailableBasedOnPlan
 
@@ -124,10 +127,11 @@ export const AuditLogs = () => {
   )
 
   const shouldShowLoadingState =
-    (isLoading && fetchStatus !== 'idle') || isLoadingPermissions || isLoadingEntitlements
+    (isLoading && fetchStatus !== 'idle') ||
+    (IS_PLATFORM && (isLoadingPermissions || isLoadingEntitlements))
 
   useShortcut(SHORTCUT_IDS.ORG_AUDIT_LOGS_REFRESH, () => refetch(), {
-    enabled: !isLoading && !isRefetching && canReadAuditLogs,
+    enabled: !isLoading && !isRefetching && canReadAuditLogSurface,
   })
 
   // This feature depends on the subscription tier of the user.
@@ -252,7 +256,7 @@ export const AuditLogs = () => {
                 <ShimmeringLoader className="w-3/4" />
                 <ShimmeringLoader className="w-1/2" />
               </div>
-            ) : !canReadAuditLogs ? (
+            ) : !canReadAuditLogSurface ? (
               <NoPermission resourceText="view organization audit logs" />
             ) : null}
 

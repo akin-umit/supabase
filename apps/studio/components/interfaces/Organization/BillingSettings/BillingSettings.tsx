@@ -143,11 +143,11 @@ const SelfHostedBillingSettings = () => {
                 <p className="text-base text-foreground">Self-hosted control plane</p>
                 <p className="text-sm text-foreground-light">
                   Billing, invoices, payment methods, credits, and Supabase Cloud plan changes are
-                  not used in VPS mode. Capacity and paid feature access are managed by the local
-                  operator deployment.
+                  not used in VPS mode. Capacity and paid feature access are managed by the VPS
+                  deployment.
                 </p>
               </div>
-              <Badge variant="warning">Operator-managed</Badge>
+              <Badge variant="warning">VPS-managed</Badge>
             </div>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -166,9 +166,9 @@ const SelfHostedBillingSettings = () => {
             </div>
 
             <p className="text-sm text-foreground-light">
-              Use Organization Usage for local resource telemetry. Runtime-changing actions should
-              go through the audited self-host operator that writes environment and compose changes
-              for the target VPS.
+              Use Organization Usage for local resource telemetry. Runtime-changing actions go
+              through the audited VPS apply worker that writes environment and compose changes for
+              the target project.
             </p>
           </CardContent>
         </Card>

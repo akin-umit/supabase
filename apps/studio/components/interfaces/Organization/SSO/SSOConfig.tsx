@@ -248,7 +248,7 @@ export const SSOConfig = () => {
         <ScaffoldSection isFullWidth>
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-base">Self-hosted SSO is operator managed</h2>
+              <h2 className="text-base">Self-hosted SSO is VPS-managed</h2>
               <p className="text-sm text-foreground-light">
                 Organization SSO is available in self-hosted mode, but it must be backed by a local
                 management bridge before Studio can persist provider metadata, domains, mappings,
