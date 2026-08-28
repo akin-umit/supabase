@@ -44,4 +44,14 @@ describe('normalizeReplicationState', () => {
       destinations: [],
     })
   })
+
+  it('preserves operator-managed state so self-hosted write actions stay disabled', () => {
+    const result = normalizeReplicationState({
+      status: 'operator_managed',
+      wal_level: 'logical',
+      configured: true,
+    })
+
+    expect(result.status).toBe('operator_managed')
+  })
 })

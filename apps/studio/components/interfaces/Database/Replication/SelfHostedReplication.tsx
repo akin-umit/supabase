@@ -107,7 +107,7 @@ export function normalizeReplicationState(
   return {
     walLevel: (data?.walLevel ?? data?.wal_level) ? String(data?.walLevel ?? data?.wal_level) : '',
     configured: data?.configured ?? true,
-    status: data?.status === 'operator_managed' ? 'runtime_managed' : (data?.status ?? 'configured'),
+    status: data?.status ?? 'configured',
     message: data?.message ?? '',
     publications,
     slots,
@@ -136,6 +136,7 @@ export function SelfHostedReplication() {
   const replication = normalizeReplicationState(data)
   const hasLogicalWal = replication.walLevel === 'logical'
   const isUnavailable =
+    replication.status === 'operator_managed' ||
     replication.status === 'unsupported' ||
     replication.status === 'unavailable' ||
     replication.configured === false
