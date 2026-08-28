@@ -14,6 +14,9 @@ vi.mock('@/lib/api/self-hosted/logs', () => ({
       ? { result: [{ timestamp: '2026-08-11T00:00:00.000Z' }] }
       : { result: [] }
   ),
+  getMissingAnalyticsSources: vi.fn((error?: Error) =>
+    error?.message.includes('function_edge_logs') ? ['function_edge_logs'] : []
+  ),
   retrieveAnalyticsData: vi.fn(),
 }))
 
@@ -60,7 +63,30 @@ describe('/api/platform/projects/[ref]/analytics/endpoints/[name]', () => {
     expect(data.result).toEqual([])
     expect(data.self_hosted).toMatchObject({
       degraded: true,
+      missing_sources: [],
       reason: 'LOGFLARE_PRIVATE_ACCESS_TOKEN is required',
+    })
+  })
+
+  it('includes missing self-hosted analytics source names for service-scoped fallback states', async () => {
+    const { retrieveAnalyticsData } = await import('@/lib/api/self-hosted/logs')
+    vi.mocked(retrieveAnalyticsData).mockResolvedValueOnce({
+      data: undefined,
+      error: new Error('Unknown identifier "function_edge_logs" while processing query'),
+    })
+
+    const { req, res } = createMocks({
+      method: 'POST',
+      query: { ref: 'default', name: 'service-health' },
+      body: { sql: 'select 1' },
+    })
+
+    await handler(req, res)
+
+    expect(res._getStatusCode()).toBe(200)
+    expect(JSON.parse(res._getData()).self_hosted).toMatchObject({
+      degraded: true,
+      missing_sources: ['function_edge_logs'],
     })
   })
 })

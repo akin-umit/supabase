@@ -116,6 +116,20 @@ describe('self-hosted Logflare queries', () => {
     expect(error?.message).toBe('LOGFLARE_PRIVATE_ACCESS_TOKEN is required')
   })
 
+  it('extracts missing Logflare source names from recoverable analytics errors', async () => {
+    const { getMissingAnalyticsSources } = await import('./logs')
+
+    expect(
+      getMissingAnalyticsSources(
+        new Error('Unknown identifier "function_edge_logs" while processing query')
+      )
+    ).toEqual(['function_edge_logs'])
+
+    expect(
+      getMissingAnalyticsSources(new Error('LOGFLARE_PRIVATE_ACCESS_TOKEN is required'))
+    ).toEqual([])
+  })
+
   it('builds self-hosted log queries against Logflare source aliases', async () => {
     const { getLogQuery } = await import('./logs')
 

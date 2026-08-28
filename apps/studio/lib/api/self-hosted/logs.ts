@@ -41,6 +41,9 @@ const SERVICE_HEALTH_SOURCES = [
   'etl_replication_logs',
 ] as const
 
+const SOURCE_NAME_PATTERN =
+  /\b(?:logs|source|table|relation|identifier)\b[^"'`]*["'`]([A-Za-z0-9_]+_logs)["'`]/gi
+
 const FUNCTION_STATS_INTERVALS: Record<string, string> = {
   '15min': 'minute',
   '1hr': 'minute',
@@ -141,6 +144,23 @@ export function getEmptyAnalyticsResult(
   }
 
   return { result: [] }
+}
+
+export function getMissingAnalyticsSources(error: Error | undefined) {
+  if (!error?.message) return []
+
+  const sourceNames = new Set<string>()
+  for (const match of error.message.matchAll(SOURCE_NAME_PATTERN)) {
+    sourceNames.add(match[1])
+  }
+
+  for (const source of SERVICE_HEALTH_SOURCES) {
+    if (new RegExp(`\\b${source}\\b`).test(error.message)) sourceNames.add(source)
+  }
+
+  return [...sourceNames].filter((source) =>
+    (SERVICE_HEALTH_SOURCES as readonly string[]).includes(source)
+  )
 }
 
 export function getServiceHealthQuery(params: Record<string, string | string[] | undefined>) {

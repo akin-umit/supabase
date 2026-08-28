@@ -2,7 +2,11 @@ import assert from 'node:assert'
 import { NextApiRequest, NextApiResponse } from 'next'
 
 import { apiWrapper } from '@/lib/api/apiWrapper'
-import { getEmptyAnalyticsResult, retrieveAnalyticsData } from '@/lib/api/self-hosted/logs'
+import {
+  getEmptyAnalyticsResult,
+  getMissingAnalyticsSources,
+  retrieveAnalyticsData,
+} from '@/lib/api/self-hosted/logs'
 
 const analyticsEndpointHandler = (req: NextApiRequest, res: NextApiResponse) =>
   apiWrapper(req, res, handler)
@@ -35,6 +39,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         ...getEmptyAnalyticsResult(name, params),
         self_hosted: {
           degraded: true,
+          missing_sources: getMissingAnalyticsSources(error),
           reason:
             error?.message ||
             'Self-hosted analytics data is waiting for local Logflare and Vector metrics collector data.',

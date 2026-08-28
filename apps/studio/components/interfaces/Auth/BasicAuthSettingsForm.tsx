@@ -164,8 +164,9 @@ export const BasicAuthSettingsForm = () => {
           <Alert className="mb-4">
             <AlertTitle>Self-hosted Auth configuration</AlertTitle>
             <AlertDescription>
-              These controls mirror your current GoTrue environment values. Change them in your
-              deployment environment, then redeploy the Auth service.
+              These controls use the local Auth configuration bridge. Saving changes requires the
+              self-host management API to persist GOTRUE_* settings and apply the Auth runtime;
+              without that bridge, Studio shows the runtime values as read-only.
               {isLoadingAuthRuntime ? (
                 <span className="mt-2 block">Checking runtime source status...</span>
               ) : isAuthRuntimeError ? (

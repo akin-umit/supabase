@@ -265,7 +265,7 @@ export const CustomAuthProvidersList = () => {
         <Admonition
           type="default"
           title="Self-hosted custom provider configuration"
-          description="Custom OAuth/OIDC providers are configured through GoTrue environment variables in self-hosted deployments. Studio reads the supported operator flags here, but provider CRUD remains disabled because self-hosted GoTrue does not expose the Supabase Cloud custom provider management API."
+          description="Custom OAuth/OIDC provider CRUD is unavailable in this self-hosted Studio because the local GoTrue admin API does not expose the hosted custom provider management contract. Studio shows the supported runtime flags here as a read-only state instead of linking to Supabase Cloud."
         />
         <Card>
           <Table>

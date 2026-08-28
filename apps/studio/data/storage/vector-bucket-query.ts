@@ -4,7 +4,7 @@ import { components } from 'api-types'
 import { storageKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { IS_PLATFORM, PROJECT_STATUS } from '@/lib/constants'
+import { PROJECT_STATUS } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 // [Joshen] JFYI typed incorrectly in API, to fix by adding creationTime to APi
@@ -26,16 +26,7 @@ export async function getVectorBucket(
     signal,
   })
 
-  if (error) {
-    if (!IS_PLATFORM) {
-      return {
-        name: vectorBucketName,
-        vectorBucketName,
-        creationTime: new Date(0).toISOString(),
-      } as VectorBucket
-    }
-    handleError(error)
-  }
+  if (error) handleError(error)
   return data as VectorBucket
 }
 

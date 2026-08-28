@@ -17,12 +17,13 @@ const withFilters = (...entries: string[]) => ({ ...baseSearch, filter: entries 
 
 describe('UnifiedLogs.queries (OTEL flat)', () => {
   describe('getUnifiedLogsQuery', () => {
-    it('defaults to postgres + edge log types when none specified', () => {
+    it('defaults to the visible unified log types when none specified', () => {
       const sql = getUnifiedLogsQuery(baseSearch)
       const where = sql.split(/\bWHERE\b/)[1] ?? ''
       expect(where).toContain(`source = 'postgres_logs'`)
       expect(where).toContain(`source = 'edge_logs'`)
-      expect(where).not.toContain(`source = 'postgrest_logs'`)
+      expect(where).toContain(`source = 'postgrest_logs'`)
+      expect(where).toContain(`source = 'storage_logs'`)
     })
 
     it('routes the `postgrest` log type solely to postgrest_logs (mutually exclusive from edge_logs)', () => {
@@ -309,8 +310,9 @@ describe('UnifiedLogs.queries.bq', () => {
 
   it('rejects keys containing spaces', () => {
     const sql = getUnifiedLogsQueryBQ(withFilters('level OR id IS NOT NULL:eq:anything'))
-    expect(sql).not.toContain('IS NOT NULL')
-    expect(sql).not.toContain('level OR')
+    const where = sql.split(/\bFROM unified_logs\b/)[1] ?? ''
+    expect(where).not.toContain('IS NOT NULL')
+    expect(where).not.toContain('level OR')
   })
 
   it('escapes injection attempts in filter values via analyticsLiteral', () => {

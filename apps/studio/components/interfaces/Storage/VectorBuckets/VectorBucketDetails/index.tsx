@@ -73,7 +73,12 @@ export const VectorBucketDetails = () => {
     { enabled: isSuccess && !!_bucket }
   )
 
-  const { data, isPending: isLoadingIndexes } = useVectorBucketsIndexesQuery({
+  const {
+    data,
+    error: indexesError,
+    isError: isErrorIndexes,
+    isPending: isLoadingIndexes,
+  } = useVectorBucketsIndexesQuery({
     projectRef,
     vectorBucketName: bucket?.vectorBucketName,
   })
@@ -155,7 +160,9 @@ export const VectorBucketDetails = () => {
             )}
 
             {state === 'missing' && <WrapperMissing bucketName={bucket?.vectorBucketName} />}
-            {isLoadingIndexes ? (
+            {isErrorIndexes ? (
+              <AlertError subject="Failed to fetch vector bucket indexes" error={indexesError} />
+            ) : isLoadingIndexes ? (
               <GenericSkeletonLoader />
             ) : (
               <Card>

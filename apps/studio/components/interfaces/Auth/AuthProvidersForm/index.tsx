@@ -73,8 +73,9 @@ export const AuthProvidersForm = () => {
           <Alert className="mb-4">
             <AlertTitle>Self-hosted Auth providers</AlertTitle>
             <AlertDescription>
-              Provider states are read from the GoTrue runtime configuration. Update GOTRUE_*
-              environment variables in the deployment, then redeploy Auth.
+              Provider states are read from the local Auth configuration bridge. Saving changes
+              uses the self-host management API to persist GOTRUE_* settings and apply the Auth
+              runtime; without that bridge, Studio shows the runtime values as read-only.
               {isLoadingAuthRuntime ? (
                 <span className="mt-2 block">Checking runtime source status...</span>
               ) : isAuthRuntimeError ? (
