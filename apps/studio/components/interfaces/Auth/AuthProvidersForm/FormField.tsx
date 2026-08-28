@@ -31,7 +31,7 @@ import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 
 import type { Enum } from './AuthProvidersForm.types'
 import { Markdown } from '@/components/interfaces/Markdown'
-import { BASE_PATH } from '@/lib/constants'
+import { BASE_PATH, IS_PLATFORM } from '@/lib/constants'
 
 interface FormFieldProps {
   projectRef: string | undefined
@@ -68,7 +68,9 @@ const FormField = ({
   const fieldValue = useWatch({ control, name })
   if (!hasAccess) {
     const planMessage = organizationSlug
-      ? `Only available on [Pro plan](/org/${organizationSlug}/billing?panel=subscriptionPlan) and above.`
+      ? IS_PLATFORM
+        ? `Only available on [Pro plan](/org/${organizationSlug}/billing?panel=subscriptionPlan) and above.`
+        : 'Available in self-hosted mode when the local Auth runtime bridge is configured.'
       : ''
     description = originalDescription ? `${originalDescription} ${planMessage}` : planMessage
   }

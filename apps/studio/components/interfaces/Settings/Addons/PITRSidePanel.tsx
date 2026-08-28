@@ -60,6 +60,9 @@ const PITRSidePanel = () => {
   const { data: project } = useSelectedProjectQuery()
   const { data: organization } = useSelectedOrganizationQuery()
   const { data: projectSettings } = useProjectSettingsV2Query({ projectRef })
+  const isSelfHostedOrganization =
+    organization?.plan?.name?.toLowerCase() === 'self-hosted' ||
+    organization?.plan?.id?.toLowerCase() === 'self-hosted'
 
   const [selectedCategory, setSelectedCategory] = useState<'on' | 'off'>('off')
   const [selectedOption, setSelectedOption] = useState<string>('pitr_0')
@@ -107,6 +110,8 @@ const PITRSidePanel = () => {
 
   const hasChanges = selectedOption !== (subscriptionPitr?.variant.identifier ?? 'pitr_0')
   const { hasAccess: hasAccessToPitrVariants } = useCheckEntitlements('pitr.available_variants')
+  const canUsePitrVariants = hasAccessToPitrVariants || isSelfHostedOrganization
+  const canSubmitPitr = canUpdatePitr || isSelfHostedOrganization
   const selectedPitr = availableOptions.find((option) => option.identifier === selectedOption)
   const hasSufficientCompute =
     !!subscriptionCompute && subscriptionCompute.variant.identifier !== 'ci_micro'
@@ -148,20 +153,20 @@ const PITRSidePanel = () => {
       onConfirm={onConfirm}
       loading={isLoading || isSubmitting}
       disabled={
-        !hasAccessToPitrVariants ||
+        !canUsePitrVariants ||
         isLoading ||
         !hasChanges ||
         isSubmitting ||
-        !canUpdatePitr ||
-        (!!selectedPitr && !hasSufficientCompute) ||
+        !canSubmitPitr ||
+        (!!selectedPitr && !hasSufficientCompute && !isSelfHostedOrganization) ||
         blockDowngradeDueToHipaa
       }
       tooltip={
         blockDowngradeDueToHipaa
           ? 'Unable to disable PITR with HIPAA add-on'
-          : !hasAccessToPitrVariants
+          : !canUsePitrVariants
             ? 'Unable to enable point in time recovery on your Plan'
-            : !canUpdatePitr
+            : !canSubmitPitr
               ? 'You do not have permission to update PITR'
               : undefined
       }
@@ -189,7 +194,7 @@ const PITRSidePanel = () => {
                     key={option.id}
                     className={cn(
                       'col-span-3 group space-y-1',
-                      !hasAccessToPitrVariants && 'opacity-75'
+                      !canUsePitrVariants && 'opacity-75'
                     )}
                     onClick={() => {
                       setSelectedCategory(option.id)
@@ -261,15 +266,15 @@ const PITRSidePanel = () => {
 
           {selectedCategory === 'on' && (
             <div className="mt-8! pb-4">
-              {!hasAccessToPitrVariants ? (
+              {!canUsePitrVariants ? (
                 <UpgradeToPro
                   className="mb-4"
                   addon="pitr"
-                  primaryText="Changing your Point-In-Time-Recovery is only available on the Pro Plan"
-                  secondaryText="Upgrade your plan to change PITR for your project."
+                  primaryText="Point-In-Time Recovery needs local runtime support"
+                  secondaryText="Configure WAL archiving and backup storage in the self-host management bridge to change PITR for this project."
                   featureProposition="enable PITR"
                 />
-              ) : !hasSufficientCompute ? (
+              ) : !hasSufficientCompute && !isSelfHostedOrganization ? (
                 <UpgradeToPro
                   className="mb-4"
                   addon="computeSize"
@@ -287,7 +292,10 @@ const PITRSidePanel = () => {
                 className="flex flex-wrap gap-3"
                 value={selectedOption}
                 onValueChange={(value) => setSelectedOption(value)}
-                disabled={!hasAccessToPitrVariants || subscriptionCompute === undefined}
+                disabled={
+                  !canUsePitrVariants ||
+                  (!isSelfHostedOrganization && subscriptionCompute === undefined)
+                }
               >
                 {availableOptions.map((option) => (
                   <RadioGroupCardItem
@@ -323,8 +331,8 @@ const PITRSidePanel = () => {
 
           {hasChanges && selectedOption !== 'pitr_0' && (
             <p className="text-sm text-foreground-light">
-              There are no immediate charges. The add-on is billed at the end of your billing cycle
-              based on your usage and prorated to the hour.
+              This updates the local PITR runtime configuration for this project. No Supabase Cloud
+              billing or payment flow is used in self-hosted mode.
             </p>
           )}
         </div>

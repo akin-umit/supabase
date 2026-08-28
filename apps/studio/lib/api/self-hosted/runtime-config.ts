@@ -114,7 +114,11 @@ async function requestRuntimeConfig<TResource extends RuntimeConfigResource>({
   assertSelfHosted()
 
   const baseUrl = process.env.INTERNAL_MANAGEMENT_API_URL
-  const token = process.env.INTERNAL_MANAGEMENT_API_TOKEN
+  const token =
+    method === 'PATCH'
+      ? process.env.INTERNAL_MANAGEMENT_API_WRITE_TOKEN
+      : (process.env.INTERNAL_MANAGEMENT_API_TOKEN ??
+        process.env.INTERNAL_MANAGEMENT_API_WRITE_TOKEN)
 
   if (!baseUrl || !token) {
     throw new RuntimeManagementApiError('Runtime config management API is not configured', 503)

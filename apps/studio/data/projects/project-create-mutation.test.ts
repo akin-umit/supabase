@@ -102,6 +102,11 @@ describe('project-create-mutation', () => {
         body: {
           name: 'Local Project',
           organization_slug: 'default-org-slug',
+          desired_instance_size: 'micro',
+          db_region: 'West US (North California)',
+          data_api_exposed_schemas: undefined,
+          data_api_use_api_schema: undefined,
+          data_api_revoke_default_privileges: undefined,
         },
       })
     })

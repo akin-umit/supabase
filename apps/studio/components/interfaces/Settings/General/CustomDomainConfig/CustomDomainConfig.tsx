@@ -39,9 +39,13 @@ const PlatformCustomDomainConfig = () => {
   const customDomainsDisabledDueToQuota = useFlag('customDomainsDisabledDueToQuota')
 
   const plan = organization?.plan?.id
+  const isSelfHostedOrganization =
+    organization?.plan?.name?.toLowerCase() === 'self-hosted' ||
+    organization?.plan?.id?.toLowerCase() === 'self-hosted'
 
   const { data: addons, isPending: isLoadingAddons } = useProjectAddonsQuery({ projectRef: ref })
-  const hasCustomDomainAddon = !!addons?.selected_addons.find((x) => x.type === 'custom_domain')
+  const hasCustomDomainAddon =
+    isSelfHostedOrganization || !!addons?.selected_addons.find((x) => x.type === 'custom_domain')
 
   const {
     data: customDomainData,
@@ -88,14 +92,18 @@ const PlatformCustomDomainConfig = () => {
             primaryText={
               customDomainsDisabledDueToQuota
                 ? 'New custom domains are temporarily disabled'
-                : 'Custom domains are a Pro Plan add-on'
+                : isSelfHostedOrganization
+                  ? 'Custom domains are managed by the local VPS runtime'
+                  : 'Custom domains are a Pro Plan add-on'
             }
             secondaryText={
               customDomainsDisabledDueToQuota
                 ? 'We are working with our upstream DNS provider before we are able to sign up new custom domains. Please check back in a few hours.'
-                : plan === 'free'
-                  ? 'Paid Plans come with free vanity subdomains or Custom Domains for an additional $10/month per domain.'
-                  : `To configure a custom domain for your ${entityLabel}, please enable the add-on. Each Custom Domain costs $10 per month.`
+                : isSelfHostedOrganization
+                  ? 'Configure the base domain and DNS route in your self-host management bridge.'
+                  : plan === 'free'
+                    ? 'Paid Plans come with free vanity subdomains or Custom Domains for an additional $10/month per domain.'
+                    : `To configure a custom domain for your ${entityLabel}, please enable the add-on. Each Custom Domain costs $10 per month.`
             }
             addon="customDomain"
             source="customDomain"

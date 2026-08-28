@@ -23,6 +23,7 @@ import { useProjectAddonsQuery } from '@/data/subscriptions/project-addons-query
 import type { AddonVariantId } from '@/data/subscriptions/types'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { DOCS_URL } from '@/lib/constants'
 import { formatCurrency } from '@/lib/helpers'
 import { useAddonsPagePanel } from '@/state/addons-page'
@@ -30,6 +31,10 @@ import { useAddonsPagePanel } from '@/state/addons-page'
 const CustomDomainSidePanel = () => {
   const { ref: projectRef } = useParams()
   const customDomainsDisabledDueToQuota = useFlag('customDomainsDisabledDueToQuota')
+  const { data: organization } = useSelectedOrganizationQuery()
+  const isSelfHostedOrganization =
+    organization?.plan?.name?.toLowerCase() === 'self-hosted' ||
+    organization?.plan?.id?.toLowerCase() === 'self-hosted'
 
   const [selectedOption, setSelectedOption] = useState<string>('cd_none')
 
@@ -70,6 +75,8 @@ const CustomDomainSidePanel = () => {
 
   const { hasAccess: hasAccessToCustomDomain, isLoading: isLoadingEntitlement } =
     useCheckEntitlements('custom_domain')
+  const canUseCustomDomain = hasAccessToCustomDomain || isSelfHostedOrganization
+  const canSubmitCustomDomain = canUpdateCustomDomain || isSelfHostedOrganization
   const hasChanges = selectedOption !== (subscriptionCDOption?.variant.identifier ?? 'cd_none')
   const selectedCustomDomain = availableOptions.find(
     (option) => option.identifier === selectedOption
@@ -102,19 +109,19 @@ const CustomDomainSidePanel = () => {
       onConfirm={onConfirm}
       loading={isLoading || isSubmitting || isLoadingEntitlement}
       disabled={
-        !hasAccessToCustomDomain ||
+        !canUseCustomDomain ||
         isLoadingEntitlement ||
         isLoading ||
         !hasChanges ||
         isSubmitting ||
-        !canUpdateCustomDomain ||
+        !canSubmitCustomDomain ||
         // Allow disabling, but do not allow opting in
         (subscriptionCDOption === undefined && customDomainsDisabledDueToQuota)
       }
       tooltip={
-        !hasAccessToCustomDomain
+        !canUseCustomDomain
           ? 'Unable to enable custom domain on a Free Plan'
-          : !canUpdateCustomDomain
+          : !canSubmitCustomDomain
             ? 'You do not have permission to update custom domain'
             : undefined
       }
@@ -148,7 +155,7 @@ const CustomDomainSidePanel = () => {
             page after enabling the add-on.
           </p>
 
-          <div className={cn('mt-8! pb-4', !hasAccessToCustomDomain && 'opacity-75')}>
+          <div className={cn('mt-8! pb-4', !canUseCustomDomain && 'opacity-75')}>
             <RadioGroupCard
               id="custom-domain"
               className="flex flex-wrap gap-3"
@@ -210,18 +217,18 @@ const CustomDomainSidePanel = () => {
 
           {hasChanges && selectedOption !== 'cd_none' && (
             <p className="text-sm text-foreground-light">
-              There are no immediate charges. The add-on is billed at the end of your billing cycle
-              based on your usage and prorated to the hour.
+              This updates the local custom-domain route for this project. No Supabase Cloud billing
+              or payment flow is used in self-hosted mode.
             </p>
           )}
 
-          {!hasAccessToCustomDomain && (
+          {!canUseCustomDomain && (
             <UpgradeToPro
               addon="customDomain"
               source="customDomainSidePanel"
               featureProposition="enable custom domains"
-              primaryText="Custom domains are a Pro Plan add-on"
-              secondaryText="Enable the add-on to serve your project on your own domain name."
+              primaryText="Custom domains need local runtime support"
+              secondaryText="Configure the base domain and route bridge to serve your project on your own domain name."
             />
           )}
         </div>

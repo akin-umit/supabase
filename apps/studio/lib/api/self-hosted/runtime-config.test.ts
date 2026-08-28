@@ -7,7 +7,8 @@ vi.mock('./util', () => ({ assertSelfHosted: vi.fn() }))
 describe('api/self-hosted/runtime-config', () => {
   beforeEach(() => {
     vi.stubEnv('INTERNAL_MANAGEMENT_API_URL', 'http://management.internal/base?secret=yes')
-    vi.stubEnv('INTERNAL_MANAGEMENT_API_TOKEN', 'server-secret')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_TOKEN', 'read-server-secret')
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', 'write-server-secret')
   })
 
   afterEach(() => {
@@ -44,7 +45,7 @@ describe('api/self-hosted/runtime-config', () => {
     expect(url.toString()).toBe('http://management.internal/v1/projects/default/runtime/realtime')
     expect(init).toMatchObject({
       method: 'GET',
-      headers: { Accept: 'application/json', Authorization: 'Bearer server-secret' },
+      headers: { Accept: 'application/json', Authorization: 'Bearer read-server-secret' },
     })
     expect(init?.signal).toBeInstanceOf(AbortSignal)
   })
@@ -74,7 +75,7 @@ describe('api/self-hosted/runtime-config', () => {
       method: 'PATCH',
       headers: {
         Accept: 'application/json',
-        Authorization: 'Bearer server-secret',
+        Authorization: 'Bearer write-server-secret',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ fileSizeLimit: 1048576 }),
@@ -86,6 +87,19 @@ describe('api/self-hosted/runtime-config', () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch')
 
     await expect(getRuntimeConfig('default', 'auth')).rejects.toMatchObject({
+      message: 'Runtime config management API is not configured',
+      statusCode: 503,
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('requires the write token for runtime config patches', async () => {
+    vi.stubEnv('INTERNAL_MANAGEMENT_API_WRITE_TOKEN', '')
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+
+    await expect(
+      updateRuntimeConfig('default', 'auth', { disableSignup: true })
+    ).rejects.toMatchObject({
       message: 'Runtime config management API is not configured',
       statusCode: 503,
     })

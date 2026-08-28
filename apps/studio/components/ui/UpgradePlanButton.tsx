@@ -48,6 +48,9 @@ export const UpgradePlanButton = ({
   const { ref } = useParams()
   const { data: organization } = useSelectedOrganizationQuery()
   const isFreePlan = organization?.plan?.id === 'free'
+  const isSelfHostedOrganization =
+    organization?.plan?.name?.toLowerCase() === 'self-hosted' ||
+    organization?.plan?.id?.toLowerCase() === 'self-hosted'
   const slug = slugParam ?? organization?.slug ?? '_'
 
   const projectUpdateDisabled = useFlag('disableProjectCreationAndUpdate')
@@ -66,7 +69,7 @@ export const UpgradePlanButton = ({
   const isRequestingToDisableSpendCap = addon === 'spendCap'
   const isOnPaidPlanAndRequestingToPurchaseAddon = !isFreePlan && !!addon
 
-  if (!IS_PLATFORM) {
+  if (!IS_PLATFORM || isSelfHostedOrganization) {
     return (
       <ButtonTooltip
         disabled
@@ -75,11 +78,11 @@ export const UpgradePlanButton = ({
         tooltip={{
           content: {
             side: 'bottom',
-            text: 'Self-hosted deployments manage plans, add-ons, quotas, and billing in the operator environment.',
+            text: 'Self-hosted deployments manage this capability through local runtime configuration.',
           },
         }}
       >
-        {children ?? 'Self-host runtime'}
+        {children ?? 'Configure locally'}
       </ButtonTooltip>
     )
   }

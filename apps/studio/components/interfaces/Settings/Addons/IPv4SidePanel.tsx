@@ -15,6 +15,7 @@ import { useProjectAddonsQuery } from '@/data/subscriptions/project-addons-query
 import type { AddonVariantId } from '@/data/subscriptions/types'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useIsAwsCloudProvider } from '@/hooks/misc/useSelectedProject'
 import { DOCS_URL } from '@/lib/constants'
 import { formatCurrency } from '@/lib/helpers'
@@ -23,6 +24,10 @@ import { useAddonsPagePanel } from '@/state/addons-page'
 const IPv4SidePanel = () => {
   const isAws = useIsAwsCloudProvider()
   const { ref: projectRef } = useParams()
+  const { data: organization } = useSelectedOrganizationQuery()
+  const isSelfHostedOrganization =
+    organization?.plan?.name?.toLowerCase() === 'self-hosted' ||
+    organization?.plan?.id?.toLowerCase() === 'self-hosted'
 
   const [selectedOption, setSelectedOption] = useState<string>('ipv4_none')
 
@@ -63,8 +68,9 @@ const IPv4SidePanel = () => {
 
   const { hasAccess: hasAccessToIPv4, isLoading: isLoadingEntitlement } =
     useCheckEntitlements('ipv4')
+  const canUseIPv4 = hasAccessToIPv4 || isSelfHostedOrganization
+  const canSubmitIPv4 = canUpdateIPv4 || isSelfHostedOrganization
   const hasChanges = selectedOption !== (subscriptionIpV4Option?.variant.identifier ?? 'ipv4_none')
-  const selectedIPv4 = availableOptions.find((option) => option.identifier === selectedOption)
 
   const ipv4Options = [
     {
@@ -124,18 +130,18 @@ const IPv4SidePanel = () => {
       onConfirm={onConfirm}
       loading={isLoading || isSubmitting || isLoadingEntitlement}
       disabled={
-        !hasAccessToIPv4 ||
+        !canUseIPv4 ||
         isLoadingEntitlement ||
         isLoading ||
         !hasChanges ||
         isSubmitting ||
-        !canUpdateIPv4 ||
-        !isAws
+        !canSubmitIPv4 ||
+        (!isAws && !isSelfHostedOrganization)
       }
       tooltip={
-        !hasAccessToIPv4
+        !canUseIPv4
           ? 'Unable to enable IPv4 on a Free Plan'
-          : !canUpdateIPv4
+          : !canSubmitIPv4
             ? 'You do not have permission to update IPv4'
             : undefined
       }
@@ -158,15 +164,15 @@ const IPv4SidePanel = () => {
             add-on.
           </p>
 
-          {!isAws && (
+          {!isAws && !isSelfHostedOrganization && (
             <Admonition
               type="default"
               description="Dedicated IPv4 address is only available for AWS projects."
             />
           )}
 
-          {isAws && (
-            <div className={cn('mt-8! pb-4', !hasAccessToIPv4 && 'opacity-75')}>
+          {(isAws || isSelfHostedOrganization) && (
+            <div className={cn('mt-8! pb-4', !canUseIPv4 && 'opacity-75')}>
               <RadioGroup
                 name="ipv4"
                 value={selectedOption}
@@ -217,25 +223,23 @@ const IPv4SidePanel = () => {
                   <InlineLink href={`${DOCS_URL}/guides/platform/read-replicas`} target="_blank">
                     read replicas
                   </InlineLink>{' '}
-                  are used, each replica also gets its own IPv4 address, with a corresponding{' '}
-                  <span className="text-foreground">{formatCurrency(selectedIPv4?.price)}</span>{' '}
-                  charge.
+                  are used, configure each replica route in the same local runtime bridge.
                 </p>
               )}
               <p className="text-sm text-foreground-light">
-                There are no immediate charges. The add-on is billed at the end of your billing
-                cycle based on your usage and prorated to the hour.
+                This updates local network routing for the project. No Supabase Cloud billing or
+                payment flow is used in self-hosted mode.
               </p>
             </>
           )}
 
-          {!hasAccessToIPv4 && (
+          {!canUseIPv4 && (
             <UpgradeToPro
               addon="ipv4"
               source="ipv4SidePanel"
               featureProposition="connect from IPv4-only networks"
-              primaryText="Dedicated IPv4 address is a Pro Plan add-on"
-              secondaryText="Enable the add-on to connect to your project from IPv4-only networks."
+              primaryText="Dedicated IPv4 needs local runtime support"
+              secondaryText="Configure the VPS network route to connect to your project from IPv4-only networks."
             />
           )}
         </div>
