@@ -98,7 +98,14 @@ const handleCreate = async (req: NextApiRequest, res: NextApiResponse) => {
     })) as { project?: Record<string, unknown>; job?: Record<string, unknown> }
 
     const project = payload.project ?? {}
-    const projectRef = typeof project.ref === 'string' ? project.ref : ref
+    if (typeof project.ref !== 'string' || !PROJECT_REF_PATTERN.test(project.ref)) {
+      throw new SelfHostedManagementError(
+        'Project provisioning was accepted but no project record was returned. Check the local management API jobs and Coolify deployment state.',
+        502
+      )
+    }
+
+    const projectRef = project.ref
     const apiHostname = typeof project.apiHostname === 'string' ? project.apiHostname : undefined
 
     return res.status(202).json({

@@ -26,3 +26,15 @@ export const getNamespaceTableNameFromPostgresTableName = (table: {
 export const getAnalyticsBucketsDestinationName = (bucketId: string) => {
   return `${snakeCase(bucketId)}_destination`
 }
+
+export const getAnalyticsNamespaceDefaultTargetSchema = (namespace: string) => {
+  return `fdw_analytics_${namespace.replaceAll('-', '_')}`
+}
+
+export const hasAnalyticsNamespaceSchemaClash = (
+  schemas: { name?: string }[] | undefined,
+  targetSchema: string
+) => {
+  if (!schemas) return true
+  return schemas.some((schema) => schema.name === targetSchema)
+}

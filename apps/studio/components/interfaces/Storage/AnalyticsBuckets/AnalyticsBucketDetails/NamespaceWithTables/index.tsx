@@ -25,13 +25,18 @@ import {
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 
 import { HIDE_REPLICATION_USER_FLOW } from '../AnalyticsBucketDetails.constants'
-import { getNamespaceTableNameFromPostgresTableName } from '../AnalyticsBucketDetails.utils'
+import {
+  getAnalyticsNamespaceDefaultTargetSchema,
+  getNamespaceTableNameFromPostgresTableName,
+  hasAnalyticsNamespaceSchemaClash,
+} from '../AnalyticsBucketDetails.utils'
 import { InitializeForeignSchemaDialog } from '../InitializeForeignSchemaDialog'
 import { UpdateForeignSchemaDialog } from '../UpdateForeignSchemaDialog'
 import { useAnalyticsBucketAssociatedEntities } from '../useAnalyticsBucketAssociatedEntities'
 import { TableRowComponent } from './TableRowComponent'
 import { FormattedWrapperTable } from '@/components/interfaces/Integrations/Wrappers/Wrappers.utils'
 import { ImportForeignSchemaDialog } from '@/components/interfaces/Storage/ImportForeignSchemaDialog'
+import { useSchemasQuery } from '@/data/database/schemas-query'
 import { useFDWDropForeignTableMutation } from '@/data/fdw/fdw-drop-foreign-table-mutation'
 import { useFDWImportForeignSchemaMutation } from '@/data/fdw/fdw-import-foreign-schema-mutation'
 import { useIcebergNamespaceDeleteMutation } from '@/data/storage/iceberg-namespace-delete-mutation'
@@ -61,6 +66,7 @@ export const NamespaceWithTables = ({
 }: NamespaceWithTablesProps) => {
   const { ref: projectRef, bucketId } = useParams()
   const { data: project } = useSelectedProjectQuery()
+  const { data: schemas } = useSchemasQuery({ projectRef })
   const [importForeignSchemaShown, setImportForeignSchemaShown] = useState(false)
   const [showConfirmDeleteNamespace, setShowConfirmDeleteNamespace] = useState(false)
   const [isDeletingNamespace, setIsDeletingNamespace] = useState(false)
@@ -153,25 +159,16 @@ export const NamespaceWithTables = ({
     }))
   }, [tables, missingTables])
 
-  // Determine if schema is valid (no clashes with Postgres schema)
-  // TODO: Replace with actual clash check logic
-  const validSchema = useMemo(() => {
-    // If schema exists and has tables, it's always valid
-    if (schema && tables.length > 0) return true
-
-    // For uploaded namespaces without tables, check for clashes against incoming schema (namespace name)
-    // TODO: Replace with actual clash check against Postgres schema
-    const hasClashes = false // Mock: no clashes for now
-
-    // Show incoming schema if no clashes (even without tables)
-    return !hasClashes
-  }, [schema, tables.length])
-
   const displaySchema = useMemo(() => {
     // If we have a target schema, use it, otherwise show the incoming schema (namespace name)
     if (schema) return schema
-    return `fdw_analytics_${namespace.replaceAll('-', '_')}`
+    return getAnalyticsNamespaceDefaultTargetSchema(namespace)
   }, [schema, namespace])
+
+  const validSchema = useMemo(() => {
+    if (schema && tables.length > 0) return true
+    return !hasAnalyticsNamespaceSchemaClash(schemas, displaySchema)
+  }, [displaySchema, schema, schemas, tables.length])
 
   const onConfirmDeleteNamespace = async () => {
     if (!bucketId) return console.error('Bucket ID is required')

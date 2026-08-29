@@ -9,6 +9,7 @@ import { ProductMenuShortcuts } from '@/components/ui/ProductMenu/ProductMenuSho
 import { convertSectionsToProductMenu } from '@/components/ui/ProductMenu/SubMenu.utils'
 import { useCurrentPath } from '@/hooks/misc/useCurrentPath'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 
 interface OrganizationSettingsMenuItemsProps {
@@ -249,10 +250,10 @@ export function OrganizationSettingsLayout({ children }: PropsWithChildren) {
   const sections = generateOrganizationSettingsSections({
     currentPath,
     slug,
-    showSecuritySettings,
-    showSsoSettings,
-    showLegalDocuments,
-    showPlatformWebhooks,
+    showSecuritySettings: !IS_PLATFORM || showSecuritySettings,
+    showSsoSettings: !IS_PLATFORM || showSsoSettings,
+    showLegalDocuments: !IS_PLATFORM || showLegalDocuments,
+    showPlatformWebhooks: !IS_PLATFORM || showPlatformWebhooks,
     showPrivateApps,
     showAuditLogDrains,
   })

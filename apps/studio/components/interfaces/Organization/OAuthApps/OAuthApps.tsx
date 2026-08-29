@@ -40,6 +40,7 @@ import { AuthorizedApp, useAuthorizedAppsQuery } from '@/data/oauth/authorized-a
 import { OAuthAppCreateResponse } from '@/data/oauth/oauth-app-create-mutation'
 import { OAuthApp, useOAuthAppsQuery } from '@/data/oauth/oauth-apps-query'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 
 // [Joshen] Note on nav UX
@@ -71,6 +72,60 @@ const toggleSort = <S extends string>(
 }
 
 export const OAuthApps = () => {
+  const { data: organization } = useSelectedOrganizationQuery()
+
+  if (organization === undefined) {
+    return (
+      <PageContainer size="default" className="pb-16">
+        <PageSection className="pt-12">
+          <PageSectionContent className="space-y-2">
+            <ShimmeringLoader />
+            <ShimmeringLoader className="w-3/4" />
+            <ShimmeringLoader className="w-1/2" />
+          </PageSectionContent>
+        </PageSection>
+      </PageContainer>
+    )
+  }
+
+  if (organization?.integration_source === 'self-hosted') {
+    return <SelfHostedOAuthApps />
+  }
+
+  return <CloudOAuthApps />
+}
+
+const SelfHostedOAuthApps = () => {
+  return (
+    <PageContainer size="default" className="pb-16">
+      <PageSection id="self-hosted-oauth-apps" className="pt-12">
+        <PageSectionMeta>
+          <PageSectionSummary>
+            <PageSectionTitle>OAuth Apps</PageSectionTitle>
+            <PageSectionDescription>
+              Supabase Cloud OAuth app registry is not used by this self-hosted deployment
+            </PageSectionDescription>
+          </PageSectionSummary>
+        </PageSectionMeta>
+        <PageSectionContent>
+          <Card>
+            <div className="space-y-3 p-6">
+              <p className="text-base text-foreground">Self-hosted OAuth app registry required</p>
+              <p className="text-sm text-foreground-light">
+                Publishing, editing, revoking, and listing organization OAuth apps require a local
+                management bridge that persists client metadata, secrets, grants, and audit events
+                for this VPS. Studio does not call Supabase Cloud OAuth APIs in self-hosted mode and
+                will not show a fake empty registry.
+              </p>
+            </div>
+          </Card>
+        </PageSectionContent>
+      </PageSection>
+    </PageContainer>
+  )
+}
+
+const CloudOAuthApps = () => {
   const { slug } = useParams()
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [createdApp, setCreatedApp] = useState<OAuthAppCreateResponse>()

@@ -30,6 +30,7 @@ import { useOrganizationsQuery } from '@/data/organizations/organizations-query'
 import { useOrgProjectsInfiniteQuery } from '@/data/projects/org-projects-infinite-query'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
+import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { IS_PLATFORM } from '@/lib/constants'
 import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import { useShortcut } from '@/state/shortcuts/useShortcut'
@@ -43,6 +44,49 @@ const logsUpgradeError = 'upgrade to Team or Enterprise Plan to access audit log
 //   - Maybe a rule to follow from here is just everytime we call dayjs, use UTC(), one TZ to rule them all
 
 export const AuditLogs = () => {
+  const { data: organization } = useSelectedOrganizationQuery()
+
+  if (organization === undefined) {
+    return (
+      <ScaffoldContainer className="px-6 xl:px-10">
+        <ScaffoldSection isFullWidth>
+          <div className="space-y-2">
+            <ShimmeringLoader />
+            <ShimmeringLoader className="w-3/4" />
+            <ShimmeringLoader className="w-1/2" />
+          </div>
+        </ScaffoldSection>
+      </ScaffoldContainer>
+    )
+  }
+
+  if (organization?.integration_source === 'self-hosted') {
+    return <SelfHostedAuditLogs />
+  }
+
+  return <CloudAuditLogs />
+}
+
+const SelfHostedAuditLogs = () => {
+  return (
+    <ScaffoldContainer className="px-6 xl:px-10">
+      <ScaffoldSection isFullWidth>
+        <Alert>
+          <WarningIcon />
+          <AlertTitle>Self-hosted audit log bridge required</AlertTitle>
+          <AlertDescription>
+            Organization audit logs are a Supabase Cloud control-plane feature. This Studio build
+            does not call Cloud audit log APIs for self-hosted organizations and will not display a
+            fake empty audit history. Connect a local management bridge that records organization
+            events, actor metadata, retention, filters, and export jobs to enable this page.
+          </AlertDescription>
+        </Alert>
+      </ScaffoldSection>
+    </ScaffoldContainer>
+  )
+}
+
+const CloudAuditLogs = () => {
   const { slug } = useParams()
   const currentTime = dayjs().utc().set('millisecond', 0)
 

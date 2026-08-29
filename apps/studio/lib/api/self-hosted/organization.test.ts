@@ -13,9 +13,23 @@ import {
   updateSelfHostedOrganization,
 } from './organization'
 
+vi.mock('@/lib/api/self-hosted/management', () => ({
+  SelfHostedManagementError: class SelfHostedManagementError extends Error {
+    constructor(
+      message: string,
+      public statusCode = 500
+    ) {
+      super(message)
+      this.name = 'SelfHostedManagementError'
+    }
+  },
+  requestSelfHostedManagementRoot: vi.fn(),
+}))
+
 describe('api/self-hosted/organization', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
+    vi.clearAllMocks()
   })
 
   it('returns a self-hosted organization without Cloud billing requirements', async () => {
@@ -104,6 +118,47 @@ describe('api/self-hosted/organization', () => {
     ).resolves.toMatchObject({
       name: 'Aqenta Local',
       slug: 'default-org-slug',
+    })
+  })
+
+  it('merges local management registry projects into organization project lists', async () => {
+    const { requestSelfHostedManagementRoot } = await import('@/lib/api/self-hosted/management')
+    vi.mocked(requestSelfHostedManagementRoot).mockResolvedValueOnce({
+      projects: [
+        {
+          ref: 'aqenta-admin',
+          name: 'Aqenta Admin',
+          status: 'running',
+          desiredInstanceSize: 'medium',
+          region: 'local-vps',
+          studioHostname: 'aqenta-admin.aqenta.com.tr',
+          apiHostname: 'api.aqenta-admin.aqenta.com.tr',
+          createdAt: '2026-08-29T00:00:00.000Z',
+        },
+      ],
+    })
+
+    await expect(
+      getSelfHostedOrganizationProjects({ limit: 10, offset: 0, search: 'aqenta-admin' })
+    ).resolves.toMatchObject({
+      projects: [
+        {
+          ref: 'aqenta-admin',
+          name: 'Aqenta Admin',
+          status: 'ACTIVE_HEALTHY',
+          cloud_provider: 'self-hosted',
+          databases: [
+            {
+              identifier: 'aqenta-admin',
+              infra_compute_size: 'medium',
+            },
+          ],
+          app_config: {
+            custom_domains: ['aqenta-admin.aqenta.com.tr', 'api.aqenta-admin.aqenta.com.tr'],
+          },
+        },
+      ],
+      pagination: { count: 1, limit: 10, offset: 0 },
     })
   })
 })

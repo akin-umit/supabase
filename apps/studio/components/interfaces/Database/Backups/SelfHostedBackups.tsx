@@ -19,10 +19,12 @@ type Backup = {
   earliestRestoreAt?: string
   latestRestoreAt?: string
 }
-type BackupResponse = {
+export type BackupResponse = {
   backups?: Backup[]
   schedule?: string
   configured?: boolean
+  status?: 'configured' | 'operator_managed' | 'unsupported' | 'unavailable'
+  message?: string
   pitr?: { enabled?: boolean }
 }
 
@@ -48,6 +50,9 @@ export const isSelfHostedManagementUnavailable = (error: unknown) => {
     message.includes('upstream_operation_failed')
   )
 }
+
+export const isBackupRuntimeConfigured = (data: BackupResponse | undefined) =>
+  data?.configured === true
 
 export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'restore' }) {
   const { ref } = useParams()
@@ -106,7 +111,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
   }
 
   if (mode === 'pitr') {
-    const pitrEnabled = Boolean(data?.pitr?.enabled ?? data?.configured)
+    const pitrEnabled = isBackupRuntimeConfigured(data) && data?.pitr?.enabled === true
 
     return (
       <Card className="p-6 space-y-5">
@@ -156,14 +161,16 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
         <div>
           <h3 className="text-lg">{mode === 'restore' ? 'Restore to new project' : 'Backups'}</h3>
           <p className="text-sm text-foreground-light">
-            {data?.schedule ? `Schedule: ${data.schedule}` : 'Verified database recovery points'}
+            {isBackupRuntimeConfigured(data) && data?.schedule
+              ? `Schedule: ${data.schedule}`
+              : 'Verified database recovery points'}
           </p>
         </div>
         {mode === 'scheduled' && (
           <Button
             icon={<Play />}
             loading={run.isPending}
-            disabled={data?.configured === false}
+            disabled={!isBackupRuntimeConfigured(data)}
             onClick={() => act(run.mutateAsync({}), 'Backup job queued')}
           >
             Back up now
@@ -172,7 +179,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
       </div>
       {isPending ? (
         <Card className="p-6 text-sm text-foreground-light">Loading backups...</Card>
-      ) : data?.configured === false ? (
+      ) : !isBackupRuntimeConfigured(data) ? (
         <Card className="p-6 space-y-2 text-sm text-foreground-light">
           <p>Backup job runner is not configured.</p>
           <p>
@@ -180,6 +187,7 @@ export function SelfHostedBackups({ mode }: { mode: 'scheduled' | 'pitr' | 'rest
             runtime. Studio will enable backup actions when the management API reports this project
             as configured.
           </p>
+          {data?.message && <p className="text-xs text-foreground-lighter">{data.message}</p>}
         </Card>
       ) : data?.backups?.length ? (
         data.backups.map((backup) => (

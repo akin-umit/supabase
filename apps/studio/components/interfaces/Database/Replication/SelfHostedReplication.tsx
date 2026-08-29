@@ -106,8 +106,8 @@ export function normalizeReplicationState(
 
   return {
     walLevel: (data?.walLevel ?? data?.wal_level) ? String(data?.walLevel ?? data?.wal_level) : '',
-    configured: data?.configured ?? true,
-    status: data?.status ?? 'configured',
+    configured: data?.configured === true,
+    status: data?.status ?? (data === undefined ? 'unavailable' : 'configured'),
     message: data?.message ?? '',
     publications,
     slots,
@@ -337,6 +337,7 @@ export function SelfHostedReplication() {
             <Button
               variant="default"
               icon={<Trash2 />}
+              disabled={isUnavailable}
               loading={remove.isPending}
               onClick={async () => {
                 try {

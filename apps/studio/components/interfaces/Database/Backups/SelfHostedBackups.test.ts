@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatManagementError, isSelfHostedManagementUnavailable } from './SelfHostedBackups'
+import {
+  formatManagementError,
+  isBackupRuntimeConfigured,
+  isSelfHostedManagementUnavailable,
+} from './SelfHostedBackups'
 
 describe('self-hosted backup helpers', () => {
   it('turns upstream backup worker failures into runtime guidance', () => {
@@ -22,5 +26,12 @@ describe('self-hosted backup helpers', () => {
 
     expect(formatManagementError(error)).toBe('permission denied')
     expect(isSelfHostedManagementUnavailable(error)).toBe(false)
+  })
+
+  it('requires an explicit configured flag before enabling backup writes', () => {
+    expect(isBackupRuntimeConfigured(undefined)).toBe(false)
+    expect(isBackupRuntimeConfigured({})).toBe(false)
+    expect(isBackupRuntimeConfigured({ configured: false })).toBe(false)
+    expect(isBackupRuntimeConfigured({ configured: true })).toBe(true)
   })
 })

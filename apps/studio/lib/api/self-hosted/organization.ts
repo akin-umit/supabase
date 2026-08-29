@@ -1,4 +1,8 @@
 import { DEFAULT_PROJECT } from '@/lib/constants/api'
+import {
+  requestSelfHostedManagementRoot,
+  SelfHostedManagementError,
+} from '@/lib/api/self-hosted/management'
 
 const ORGANIZATION_ID = 1
 const ORGANIZATION_SLUG = 'default-org-slug'
@@ -107,16 +111,23 @@ export async function getSelfHostedOrganizationProjects({
   statuses?: string
   sort?: string
 }) {
-  const project = getSelfHostedProject()
+  const registryProjects = await getSelfHostedProjectRegistry()
+  const projectsFromRegistry = registryProjects.map(mapRegistryProject)
+  const defaultProject = getSelfHostedProject()
+  const projectsWithDefault = projectsFromRegistry.some((project) => project.ref === defaultProject.ref)
+    ? projectsFromRegistry
+    : [defaultProject, ...projectsFromRegistry]
   const statusFilter = statuses ? new Set(statuses.split(',').filter(Boolean)) : undefined
-  const matchesSearch =
-    !search ||
-    project.name.toLowerCase().includes(search.toLowerCase()) ||
-    project.ref.toLowerCase().includes(search.toLowerCase())
-  const matchesStatus = !statusFilter || statusFilter.has(project.status)
-
-  const projects = matchesSearch && matchesStatus ? [project] : []
-  const sorted = [...projects].sort((a, b) => {
+  const projects = projectsWithDefault.filter((project) => {
+    const matchesSearch =
+      !search ||
+      project.name.toLowerCase().includes(search.toLowerCase()) ||
+      project.ref.toLowerCase().includes(search.toLowerCase()) ||
+      getProjectHostnames(project).some((hostname) => hostname.includes(search.toLowerCase()))
+    const matchesStatus = !statusFilter || statusFilter.has(project.status)
+    return matchesSearch && matchesStatus
+  })
+  const sorted = projects.sort((a, b) => {
     if (sort === 'name_desc') return b.name.localeCompare(a.name)
     if (sort === 'created_asc') return a.inserted_at.localeCompare(b.inserted_at)
     if (sort === 'created_desc') return b.inserted_at.localeCompare(a.inserted_at)
@@ -131,6 +142,84 @@ export async function getSelfHostedOrganizationProjects({
       offset,
     },
   }
+}
+
+async function getSelfHostedProjectRegistry() {
+  try {
+    const payload = (await requestSelfHostedManagementRoot({
+      resource: ['projects'],
+      method: 'GET',
+    })) as { projects?: unknown }
+
+    return payload && Array.isArray(payload.projects)
+      ? payload.projects.filter(
+          (project): project is Record<string, unknown> =>
+            project !== null && typeof project === 'object'
+        )
+      : []
+  } catch (error) {
+    if (error instanceof SelfHostedManagementError) return []
+    throw error
+  }
+}
+
+function mapRegistryProject(project: Record<string, unknown>) {
+  const ref = typeof project.ref === 'string' && project.ref.trim() ? project.ref.trim() : 'default'
+  const name = typeof project.name === 'string' && project.name.trim() ? project.name.trim() : ref
+  const insertedAt =
+    typeof project.createdAt === 'string' ? project.createdAt : DEFAULT_PROJECT.inserted_at || nowIso()
+  const status = mapRegistryStatus(project.status)
+  const desiredInstanceSize =
+    typeof project.desiredInstanceSize === 'string' && project.desiredInstanceSize.trim()
+      ? project.desiredInstanceSize.trim()
+      : 'local-vps'
+
+  return {
+    ...DEFAULT_PROJECT,
+    ref,
+    name,
+    organization_id: ORGANIZATION_ID,
+    cloud_provider: 'self-hosted',
+    status,
+    region: typeof project.region === 'string' ? project.region : 'local-vps',
+    inserted_at: insertedAt,
+    updated_at: typeof project.updatedAt === 'string' ? project.updatedAt : insertedAt,
+    app_config: {
+      custom_domains: getProjectHostnames(project),
+    },
+    databases: [
+      {
+        identifier: ref,
+        infra_compute_size: desiredInstanceSize,
+        status: status === 'ACTIVE_HEALTHY' ? 'ACTIVE_HEALTHY' : status,
+      },
+    ],
+  }
+}
+
+function mapRegistryStatus(status: unknown) {
+  switch (status) {
+    case 'running':
+      return 'ACTIVE_HEALTHY'
+    case 'degraded':
+      return 'ACTIVE_UNHEALTHY'
+    case 'stopped':
+      return 'INACTIVE'
+    case 'failed':
+      return 'INIT_FAILED'
+    case 'deprovisioning':
+      return 'GOING_DOWN'
+    case 'provisioning':
+      return 'COMING_UP'
+    default:
+      return 'UNKNOWN'
+  }
+}
+
+function getProjectHostnames(project: Record<string, unknown>) {
+  return [project.studioHostname, project.apiHostname]
+    .filter((hostname): hostname is string => typeof hostname === 'string')
+    .map((hostname) => hostname.toLowerCase())
 }
 
 export async function updateSelfHostedOrganization(body: Record<string, unknown>) {

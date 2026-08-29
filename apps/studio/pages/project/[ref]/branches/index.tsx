@@ -1,10 +1,10 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { useParams } from 'common'
 import { partition } from 'lodash'
-import { MessageCircle } from 'lucide-react'
+import { GitBranch, MessageCircle } from 'lucide-react'
 import { useRouter } from 'next/router'
 import { useState, type PropsWithChildren } from 'react'
-import { Button } from 'ui'
+import { Button, Card } from 'ui'
 
 import { DeleteBranchModal } from '@/components/interfaces/BranchManagement/DeleteBranchModal'
 import { Overview } from '@/components/interfaces/BranchManagement/Overview'
@@ -21,12 +21,16 @@ import { useGitHubConnectionsQuery } from '@/data/integrations/github-connection
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
+import { DOCS_URL, IS_PLATFORM } from '@/lib/constants'
 import { useTrack } from '@/lib/telemetry/track'
 import { useAppStateSnapshot } from '@/state/app-state'
 import type { NextPageWithLayout } from '@/types'
 
 const BranchesPage: NextPageWithLayout = () => {
+  return IS_PLATFORM ? <PlatformBranchesPage /> : <SelfHostedBranchesPage />
+}
+
+const PlatformBranchesPage = () => {
   const router = useRouter()
   const { ref } = useParams()
   const snap = useAppStateSnapshot()
@@ -151,10 +155,40 @@ const BranchesPage: NextPageWithLayout = () => {
   )
 }
 
+const SelfHostedBranchesPage = () => {
+  return (
+    <ScaffoldContainer>
+      <ScaffoldSection>
+        <Card className="col-span-12 p-6">
+          <div className="flex items-start gap-3">
+            <GitBranch className="mt-0.5 text-foreground-light" />
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Database branching is operator-managed</p>
+              <p className="text-sm text-foreground-light">
+                Preview branches depend on Supabase Cloud orchestration, GitHub integration, and
+                platform database cloning APIs. This self-hosted Studio does not expose those write
+                controls until a VPS branching backend is configured.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </ScaffoldSection>
+    </ScaffoldContainer>
+  )
+}
+
 // Hoisted out of `getLayout` so the TanStack route can import it
 // directly. Same shape and identical body as before — accepts the page
 // content as `children` instead of capturing it from a closure.
 export const BranchesPageWrapper = ({ children }: PropsWithChildren) => {
+  return IS_PLATFORM ? (
+    <PlatformBranchesPageWrapper>{children}</PlatformBranchesPageWrapper>
+  ) : (
+    <SelfHostedBranchesPageWrapper>{children}</SelfHostedBranchesPageWrapper>
+  )
+}
+
+const PlatformBranchesPageWrapper = ({ children }: PropsWithChildren) => {
   const snap = useAppStateSnapshot()
   const { can: canCreateBranches } = useAsyncCheckPermissions(
     PermissionAction.CREATE,
@@ -207,6 +241,17 @@ export const BranchesPageWrapper = ({ children }: PropsWithChildren) => {
       subtitle="Manage your database preview branches and deployments"
       primaryActions={primaryActions}
       secondaryActions={secondaryActions}
+    >
+      {children}
+    </PageLayout>
+  )
+}
+
+const SelfHostedBranchesPageWrapper = ({ children }: PropsWithChildren) => {
+  return (
+    <PageLayout
+      title="Database branching"
+      subtitle="Database preview branches require a Cloud control plane or an operator-provided self-host branching backend"
     >
       {children}
     </PageLayout>

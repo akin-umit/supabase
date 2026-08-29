@@ -33,15 +33,25 @@ describe('normalizeReplicationState', () => {
     expect(result.destinations[0].status).toBe('active')
   })
 
-  it('falls back to a configured empty state for partial responses', () => {
+  it('falls back to an unavailable state when the runtime returns no data', () => {
     const result = normalizeReplicationState(undefined)
 
     expect(result).toMatchObject({
-      configured: true,
-      status: 'configured',
+      configured: false,
+      status: 'unavailable',
       publications: [],
       slots: [],
       destinations: [],
+    })
+  })
+
+  it('keeps partial responses read-only until the runtime reports configured', () => {
+    const result = normalizeReplicationState({ wal_level: 'logical' })
+
+    expect(result).toMatchObject({
+      configured: false,
+      status: 'configured',
+      walLevel: 'logical',
     })
   })
 
