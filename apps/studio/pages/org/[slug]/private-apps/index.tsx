@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { Button } from 'ui'
+import { Alert, AlertDescription, AlertTitle, Button, WarningIcon } from 'ui'
 import { PageContainer } from 'ui-patterns/PageContainer'
 import {
   PageHeader,
@@ -33,7 +33,7 @@ import { SHORTCUT_IDS } from '@/state/shortcuts/registry'
 import type { NextPageWithLayout } from '@/types'
 
 function PrivateAppsContent() {
-  const { apps, isLoading } = usePrivateApps()
+  const { apps, isLoading, isSelfHosted } = usePrivateApps()
   const [showCreate, setShowCreate] = useState(false)
 
   return (
@@ -78,19 +78,33 @@ function PrivateAppsContent() {
             )}
           </PageSectionMeta>
           <PageSectionContent>
-            <AppsList
-              onCreateApp={() => setShowCreate(true)}
-              createShortcutId={SHORTCUT_IDS.ORG_PRIVATE_APPS_CREATE}
-            />
+            {isSelfHosted ? (
+              <Alert>
+                <WarningIcon />
+                <AlertTitle>Self-hosted private app bridge required</AlertTitle>
+                <AlertDescription>
+                  Private app registration and scoped access token issuance require a local
+                  management bridge for this VPS. Studio does not call Supabase Cloud private app
+                  APIs in self-hosted mode and will not create temporary in-browser app records.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <AppsList
+                onCreateApp={() => setShowCreate(true)}
+                createShortcutId={SHORTCUT_IDS.ORG_PRIVATE_APPS_CREATE}
+              />
+            )}
           </PageSectionContent>
         </PageSection>
       </PageContainer>
 
-      <CreateAppSheet
-        visible={showCreate}
-        onClose={() => setShowCreate(false)}
-        onCreated={() => setShowCreate(false)}
-      />
+      {!isSelfHosted && (
+        <CreateAppSheet
+          visible={showCreate}
+          onClose={() => setShowCreate(false)}
+          onCreated={() => setShowCreate(false)}
+        />
+      )}
     </>
   )
 }

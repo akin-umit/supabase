@@ -13,6 +13,7 @@ interface PrivateAppsContextValue {
   apps: PrivateApp[]
   isLoading: boolean
   isLoadingInstallations: boolean
+  isSelfHosted: boolean
   installations: Installation[]
   addInstallation: (
     data: components['schemas']['InstallPlatformAppResponse'],
@@ -27,13 +28,17 @@ const PrivateAppsContext = createContext<PrivateAppsContextValue | null>(null)
 export function PrivateAppsProvider({ children }: PropsWithChildren) {
   const { data: org } = useSelectedOrganizationQuery()
   const slug = org?.slug
+  const isSelfHosted = org?.integration_source === 'self-hosted'
 
-  const { data: appsData, isLoading } = usePlatformAppsQuery({ slug })
+  const { data: appsData, isLoading } = usePlatformAppsQuery(
+    { slug },
+    { enabled: !isSelfHosted }
+  )
   const {
     data: installationsData,
     isLoading: isLoadingInstallations,
     isError: installationsError,
-  } = usePlatformAppInstallationsQuery({ slug }, { retry: false })
+  } = usePlatformAppInstallationsQuery({ slug }, { enabled: !isSelfHosted, retry: false })
 
   // Local state fallback when GET installations endpoint is unavailable
   const [localInstallations, setLocalInstallations] = useState<Installation[]>([])
@@ -68,8 +73,9 @@ export function PrivateAppsProvider({ children }: PropsWithChildren) {
       value={{
         slug,
         apps: appsData?.apps ?? [],
-        isLoading: isLoading || !slug,
-        isLoadingInstallations: isLoadingInstallations || !slug,
+        isLoading: isSelfHosted ? false : isLoading || !slug,
+        isLoadingInstallations: isSelfHosted ? false : isLoadingInstallations || !slug,
+        isSelfHosted,
         installations,
         addInstallation,
         removeInstallation,
