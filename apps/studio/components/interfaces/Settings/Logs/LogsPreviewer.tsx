@@ -1,4 +1,4 @@
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import dayjs from 'dayjs'
 import { Rewind } from 'lucide-react'
 import { useRouter } from 'next/router'
@@ -210,7 +210,7 @@ export const LogsPreviewer = ({
   }
 
   const { getEntitlementNumericValue } = useCheckEntitlements('log.retention_days')
-  const entitledToAuditLogDays = getEntitlementNumericValue()
+  const entitledToAuditLogDays = IS_PLATFORM ? getEntitlementNumericValue() : undefined
 
   const handleSearch: LogSearchCallback = async (event, { query, to, from }) => {
     if (event === 'search-input-change') {

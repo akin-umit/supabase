@@ -3,7 +3,7 @@ export const LOGS_API_MOCKS = {
     {
       id: 'uuid',
       event_message: 'foobar',
-      timestamp: 1298085933,
+      timestamp: 1298085000,
       error_count: 1,
       warning_count: 2,
       ok_count: 3,
@@ -12,7 +12,7 @@ export const LOGS_API_MOCKS = {
     {
       id: 'uuid2',
       event_message: 'foobar',
-      timestamp: 1298085933,
+      timestamp: 1298085000,
       error_count: 1,
       warning_count: 2,
       ok_count: 3,

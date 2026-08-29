@@ -50,6 +50,11 @@ beforeEach(() => {
     path: '/platform/projects/:ref/analytics/endpoints/logs.all',
     response: LOGS_API_MOCKS,
   })
+  addAPIMock({
+    method: 'get',
+    path: '/platform/projects/:ref/analytics/endpoints/logs.all.otel',
+    response: LOGS_API_MOCKS,
+  })
 })
 
 test('search loads with whatever is on the URL', async () => {

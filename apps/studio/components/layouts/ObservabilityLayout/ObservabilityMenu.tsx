@@ -56,7 +56,7 @@ export const ObservabilityMenu = () => {
       subject: { id: profile?.id },
     }
   )
-  const canManageCustomReports = !IS_PLATFORM || canCreateCustomReport
+  const canManageCustomReports = IS_PLATFORM && canCreateCustomReport
 
   // Preserve date range query parameters when navigating
   const preservedQueryParams = useMemo(() => {
@@ -72,15 +72,16 @@ export const ObservabilityMenu = () => {
     return queryString ? `?${queryString}` : ''
   }, [router.query])
 
-  const { data: content, isPending: isLoading } = useContentQuery(
+  const { data: content, isPending: isLoadingContent } = useContentQuery(
     {
       projectRef: ref,
       type: 'report',
     },
     {
-      enabled: Boolean(ref),
+      enabled: IS_PLATFORM && Boolean(ref),
     }
   )
+  const isLoading = IS_PLATFORM && isLoadingContent
   const { mutateAsync: deleteReport } = useContentDeleteMutation({
     // Toasts are driven by toast.promise in onConfirmDeleteReport. This no-op keeps the hook
     // from showing its own default error toast, while its optimistic rollback still runs.
@@ -194,21 +195,65 @@ export const ObservabilityMenu = () => {
             }))}
           />
 
-          <>
-            <div className="h-px w-full bg-border-overlay" />
-            <div className="mx-2">
-              <Menu type="pills">
-                <Menu.Group
-                  title={
-                    <span className="flex w-full items-center justify-between relative h-6">
-                      <span className="uppercase font-mono">Custom Reports</span>
-                      {reportMenuItems.length > 0 && (
+          {IS_PLATFORM && (
+            <>
+              <div className="h-px w-full bg-border-overlay" />
+              <div className="mx-2">
+                <Menu type="pills">
+                  <Menu.Group
+                    title={
+                      <span className="flex w-full items-center justify-between relative h-6">
+                        <span className="uppercase font-mono">Custom Reports</span>
+                        {reportMenuItems.length > 0 && (
+                          <ButtonTooltip
+                            variant="default"
+                            size="tiny"
+                            icon={<Plus />}
+                            disabled={!canManageCustomReports}
+                            className="flex items-center justify-center h-6 w-6 absolute top-0 -right-1"
+                            onClick={() => {
+                              if (!canManageCustomReports) return
+                              setShowNewReportModal(true)
+                            }}
+                            tooltip={{
+                              content: {
+                                side: 'bottom',
+                                text: !canManageCustomReports
+                                  ? 'You need additional permissions to create custom reports'
+                                  : undefined,
+                              },
+                            }}
+                          />
+                        )}
+                      </span>
+                    }
+                  />
+                  {reportMenuItems.length > 0 &&
+                    reportMenuItems.map((item) => (
+                      <ObservabilityMenuItem
+                        key={item.id}
+                        item={item}
+                        pageKey={pageKey}
+                        onSelectEdit={() => {
+                          setSelectedReportToUpdate(item.report)
+                        }}
+                        onSelectDelete={() => {
+                          setSelectedReportToDelete(item.report)
+                          setDeleteModalOpen(true)
+                        }}
+                      />
+                    ))}
+                </Menu>
+                {reportMenuItems.length === 0 ? (
+                  <div className="px-2">
+                    <InnerSideBarEmptyPanel
+                      title="No custom reports yet"
+                      description="Create and save custom reports to track your project metrics"
+                      actions={
                         <ButtonTooltip
                           variant="default"
-                          size="tiny"
                           icon={<Plus />}
                           disabled={!canManageCustomReports}
-                          className="flex items-center justify-center h-6 w-6 absolute top-0 -right-1"
                           onClick={() => {
                             if (!canManageCustomReports) return
                             setShowNewReportModal(true)
@@ -221,89 +266,47 @@ export const ObservabilityMenu = () => {
                                 : undefined,
                             },
                           }}
-                        />
-                      )}
-                    </span>
-                  }
-                />
-                {reportMenuItems.length > 0 &&
-                  reportMenuItems.map((item) => (
-                    <ObservabilityMenuItem
-                      key={item.id}
-                      item={item}
-                      pageKey={pageKey}
-                      onSelectEdit={() => {
-                        setSelectedReportToUpdate(item.report)
-                      }}
-                      onSelectDelete={() => {
-                        setSelectedReportToDelete(item.report)
-                        setDeleteModalOpen(true)
-                      }}
+                        >
+                          New custom report
+                        </ButtonTooltip>
+                      }
                     />
-                  ))}
-              </Menu>
-              {reportMenuItems.length === 0 ? (
-                <div className="px-2">
-                  <InnerSideBarEmptyPanel
-                    title="No custom reports yet"
-                    description="Create and save custom reports to track your project metrics"
-                    actions={
-                      <ButtonTooltip
-                        variant="default"
-                        icon={<Plus />}
-                        disabled={!canManageCustomReports}
-                        onClick={() => {
-                          if (!canManageCustomReports) return
-                          setShowNewReportModal(true)
-                        }}
-                        tooltip={{
-                          content: {
-                            side: 'bottom',
-                            text: !canManageCustomReports
-                              ? 'You need additional permissions to create custom reports'
-                              : undefined,
-                          },
-                        }}
-                      >
-                        New custom report
-                      </ButtonTooltip>
-                    }
-                  />
-                </div>
-              ) : null}
-            </div>
-          </>
-
-          <UpdateCustomReportModal
-            onCancel={() => setSelectedReportToUpdate(undefined)}
-            selectedReport={selectedReportToUpdate}
-            initialValues={{
-              name: selectedReportToUpdate?.name || '',
-              description: selectedReportToUpdate?.description || '',
-            }}
-          />
-
-          <ConfirmationModal
-            title="Delete custom report"
-            confirmLabel="Delete report"
-            size="medium"
-            loading={false}
-            visible={deleteModalOpen}
-            onCancel={() => setDeleteModalOpen(false)}
-            onConfirm={onConfirmDeleteReport}
-          >
-            <div className="text-sm text-foreground-light grid gap-4">
-              <div className="grid gap-1">
-                <p>Are you sure you want to delete '{selectedReportToDelete?.name}'?</p>
+                  </div>
+                ) : null}
               </div>
-            </div>
-          </ConfirmationModal>
 
-          <CreateReportModal
-            visible={showNewReportModal}
-            onCancel={() => setShowNewReportModal(false)}
-            afterSubmit={() => setShowNewReportModal(false)}
-          />
+              <UpdateCustomReportModal
+                onCancel={() => setSelectedReportToUpdate(undefined)}
+                selectedReport={selectedReportToUpdate}
+                initialValues={{
+                  name: selectedReportToUpdate?.name || '',
+                  description: selectedReportToUpdate?.description || '',
+                }}
+              />
+
+              <ConfirmationModal
+                title="Delete custom report"
+                confirmLabel="Delete report"
+                size="medium"
+                loading={false}
+                visible={deleteModalOpen}
+                onCancel={() => setDeleteModalOpen(false)}
+                onConfirm={onConfirmDeleteReport}
+              >
+                <div className="text-sm text-foreground-light grid gap-4">
+                  <div className="grid gap-1">
+                    <p>Are you sure you want to delete '{selectedReportToDelete?.name}'?</p>
+                  </div>
+                </div>
+              </ConfirmationModal>
+
+              <CreateReportModal
+                visible={showNewReportModal}
+                onCancel={() => setShowNewReportModal(false)}
+                afterSubmit={() => setShowNewReportModal(false)}
+              />
+            </>
+          )}
         </div>
       )}
     </div>
