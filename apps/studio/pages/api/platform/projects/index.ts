@@ -170,7 +170,7 @@ function explainSelfHostedCreateError(message: string) {
     return `Self-hosted project creation requires the Coolify provisioning bridge to be configured. ${message}`
   }
   if (message.includes('coolify')) {
-    return 'Self-hosted project creation requires the Coolify provisioning bridge to be configured.'
+    return `Coolify provisioning failed: ${message}`
   }
   return message
 }

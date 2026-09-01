@@ -230,7 +230,7 @@ const Wizard: NextPageWithLayout = () => {
       cloudProvider: selectedCloudProvider,
     },
     {
-      enabled: flagsLoaded && !smartRegionEnabled,
+      enabled: flagsLoaded && !isSelfHostedMode && !smartRegionEnabled,
       refetchOnMount: false,
       refetchOnWindowFocus: false,
       refetchInterval: false,
@@ -247,7 +247,7 @@ const Wizard: NextPageWithLayout = () => {
         desiredInstanceSize: instanceSize as DesiredInstanceSize,
       },
       {
-        enabled: flagsLoaded && smartRegionEnabled,
+        enabled: flagsLoaded && !isSelfHostedMode && smartRegionEnabled,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchInterval: false,
@@ -280,7 +280,7 @@ const Wizard: NextPageWithLayout = () => {
       dbRegion: smartRegionEnabled ? dbRegionExact : (dbRegion ?? ''),
       organizationSlug: organization,
     },
-    { enabled: currentOrg !== null }
+    { enabled: currentOrg !== null && !isSelfHostedMode }
   )
 
   const userPrimaryEmail = profile?.primary_email?.toLowerCase()
@@ -549,11 +549,17 @@ const Wizard: NextPageWithLayout = () => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmitWithComputeCostsConfirmation, (errors) =>
-            trackFunnelError(
-              'project_creation',
-              classifyValidationError('project_creation', errors),
-              'form'
-            )
+            {
+              trackFunnelError(
+                'project_creation',
+                classifyValidationError('project_creation', errors),
+                'form'
+              )
+              if (isSelfHostedMode) {
+                const firstError = Object.values(errors).find((error) => error?.message)
+                toast.error(firstError?.message ?? 'Project form is missing required information.')
+              }
+            }
           )}
         >
           <Panel
