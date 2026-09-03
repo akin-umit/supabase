@@ -53,7 +53,7 @@ export function getProjectSettings() {
     inserted_at: '2021-08-02T06:40:40.646Z',
     jwt_secret: process.env.JWT_SECRET || AUTH_JWT_SECRET,
     name: process.env.DEFAULT_PROJECT_NAME || 'Default Project',
-    ref: 'default',
+    ref: process.env.DEFAULT_PROJECT_REF || 'default',
     region: process.env.SUPABASE_REGION || process.env.REGION || 'self-hosted',
     service_api_keys: [
       {

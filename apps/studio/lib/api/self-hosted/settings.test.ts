@@ -79,6 +79,7 @@ describe('api/self-hosted/settings', () => {
     it('should use environment variables when set', async () => {
       vi.stubEnv('AUTH_JWT_SECRET', 'custom-jwt-secret-with-at-least-32-chars')
       vi.stubEnv('DEFAULT_PROJECT_NAME', 'My Custom Project')
+      vi.stubEnv('DEFAULT_PROJECT_REF', 'my-custom-project')
       vi.stubEnv('SUPABASE_SERVICE_KEY', 'custom-service-key')
       vi.stubEnv('SUPABASE_ANON_KEY', 'custom-anon-key')
 
@@ -90,6 +91,7 @@ describe('api/self-hosted/settings', () => {
 
       expect(settings.jwt_secret).toBe('custom-jwt-secret-with-at-least-32-chars')
       expect(settings.name).toBe('My Custom Project')
+      expect(settings.ref).toBe('my-custom-project')
       expect(settings.service_api_keys[0].api_key).toBe('custom-anon-key')
       expect(settings.service_api_keys[1].api_key).toBe('custom-service-key')
     })
