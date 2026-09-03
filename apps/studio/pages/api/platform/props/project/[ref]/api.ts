@@ -25,10 +25,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 const handleGetAll = async (_req: NextApiRequest, res: NextApiResponse) => {
+  const projectRef = process.env.DEFAULT_PROJECT_REF || DEFAULT_PROJECT.ref
   // Platform specific endpoint
   const response = {
     project: {
       ...DEFAULT_PROJECT,
+      ref: projectRef,
       api_key_supabase_encrypted: '',
       db_host: PROJECT_DB_HOST,
       db_name: 'postgres',
@@ -63,7 +65,7 @@ const handleGetAll = async (_req: NextApiRequest, res: NextApiResponse) => {
     autoApiService: {
       id: 1,
       name: 'Default API',
-      project: { ref: 'default' },
+      project: { ref: projectRef },
       app: { id: 1, name: 'Auto API' },
       app_config: {
         db_schema: 'public',

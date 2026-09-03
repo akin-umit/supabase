@@ -48,7 +48,8 @@ export async function getSelfHostedOrganization() {
 export function getSelfHostedProject(ref?: string) {
   const insertedAt =
     process.env.DEFAULT_PROJECT_INSERTED_AT || DEFAULT_PROJECT.inserted_at || nowIso()
-  const projectRef = ref || process.env.DEFAULT_PROJECT_REF || DEFAULT_PROJECT.ref
+  const configuredProjectRef = process.env.DEFAULT_PROJECT_REF || DEFAULT_PROJECT.ref
+  const projectRef = ref && ref !== DEFAULT_PROJECT.ref ? ref : configuredProjectRef
 
   return {
     ...DEFAULT_PROJECT,

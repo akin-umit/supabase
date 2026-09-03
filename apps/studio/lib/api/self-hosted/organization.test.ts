@@ -112,6 +112,15 @@ describe('api/self-hosted/organization', () => {
     })
   })
 
+  it('maps the default route alias to the configured tenant project ref', async () => {
+    vi.stubEnv('DEFAULT_PROJECT_REF', 'tenant-project')
+
+    const { getSelfHostedProject } = await import('./organization')
+
+    expect(getSelfHostedProject('default').ref).toBe('tenant-project')
+    expect(getSelfHostedProject('explicit-project').ref).toBe('explicit-project')
+  })
+
   it('updates only the organization display name in self-hosted mode', async () => {
     await expect(
       updateSelfHostedOrganization({ name: '  Aqenta Local  ', slug: 'ignored' })
