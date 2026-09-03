@@ -1,3 +1,4 @@
+import { useParams } from 'common'
 import Link from 'next/link'
 import { Badge, NavMenu, NavMenuItem } from 'ui'
 
@@ -10,7 +11,8 @@ type Props = {
 }
 
 function DatabaseBackupsNav({ active }: Props) {
-  const { ref, cloud_provider } = useSelectedProjectQuery()?.data || {}
+  const { ref } = useParams()
+  const { cloud_provider } = useSelectedProjectQuery()?.data || {}
   const { databaseRestoreToNewProject } = useIsFeatureEnabled(['database:restore_to_new_project'])
 
   const navMenuItems = [

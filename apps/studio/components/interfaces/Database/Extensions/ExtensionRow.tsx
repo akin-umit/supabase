@@ -1,4 +1,5 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
+import { useParams } from 'common'
 import { AlertTriangle, Book, Github, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -22,6 +23,7 @@ interface ExtensionRowProps {
 }
 
 export const ExtensionRow = ({ extension }: ExtensionRowProps) => {
+  const { ref: routeRef } = useParams()
   const { data: project } = useSelectedProjectQuery()
   const isOn = extension.installed_version !== null
   const isOrioleDb = useIsOrioleDb()
@@ -100,7 +102,7 @@ export const ExtensionRow = ({ extension }: ExtensionRowProps) => {
             <div className="flex flex-col gap-1">
               {extensionMeta.product_url ? (
                 <Link
-                  href={extensionMeta.product_url.replace('{ref}', project?.ref ?? '')}
+                  href={extensionMeta.product_url.replace('{ref}', routeRef ?? project?.ref ?? '')}
                   className="transition hover:text-foreground"
                 >
                   {extensionMeta.product}
