@@ -22,6 +22,13 @@ describe('api/self-hosted/project-operations', () => {
           generatedAt: '2026-07-12T10:00:00Z',
           status: 'healthy',
           services: { postgres: 'healthy', storage: 'unavailable' },
+          serviceVersions: {
+            gotrue: '2.196.0',
+            postgrest: '14.5',
+            'supabase-postgres': '17.6.1.141',
+            latestSupabasePostgres: '17.6.1.166',
+            secret: 'drop-me',
+          },
           deployment: { commit: 'a1b2c3d', version: '1.2.3', secret: 'drop-me' },
           backup: { status: 'verified', lastVerifiedAt: '2026-07-12T09:00:00Z' },
           migration: {
@@ -43,6 +50,12 @@ describe('api/self-hosted/project-operations', () => {
       generatedAt: '2026-07-12T10:00:00Z',
       status: 'healthy',
       services: { postgres: 'healthy', storage: 'unavailable' },
+      serviceVersions: {
+        gotrue: '2.196.0',
+        postgrest: '14.5',
+        'supabase-postgres': '17.6.1.141',
+        latestSupabasePostgres: '17.6.1.166',
+      },
       deployment: { commit: 'a1b2c3d', version: '1.2.3' },
       backup: { status: 'verified', lastVerifiedAt: '2026-07-12T09:00:00Z' },
       migration: {

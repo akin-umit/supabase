@@ -1,5 +1,8 @@
 import { useParams } from 'common'
 import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
   Badge,
   Input,
   InputGroup,
@@ -34,12 +37,13 @@ import { useReadReplicasQuery } from '@/data/read-replicas/replicas-query'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useIsOrioleDb, useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { IS_PLATFORM } from '@/lib/constants'
+import { isGreaterThan } from '@/lib/semver'
 
 export const InfrastructureInfo = () => {
-  if (!IS_PLATFORM) {
-    return <SelfHostedInfrastructureInfo />
-  }
+  return IS_PLATFORM ? <PlatformInfrastructureInfo /> : <SelfHostedInfrastructureInfo />
+}
 
+const PlatformInfrastructureInfo = () => {
   const { ref } = useParams()
   const { data: project } = useSelectedProjectQuery()
 
@@ -232,6 +236,12 @@ const SelfHostedInfrastructureInfo = () => {
   const { data, isPending, isError, refetch, isFetching } = useProjectOperationsQuery({
     projectRef: ref,
   })
+  const serviceVersions = data?.serviceVersions
+  const currentPgVersion = serviceVersions?.['supabase-postgres'] ?? 'Unknown'
+  const latestPgVersion = serviceVersions?.latestSupabasePostgres
+  const hasPostgresUpgrade = latestPgVersion
+    ? isGreaterThan(latestPgVersion, currentPgVersion)
+    : false
 
   return (
     <>
@@ -241,7 +251,7 @@ const SelfHostedInfrastructureInfo = () => {
           <ScaffoldSectionDetail>
             <h4 className="text-base capitalize m-0">Service versions</h4>
             <p className="text-foreground-light text-sm pr-8 mt-1">
-              Version and service evidence reported by the self-hosted runtime.
+              Service versions and upgrade eligibility for your provisioned instance.
             </p>
           </ScaffoldSectionDetail>
           <ScaffoldSectionContent>
@@ -260,12 +270,42 @@ const SelfHostedInfrastructureInfo = () => {
               </Admonition>
             ) : (
               <div className="space-y-3">
-                <FormItemLayout label="Studio image version" layout="vertical" isReactForm={false}>
-                  <Input readOnly disabled value={data?.deployment.version ?? 'Unknown'} />
+                <FormItemLayout label="Auth version" layout="vertical" isReactForm={false}>
+                  <Input readOnly disabled value={serviceVersions?.gotrue ?? 'Unknown'} />
                 </FormItemLayout>
-                <FormItemLayout label="Deployed commit" layout="vertical" isReactForm={false}>
-                  <Input readOnly disabled value={data?.deployment.commit ?? 'Unknown'} />
+                <FormItemLayout label="PostgREST version" layout="vertical" isReactForm={false}>
+                  <Input readOnly disabled value={serviceVersions?.postgrest ?? 'Unknown'} />
                 </FormItemLayout>
+                <FormItemLayout label="Postgres version" layout="vertical" isReactForm={false}>
+                  <InputGroup>
+                    <InputGroupInput readOnly disabled value={currentPgVersion} />
+                    <InputGroupAddon align="inline-end">
+                      {latestPgVersion && !hasPostgresUpgrade && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Badge variant="success" className="mr-1">
+                              Latest
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="w-52 text-center">
+                            Project is on the latest configured self-hosted Postgres version
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </InputGroupAddon>
+                  </InputGroup>
+                </FormItemLayout>
+                {hasPostgresUpgrade && (
+                  <Alert title="Your project can be upgraded to the latest version of Postgres">
+                    <AlertTitle>Your project can be upgraded to the latest version of Postgres</AlertTitle>
+                    <AlertDescription>
+                      <p>
+                        The latest configured self-hosted Postgres version ({latestPgVersion}) is
+                        available for your project.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <div className="grid gap-2 sm:grid-cols-2">
                   {Object.entries(data?.services ?? {}).map(([service, status]) => (
                     <div

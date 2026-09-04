@@ -21,6 +21,20 @@ const serviceStateSchema = z.enum([
   'stopped',
   'unknown',
 ])
+
+const serviceVersionsSchema = z
+  .object({
+    gotrue: versionSchema,
+    postgrest: versionSchema,
+    'supabase-postgres': versionSchema,
+    realtime: versionSchema.optional(),
+    storage: versionSchema.optional(),
+    'postgres-meta': versionSchema.optional(),
+    'edge-runtime': versionSchema.optional(),
+    kong: versionSchema.optional(),
+    latestSupabasePostgres: versionSchema.optional(),
+  })
+  .strip()
 const overviewStatusSchema = z.enum([
   'healthy',
   'degraded',
@@ -89,6 +103,7 @@ const projectOperationsSchema = z
     generatedAt: isoTimestampSchema,
     status: overviewStatusSchema,
     services: z.record(serviceNameSchema, serviceStateSchema),
+    serviceVersions: serviceVersionsSchema.optional(),
     deployment: deploymentSchema,
     backup: backupSchema,
     migration: migrationSchema,
